@@ -11,6 +11,7 @@ app = Flask(__name__)
 base_dir = Path(__file__).parent.parent / 'src/flask/traits'
 
 special_assets = {
+    'bape_coach': 'memes/bape_coach.png',
     'bape_hoodie_red': 'memes/bape_hoodie_red.png',
     'bape_hoodie_green': 'memes/bape_hoodie_green.png',
     'adidas_hoodie': 'memes/adidas_hoodie.png' ,
