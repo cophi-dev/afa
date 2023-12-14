@@ -3,7 +3,7 @@
     {
       "src": "package.json",
       "use": "@vercel/node",
-      "config": { "distDir": "build" }
+      "config": { "distDir": "src" }
     },
     {
       "src": "api/app.py",
