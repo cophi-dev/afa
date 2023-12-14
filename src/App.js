@@ -27,11 +27,20 @@ function App() {
     const rgbToCss = (rgb) => `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
 
     useEffect(() => {
-        fetch('/api/token-ids')
-            .then(response => response.json())
-            .then(data => setTokenIds(data.sort((a, b) => parseInt(a) - parseInt(b))))
+          fetch('/api/token-ids')
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('Network response was not ok');
+              }
+              return response.json();
+            })
+            .then(data => {
+              const ids = data.map(item => item.TOKENID);
+              setTokenIds(ids.sort((a, b) => parseInt(a) - parseInt(b)));
+            })
             .catch(error => console.error('Error:', error));
-    }, []);
+}, []);
+
     
     const fetchAsset = (newTokenId, newSelectedAsset, newSecondAsset, newThirdAsset) => {
         if (newTokenId && (newSelectedAsset || newSecondAsset|| newThirdAsset)) {
