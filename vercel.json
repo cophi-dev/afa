@@ -1,20 +1,5 @@
 {
-  "routes": [
-      {
-        "src": "/api/(.*)",
-        "dest": "api/app.py"
-      },
-      {
-        "src": "/static/(.*)",
-        "dest": "/static/$1"
-      },
-      {
-        "src": "/favicon.ico",
-        "dest": "/favicon.ico"
-      },
-      {
-        "src": "/(.*)",
-        "dest": "/$1"
-      }
-    ]
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/app" }
+  ]
 }
