@@ -141,9 +141,9 @@ def get_background_color():
         print(f"Error processing Token ID {token_id}: {e}")
         return jsonify({'error': 'Internal Server Error'}), 500
 
-@app.route('/api/token-ids', methods=['GET'])
+@app.route('/token-ids', methods=['GET'])
 def get_token_ids():
-    with open('../src/flask/afa_db.json', 'r') as file:
+    with open('src/flask/afa_db.json', 'r') as file:
         minted_apes = json.load(file)
         token_ids = [ape['TOKENID'] for ape in minted_apes]
     return jsonify(token_ids)
