@@ -27,7 +27,7 @@ function App() {
     const rgbToCss = (rgb) => `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
 
     useEffect(() => {
-          fetch('/token-ids')
+          fetch('../api/token-ids')
             .then(response => {
               if (!response.ok) {
                 throw new Error('Network response was not ok');
