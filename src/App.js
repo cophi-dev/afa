@@ -128,7 +128,7 @@ function App() {
                     imageUrl && <img src={imageUrl} alt="Ape" style={{ maxWidth: '100%', height: 'auto' }} />
                 )}
             </div>
-
+            <div className="dropdown-container">
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Select AFA</h3>
                     <select value={tokenId} onChange={handleTokenChange} className="dropdown">
@@ -142,6 +142,7 @@ function App() {
                     <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown">
                         <option value="">Select</option>
                         <option value="AFA">AFA</option>
+                        <option value="bape_coach">Bape Coach Jacket</option>
                         <option value="bape_hoodie_red">Bape Hoodie Red</option>
                         <option value="bape_hoodie_green">Bape Hoodie Green</option>
                         <option value="adidas_hoodie">Adidas Hoodie</option>
@@ -149,7 +150,9 @@ function App() {
                         <option value="sweater">Christmas sweater</option>
                     </select>
                 </div>
+            </div>
 
+            <div className="dropdown-container">
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">First Hand</h3>
                     <select value={selectedAsset} onChange={handleAssetChange} className="dropdown">
@@ -168,6 +171,7 @@ function App() {
                         <option value="verified">Verified</option>
                     </select>
                 </div>
+            </div>
 
 
         </div>
