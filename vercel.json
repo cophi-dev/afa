@@ -1,6 +1,8 @@
 {
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/app.py" },
+    { "source": "/static/(.*)", "destination": "/public/static/$1" },
+    { "source": "/manifest.json", "destination": "/public/manifest.json" },
     { "source": "/(.*)", "destination": "/public/index.html" }
   ]
 }
