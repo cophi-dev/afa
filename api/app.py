@@ -149,10 +149,11 @@ def get_background_color():
 
 @app.route('/api/token-ids', methods=['GET'])
 def get_token_ids():
-    with open('src/flask/afa_db.json', 'r') as file:
-        minted_apes = json.load(file)
-        token_ids = [ape['TOKENID'] for ape in minted_apes]
-    return jsonify(token_ids)
+    try:
+        # Your existing code
+    except Exception as e:
+        app.logger.error(f"Error in get_token_ids: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
