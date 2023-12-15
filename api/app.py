@@ -52,7 +52,7 @@ def get_image_file(trait_type, value, base_dir):
     
 
 def is_minted(token_id):
-    with open('../src/flask/afa_db.json', 'r') as file:
+    with open('./afa_db.json', 'r') as file:
         minted_apes = json.load(file)
         return token_id in [ape['TOKENID'] for ape in minted_apes]
 
@@ -150,7 +150,7 @@ def get_background_color():
 @app.route('/api/token-ids', methods=['GET'])
 def get_token_ids():
     try:
-        with open('../src/flask/afa_db.json', 'r') as file:
+        with open('./afa_db.json', 'r') as file:
             minted_apes = json.load(file)
             token_ids = [ape['TOKENID'] for ape in minted_apes]
         return jsonify(token_ids)
