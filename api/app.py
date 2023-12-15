@@ -95,6 +95,12 @@ def compose_ape(ape_id, data, base_dir, asset_type, second_asset_type, third_ass
   
     return final_image
 
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def catch_all(path):
+    return send_from_directory('public', 'index.html')
+
 @app.route('/get-asset', methods=['GET'])
 def get_asset():
     token_id = request.args.get('tokenId')
