@@ -41,7 +41,6 @@ function App() {
             .catch(error => console.error('Error:', error));
 }, []);
 
-    
     const fetchAsset = (newTokenId, newSelectedAsset, newSecondAsset, newThirdAsset) => {
         if (newTokenId && (newSelectedAsset || newSecondAsset|| newThirdAsset)) {
             setIsLoading(true);
