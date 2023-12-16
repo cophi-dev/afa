@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, url_for, send_file
+from flask import Flask, request, jsonify, send_file, send_from_directory
 from PIL import Image
 import json
 import os
@@ -7,8 +7,8 @@ from pathlib import Path
 
 app = Flask(__name__)
 
-# Define the base directory for the image files
-base_dir = Path(__file__).parent.parent / 'src/flask/traits'
+# Base directory for the image files
+base_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'flask', 'traits')
 
 special_assets = {
     'bape_coach': 'memes/bape_coach.png',
@@ -44,17 +44,27 @@ color_map = {
     "Yellow": (224, 223, 171)
 }
 
-def get_image_file(trait_type, value, base_dir):
+def get_image_file(trait_type, value):
     if value:
         return os.path.join(base_dir, trait_type, f"{value}.png")
     else:
         return os.path.join(base_dir, "_blank.png")
     
-
 def is_minted(token_id):
-    with open('./afa_db.json', 'r') as file:
-        minted_apes = json.load(file)
+    try:
+        with open('../flask/afa_db.json', 'r') as file:
+            minted_apes = json.load(file)
+        # Check if token_id is in the list of minted apes
         return token_id in [ape['TOKENID'] for ape in minted_apes]
+    except Exception as e:
+        app.logger.error(f"Error in is_minted: {e}")
+        return False  # or handle the exception as needed
+    
+
+def get_minted_apes():
+    # Fetch the minted Ape tokens from your data source
+    minted_apes = [{'TOKENID': '1'}, {'TOKENID': '2'}, {'TOKENID': '3'}]  # Replace with your fetched data
+    return jsonify(minted_apes)
 
 def compose_ape(ape_id, data, base_dir, asset_type, second_asset_type, third_asset_type):
     ape = next((item for item in data["apes"] if str(item["id"]) == ape_id), None)
@@ -69,7 +79,8 @@ def compose_ape(ape_id, data, base_dir, asset_type, second_asset_type, third_ass
     for attribute in attributes:
         trait_type = attribute["trait_type"]
         value = attribute["value"]
-        with Image.open(get_image_file(trait_type, value, base_dir)) as img:
+        # Corrected call to get_image_file with two arguments
+        with Image.open(get_image_file(trait_type, value)) as img:
             layers[trait_type] = img.copy()
    
     if second_asset_type in special_assets:
@@ -110,7 +121,7 @@ def get_asset():
 
     try:
         if is_minted(token_id):
-            with open('../src/flask/db.json', 'r') as file:
+            with open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'flask', 'db.json'), 'r') as file:
                 data = json.load(file)
                 image = compose_ape(token_id, data, base_dir, asset_type, second_asset_type, third_asset_type)
 
@@ -133,7 +144,7 @@ def get_asset():
 def get_background_color():
     token_id = request.args.get('tokenId')
     try:
-        with open('../src/flask/db.json', 'r') as file:
+        with open('../flask/db.json', 'r') as file:
             data = json.load(file)
             ape = next((item for item in data["apes"] if str(item["id"]) == token_id), None)
             if ape:
@@ -150,8 +161,9 @@ def get_background_color():
 @app.route('/api/token-ids', methods=['GET'])
 def get_token_ids():
     try:
-        with open('./afa_db.json', 'r') as file:
+        with open('../flask/afa_db.json', 'r') as file:
             minted_apes = json.load(file)
+            # Extract TOKENID values
             token_ids = [ape['TOKENID'] for ape in minted_apes]
         return jsonify(token_ids)
     except Exception as e:
