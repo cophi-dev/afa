@@ -10,14 +10,14 @@ function Banner() {
     );
 }
 
-function getContrastYIQ(rgb){
+function getContrastYIQ(rgb) {
     const yiq = ((rgb[0]*299)+(rgb[1]*587)+(rgb[2]*114))/1000;
     return (yiq >= 128) ? 'black' : 'white';
 }
 
 function App() {
-    const [tokenId, setTokenId] = useState('');
     const [tokenIds, setTokenIds] = useState([]);
+    const [tokenId, setTokenId] = useState('');
     const [selectedAsset, setSelectedAsset] = useState('');
     const [secondAsset, setSecondAsset] = useState('');
     const [thirdAsset, setThirdAsset] = useState('');
@@ -27,22 +27,21 @@ function App() {
     const rgbToCss = (rgb) => `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
 
     useEffect(() => {
-          fetch('/api/token-ids')
+        fetch('/api/token-ids')
             .then(response => {
-              if (!response.ok) {
-                throw new Error('Network response was not ok');
-              }
-              return response.json();
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
             })
             .then(data => {
-              const ids = data.map(item => item.TOKENID);
-              setTokenIds(ids.sort((a, b) => parseInt(a) - parseInt(b)));
+                setTokenIds(data); // Assuming data is an array of token IDs
             })
             .catch(error => console.error('Error:', error));
-}, []);
+    }, []);
 
     const fetchAsset = (newTokenId, newSelectedAsset, newSecondAsset, newThirdAsset) => {
-        if (newTokenId && (newSelectedAsset || newSecondAsset|| newThirdAsset)) {
+        if (newTokenId && (newSelectedAsset || newSecondAsset || newThirdAsset)) {
             setIsLoading(true);
 
             const assetTypeParam = newSelectedAsset ? `&assetType=${newSelectedAsset}` : '';
@@ -69,10 +68,9 @@ function App() {
                             const textColor = getContrastYIQ(data.background_color);
                             document.body.style.backgroundColor = bgColor;
                             document.documentElement.style.setProperty('--text-color', textColor); // Set CSS variable
-                        })  
+                        })
                         .catch(error => console.error('Error fetching background color:', error));
                 })
-
                 .catch(error => {
                     console.error('Error:', error);
                     setImageUrl('./face.png');
@@ -81,43 +79,27 @@ function App() {
         }
     };
 
-
     const handleSecondAssetChange = event => {
         const newSecondAsset = event.target.value;
         setSecondAsset(newSecondAsset);
-        
-        // Use a setTimeout to ensure the state is updated before fetching the asset
         setTimeout(() => fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset), 0);
     };
-    
+
     const handleThirdAssetChange = event => {
         const newThirdAsset = event.target.value;
         setThirdAsset(newThirdAsset);
-    
-        // Use a setTimeout here as well
         setTimeout(() => fetchAsset(tokenId, selectedAsset, secondAsset, newThirdAsset), 0);
-    };
-    
-
-    const updateImageWithFade = (newImageUrl) => {
-        setFade(true);
-        setTimeout(() => {
-            setImageUrl(newImageUrl);
-            setFade(false);
-        }, 500);
     };
 
     const handleTokenChange = event => {
         const newTokenId = event.target.value;
         setTokenId(newTokenId);
-    
-        // Automatically set the selectedAsset to "AFA" when a new token ID is selected
         const defaultAsset = "AFA";
-        setSelectedAsset(defaultAsset);
-    
-        // Fetch the asset for the new token ID, but keep the second and third asset choices
-        if (newTokenId && newTokenId !== '') {
-            fetchAsset(newTokenId, defaultAsset, secondAsset, thirdAsset);
+        if (tokenIds.includes(newTokenId)) {
+            setSelectedAsset(defaultAsset);
+            setSecondAsset('');
+            setThirdAsset('');
+            fetchAsset(newTokenId, defaultAsset, '', '');
         }
     };
 
@@ -137,14 +119,15 @@ function App() {
                 )}
             </div>
             <div className="dropdown-container">
-                <div className="dropdown-section">
-                    <h3 className="dropdown-header">Select AFA</h3>
-                    <select value={tokenId} onChange={handleTokenChange} className="dropdown">
-                        <option value="AFA">Select Token ID</option>
-                        {tokenIds.map(id => <option key={id} value={id}>{id}</option>)}
-                    </select>
+                {tokenIds.length > 0 && (
+                    <div className="dropdown-section">
+                        <h3 className="dropdown-header">Select AFA</h3>
+                        <select value={tokenId} onChange={handleTokenChange} className="dropdown">
+                            <option value="">Select Token ID</option>
+                            {tokenIds.map(id => <option key={id} value={id}>{id}</option>)}
+                        </select>
                 </div>
-              
+            )}
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Outfit</h3>
                     <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown">
@@ -159,7 +142,6 @@ function App() {
                     </select>
                 </div>
             </div>
-
             <div className="dropdown-container">
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">First Hand</h3>
@@ -170,7 +152,6 @@ function App() {
                         <option value="shoe">BAPE shoe</option>
                     </select>
                 </div>
-
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Extra</h3>
                     <select value={thirdAsset} onChange={handleThirdAssetChange} className="dropdown">
@@ -180,8 +161,6 @@ function App() {
                     </select>
                 </div>
             </div>
-
-
         </div>
     );
 }
