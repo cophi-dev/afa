@@ -1,0 +1,12 @@
+services:
+- type: web
+  name: flask-app
+  env: python
+  plan: starter
+  buildCommand: "pip install -r backend/requirements.txt"
+  startCommand: "gunicorn -b :10000 backend.flask:app"
+  envVars:
+  - key: PORT
+    value: "10000"
+  - key: FLASK_ENV
+    value: "production"
