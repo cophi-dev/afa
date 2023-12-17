@@ -4,10 +4,10 @@ import json
 import os
 from io import BytesIO
 
-app = Flask(__name__, static_folder='../public', static_url_path='/')
+app = Flask(__name__, static_folder='frontend/public', static_url_path='/')
 
 # Adjusted base directory for image files
-
+base_dir = os.path.join(os.path.dirname(__file__), '../flask', 'traits')
 
 
 special_assets = {
@@ -174,7 +174,7 @@ def catch_all(path):
         return send_from_directory(app.static_folder, path)
     else:
         # Serve index.html for all other routes to enable SPA routing
-        return send_from_directory(app.static_folder, 'index.html')
+        return send_from_directory(app.static_folder, '/index.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
