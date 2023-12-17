@@ -144,6 +144,16 @@ function App() {
             </div>
             <div className="dropdown-container">
                 <div className="dropdown-section">
+                    <h3 className="dropdown-header">Extra</h3>
+                    <select value={thirdAsset} onChange={handleThirdAssetChange} className="dropdown">
+                        <option value="">Select</option>
+                        <option value="snow">Snow</option>
+                        <option value="verified">Verified</option>
+                    </select>
+                </div>
+            </div>
+            <div className="dropdown-container">
+                <div className="dropdown-section">
                     <h3 className="dropdown-header">First Hand</h3>
                     <select value={selectedAsset} onChange={handleAssetChange} className="dropdown">
                         <option value="">Select</option>
@@ -153,11 +163,21 @@ function App() {
                     </select>
                 </div>
                 <div className="dropdown-section">
-                    <h3 className="dropdown-header">Extra</h3>
-                    <select value={thirdAsset} onChange={handleThirdAssetChange} className="dropdown">
+                    <h3 className="dropdown-header">First Hand</h3>
+                    <select value={selectedAsset} onChange={handleAssetChange} className="dropdown">
                         <option value="">Select</option>
-                        <option value="snow">Snow</option>
-                        <option value="verified">Verified</option>
+                        <option value="cheers">Cheers</option>
+                        <option value="peace">Peace</option>
+                        <option value="shoe">BAPE shoe</option>
+                    </select>
+                </div>
+                <div className="dropdown-section">
+                    <h3 className="dropdown-header">First Hand</h3>
+                    <select value={selectedAsset} onChange={handleAssetChange} className="dropdown">
+                        <option value="">Select</option>
+                        <option value="cheers">Cheers</option>
+                        <option value="peace">Peace</option>
+                        <option value="shoe">BAPE shoe</option>
                     </select>
                 </div>
             </div>
