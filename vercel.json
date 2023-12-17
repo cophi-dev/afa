@@ -1,10 +1,10 @@
 {
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/backend/app.py" },
-    { "source": "/static/(.*)", "destination": "/frontend/build/static/$1" },
-    { "source": "/manifest.json", "destination": "/frontend/build/manifest.json" },
-    { "source": "/favicon.ico", "destination": "/frontend/build/favicon.ico" },
-    { "source": "/logo.png", "destination": "/frontend/build/logo.png" },
-    { "source": "/(.*)", "destination": "/frontend/build/index.html" }
+    { "source": "/static/(.*)", "destination": "/frontend/public/static/$1" },
+    { "source": "/manifest.json", "destination": "/frontend/public/manifest.json" },
+    { "source": "/favicon.ico", "destination": "/frontend/public/favicon.ico" },
+    { "source": "/logo.png", "destination": "/frontend/public/logo.png" },
+    { "source": "/(.*)", "destination": "/frontend/public/index.html" }
   ]
 }
