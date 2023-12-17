@@ -3,12 +3,12 @@ from PIL import Image
 import json
 import os
 from io import BytesIO
-from pathlib import Path
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../frontend/public', static_url_path='/')
 
-# Base directory for the image files
-base_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'flask', 'traits')
+# Adjusted base directory for image files
+base_dir = os.path.join(os.path.dirname(__file__), '../flask', 'traits')
+
 
 special_assets = {
     'bape_coach': 'memes/bape_coach.png',
@@ -107,12 +107,8 @@ def compose_ape(ape_id, data, base_dir, asset_type, second_asset_type, third_ass
     return final_image
 
 
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def catch_all(path):
-    return send_from_directory('public', 'index.html')
 
-@app.route('/get-asset', methods=['GET'])
+@app.route('/api/get-asset', methods=['GET'])
 def get_asset():
     token_id = request.args.get('tokenId')
     asset_type = request.args.get('assetType')
@@ -140,7 +136,7 @@ def get_asset():
         print(f"Error processing Token ID {token_id}: {e}")
         return jsonify({'error': 'Internal Server Error'}), 500
 
-@app.route('/get-background-color', methods=['GET'])
+@app.route('/api/get-background-color', methods=['GET'])
 def get_background_color():
     token_id = request.args.get('tokenId')
     try:
@@ -169,6 +165,16 @@ def get_token_ids():
     except Exception as e:
         app.logger.error(f"Error in get_token_ids: {e}")
         return jsonify({'error': str(e)}), 500
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def catch_all(path):
+    # Serve static files from the React app's public folder
+    if path and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    else:
+        # Serve index.html for all other routes to enable SPA routing
+        return send_from_directory(app.static_folder, 'index.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

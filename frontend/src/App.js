@@ -48,7 +48,7 @@ function App() {
             const secondAssetTypeParam = newSecondAsset ? `&secondAssetType=${newSecondAsset}` : '';
             const thirdAssetTypeParam = newThirdAsset ? `&thirdAssetType=${newThirdAsset}` : '';
 
-            fetch(`/get-asset?tokenId=${newTokenId}${assetTypeParam}${secondAssetTypeParam}${thirdAssetTypeParam}`)
+            fetch(`/api/get-asset?tokenId=${newTokenId}${assetTypeParam}${secondAssetTypeParam}${thirdAssetTypeParam}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
@@ -61,7 +61,7 @@ function App() {
                     setImageUrl(newImageUrl); // Update image URL immediately
 
                     // Fetch background color
-                    fetch(`/get-background-color?tokenId=${newTokenId}`)
+                    fetch(`/api/get-background-color?tokenId=${newTokenId}`)
                         .then(response => response.json())
                         .then(data => {
                             const bgColor = rgbToCss(data.background_color);
@@ -126,8 +126,8 @@ function App() {
                             <option value="">Select Token ID</option>
                             {tokenIds.map(id => <option key={id} value={id}>{id}</option>)}
                         </select>
-                </div>
-            )}
+                    </div>
+                )}
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Outfit</h3>
                     <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown">
@@ -153,24 +153,6 @@ function App() {
                 </div>
             </div>
             <div className="dropdown-container">
-                <div className="dropdown-section">
-                    <h3 className="dropdown-header">First Hand</h3>
-                    <select value={selectedAsset} onChange={handleAssetChange} className="dropdown">
-                        <option value="">Select</option>
-                        <option value="cheers">Cheers</option>
-                        <option value="peace">Peace</option>
-                        <option value="shoe">BAPE shoe</option>
-                    </select>
-                </div>
-                <div className="dropdown-section">
-                    <h3 className="dropdown-header">First Hand</h3>
-                    <select value={selectedAsset} onChange={handleAssetChange} className="dropdown">
-                        <option value="">Select</option>
-                        <option value="cheers">Cheers</option>
-                        <option value="peace">Peace</option>
-                        <option value="shoe">BAPE shoe</option>
-                    </select>
-                </div>
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">First Hand</h3>
                     <select value={selectedAsset} onChange={handleAssetChange} className="dropdown">
