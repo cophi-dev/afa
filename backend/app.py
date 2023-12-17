@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, send_file, send_from_directory
-from PIL import Image
+from pil import Image
 import json
 import os
 from io import BytesIO
