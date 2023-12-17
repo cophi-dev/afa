@@ -1,7 +1,10 @@
 {
   "rewrites": [
-    { "source": "/static/(.*)", "destination": "/static/$1" },
-    { "source": "/manifest.json", "destination": "/manifest.json" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/api/(.*)", "destination": "/backend/app.py" },
+    { "source": "/static/(.*)", "destination": "/frontend/build/static/$1" },
+    { "source": "/manifest.json", "destination": "/frontend/build/manifest.json" },
+    { "source": "/favicon.ico", "destination": "/frontend/build/favicon.ico" },
+    { "source": "/logo.png", "destination": "/frontend/build/logo.png" },
+    { "source": "/(.*)", "destination": "/frontend/build/index.html" }
   ]
 }
