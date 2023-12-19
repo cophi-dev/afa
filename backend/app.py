@@ -12,7 +12,7 @@ base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'flask'
 
 special_assets = {
     'bape_coach': os.path.join(base_dir, 'memes', 'bape_coach.png'),
-    'bape_hoodie_red': 'memes/bape_hoodie_red.png',
+    'bape_hoodie_red': os.path.join(base_dir, 'memes', 'bape_hoodie_red.png'),
     'bape_hoodie_green': 'memes/bape_hoodie_green.png',
     'adidas_hoodie': 'memes/adidas_hoodie.png' ,
     'adidas_yellow': 'memes/adidas_yellow.png' ,
