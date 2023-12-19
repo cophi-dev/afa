@@ -6,12 +6,12 @@ from io import BytesIO
 
 app = Flask(__name__, static_folder='public', static_url_path='/')
 
-# Adjusted base directory for image files
-base_dir = os.path.join(os.path.dirname(__file__), '../flask', 'traits')
+# Use absolute paths for file access
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'flask', 'traits'))
 
 
 special_assets = {
-    'bape_coach': 'memes/bape_coach.png',
+    'bape_coach': os.path.join(base_dir, 'memes', 'bape_coach.png'),
     'bape_hoodie_red': 'memes/bape_hoodie_red.png',
     'bape_hoodie_green': 'memes/bape_hoodie_green.png',
     'adidas_hoodie': 'memes/adidas_hoodie.png' ,
@@ -52,7 +52,8 @@ def get_image_file(trait_type, value):
     
 def is_minted(token_id):
     try:
-        with open('../flask/afa_db.json', 'r') as file:
+        db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'flask', 'afa_db.json'))
+        with open(db_path, 'r') as file:
             minted_apes = json.load(file)
         # Check if token_id is in the list of minted apes
         return token_id in [ape['TOKENID'] for ape in minted_apes]
