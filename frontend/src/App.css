@@ -87,9 +87,10 @@ body {
 }
 
 #asset-display {
-  max-width: 40%;
-  position: relative; /* Ensure this is set to relative */
-  height: auto;  
+  width: 40%; /* Adjust width as needed */
+  height: 40%;
+  max-width: 600px;
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -97,14 +98,14 @@ body {
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--text-color, black);
-  margin-bottom: 20px; /* Spacing between image and dropdowns */
+  margin-bottom: 20px;
 }
 
 #asset-display img {
-  max-width: 100%;
-  height: auto;
+  width: 100%; /* Full width of the container */
+  height: 100%; /* Full height of the container */
+  object-fit: contain;
 }
-
 
 .fade-effect {
   opacity: 1;

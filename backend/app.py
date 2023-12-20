@@ -15,22 +15,22 @@ base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
 special_assets = {
     'bape_coach': os.path.join(base_dir, 'memes', 'bape_coach.png'),
     'bape_hoodie_red': os.path.join(base_dir, 'memes', 'bape_hoodie_red.png'),
-    'bape_hoodie_green': 'memes/bape_hoodie_green.png',
-    'adidas_hoodie': 'memes/adidas_hoodie.png' ,
-    'adidas_yellow': 'memes/adidas_yellow.png' ,
-    'sweater': 'memes/sweater.png' 
+    'bape_hoodie_green': os.path.join(base_dir, 'memes', 'bape_hoodie_green.png'),
+    'adidas_hoodie': os.path.join(base_dir, 'memes', 'adidas_hoodie.png'),
+    'adidas_yellow': os.path.join(base_dir, 'memes', 'adidas_yellow.png'),
+    'sweater': os.path.join(base_dir, 'memes', 'sweater.png')
 }
 
 main_assets = {
-    'cheers': 'memes/cheers.png',
-    'shoe': 'memes/bape_shoe.png',
-    'peace': 'memes/peace.png'
+    'cheers': os.path.join(base_dir, 'memes', 'cheers.png'),
+    'shoe': os.path.join(base_dir, 'memes', 'shoe.png'),
+    'peace': os.path.join(base_dir, 'memes', 'peace.png')
     # Add more asset types here as needed
 }
 
 additional_assets = {
-    'snow': 'memes/snow.png',
-    'verified': 'memes/mask2.png'
+    'snow': os.path.join(base_dir, 'memes', 'snow.png'),
+    'verified': os.path.join(base_dir, 'memes', 'verified.png')
     # Add more assets as needed
 }
 
@@ -80,7 +80,7 @@ def compose_ape(ape_id, data):
         return None
 
     attributes = ape["metadata"]["attributes"]
-    final_image = Image.new("RGBA", (2000, 2000), (255, 255, 255, 0))
+    final_image = Image.new("RGBA", (800, 800), (255, 255, 255, 0))
     layers = {}
 
     # Add Normal Layers
