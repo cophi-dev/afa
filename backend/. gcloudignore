@@ -1,5 +1,0 @@
-.gcloudignore
-.git
-.gitignore
-node_modules/
-# other directories or files to ignore
