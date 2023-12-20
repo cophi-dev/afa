@@ -30,7 +30,7 @@ main_assets = {
 
 additional_assets = {
     'snow': os.path.join(base_dir, 'memes', 'snow.png'),
-    'verified': os.path.join(base_dir, 'memes', 'verified.png')
+    'verified': os.path.join(base_dir, 'memes', 'mask2.png')
     # Add more assets as needed
 }
 
