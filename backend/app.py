@@ -47,9 +47,14 @@ color_map = {
 }
 
 def get_image_file(trait_type, value):
-    if value:
+    if value in special_assets:
+        # Special assets are handled differently
+        return special_assets[value]
+    elif value:
+        # Regular trait handling
         return os.path.join(base_dir, trait_type, f"{value}.png")
     else:
+        # Fallback for missing value
         return os.path.join(base_dir, "_blank.png")
     
 def add_asset(image, asset_type, asset_dict):
@@ -73,7 +78,7 @@ def is_minted(token_id):
         app.logger.error(f"Error in is_minted: {e}")
         return False@app.route('/api/get-asset', methods=['GET'])
 
-def compose_ape(ape_id, data, second_asset_type):
+def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type):
     ape = next((item for item in data["apes"] if str(item["id"]) == ape_id), None)
     if not ape:
         return None
@@ -87,12 +92,19 @@ def compose_ape(ape_id, data, second_asset_type):
         value = attribute["value"]
         
         if trait_type == "Clothes" and second_asset_type in special_assets:
-            # Replace the clothes layer with the selected outfit
-            value = second_asset_type
-        
+            value = second_asset_type  # Replace clothes layer
+
         image_path = get_image_file(trait_type, value)
         with Image.open(image_path).convert("RGBA") as img:
             layers[trait_type] = img.copy()
+
+    # Add main asset if specified
+    if asset_type in main_assets:
+        add_asset(final_image, asset_type, 'main_assets')
+
+    # Add third asset if specified
+    if third_asset_type in additional_assets:
+        add_asset(final_image, third_asset_type, 'additional_assets')
 
     # Composite the layers onto the final image
     for layer_type in ['Background', 'Fur', 'Eyes', 'Clothes', 'Earring', 'Hat', 'Mouth']:
@@ -101,11 +113,12 @@ def compose_ape(ape_id, data, second_asset_type):
 
     return final_image
 
-
 @app.route('/api/get-asset', methods=['GET'])
 def get_asset():
     token_id = request.args.get('tokenId')
+    asset_type = request.args.get('assetType', '')
     second_asset_type = request.args.get('secondAssetType', '')
+    third_asset_type = request.args.get('thirdAssetType', '')
 
     try:
         if is_minted(token_id):
@@ -113,7 +126,7 @@ def get_asset():
             with open(db_path, 'r') as file:
                 data = json.load(file)
             
-            image = compose_ape(token_id, data, second_asset_type)  # Pass the new_clothes_asset parameter
+            image = compose_ape(token_id, data, asset_type, second_asset_type, third_asset_type)
             if not image:
                 raise ValueError("Ape not found")
 

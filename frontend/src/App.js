@@ -58,12 +58,8 @@ function App() {
             thirdAssetType: newThirdAsset || '',
         });
     
-        if (newSecondAsset) {
-            queryParams.append('newClothesAsset', newSecondAsset);  // Corrected parameter key
-        }
-    
         // Construct the URL with query parameters
-        const url = `${BASE_URL}/api/get-asset?${queryParams.toString()}`;
+        const url = `https://afa-editor.ew.r.appspot.com/api/get-asset?${queryParams.toString()}`;
     
         fetch(url)
         .then(response => {
