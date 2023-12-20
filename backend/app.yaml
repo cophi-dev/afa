@@ -1,12 +1,2 @@
-runtime: python
 env: flex
-entrypoint: gunicorn -b :$PORT app:app
-
-skip_files:
-  - ^(.*/)?#.*#$
-  - ^(.*/)?.*~$
-  - ^(.*/)?.*\.py[co]$
-  - ^(.*/)?.*/RCS/.*$
-  - ^(.*/)?\..*$
-  - ^(node_modules/).* 
-  - ^(google-cloud-sdk).*
+runtime: custom
