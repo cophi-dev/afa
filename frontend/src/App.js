@@ -27,7 +27,7 @@ function App() {
     const rgbToCss = (rgb) => `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
 
     useEffect(() => {
-        fetch('https://afa-editor.ew.r.appspot.com/api/get-asset?tokenId=${newTokenId}/api/token-ids')
+        fetch('/api/token-ids')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -48,7 +48,7 @@ function App() {
             const secondAssetTypeParam = newSecondAsset ? `&secondAssetType=${newSecondAsset}` : '';
             const thirdAssetTypeParam = newThirdAsset ? `&thirdAssetType=${newThirdAsset}` : '';
 
-            fetch(`https://afa-editor.ew.r.appspot.com/api/get-asset?tokenId=${newTokenId}${assetTypeParam}${secondAssetTypeParam}${thirdAssetTypeParam}`)
+            fetch(`/api/get-asset?tokenId=${newTokenId}${assetTypeParam}${secondAssetTypeParam}${thirdAssetTypeParam}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
@@ -61,7 +61,7 @@ function App() {
                     setImageUrl(newImageUrl); // Update image URL immediately
 
                     // Fetch background color
-                    fetch(`https://afa-editor.ew.r.appspot.com/api/get-asset?tokenId=${newTokenId}/api/get-background-color?tokenId=${newTokenId}`)
+                    fetch(`/api/get-asset?tokenId=${newTokenId}/api/get-background-color?tokenId=${newTokenId}`)
                         .then(response => response.json())
                         .then(data => {
                             const bgColor = rgbToCss(data.background_color);
