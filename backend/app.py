@@ -84,21 +84,22 @@ def is_minted(token_id):
 def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type):
     ape = next((item for item in data["apes"] if str(item["id"]) == ape_id), None)
     if not ape:
-        print(f"No ape found with id: {ape_id}")  # Debugging log
+        print(f"No ape found with id: {ape_id}")
         return None
 
     attributes = ape["metadata"]["attributes"]
     final_image = Image.new("RGBA", (800, 800), (255, 255, 255, 0))
     layers = {}
+    clothes_added = False  # Flag to check if clothes have been added
 
     for attribute in attributes:
         trait_type = attribute["trait_type"]
         value = attribute["value"]
 
-        # Check if a special clothes asset needs to be used
         if trait_type == "Clothes" and second_asset_type in special_assets:
-            print(f"Replacing clothes with special asset: {second_asset_type}")  # Debugging log
+            print(f"Replacing clothes with special asset: {second_asset_type}")
             image_path = special_assets[second_asset_type]
+            clothes_added = True
         else:
             image_path = get_image_file(trait_type, value)
 
@@ -112,8 +113,13 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type):
     for layer_type in ['Background', 'Fur', 'Eyes', 'Clothes', 'Earring', 'Hat', 'Mouth']:
         if layer_type in layers:
             final_image.alpha_composite(layers[layer_type], (0, 0))
-            
-   # Add main asset if specified
+
+    # Add clothes asset if it wasn't added and is selected
+    if second_asset_type in special_assets and not clothes_added:
+        print(f"Adding selected clothes asset: {second_asset_type}")
+        add_asset(final_image, second_asset_type, special_assets)
+
+    # Add main asset if specified
     if asset_type in main_assets:
         print(f"Adding main asset: {asset_type}")
         add_asset(final_image, asset_type, main_assets)
@@ -122,9 +128,8 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type):
     if third_asset_type in additional_assets:
         print(f"Adding third asset: {third_asset_type}")
         add_asset(final_image, third_asset_type, additional_assets)
-        
 
-    return final_image      
+    return final_image     
 
 
 @app.route('/api/get-asset', methods=['GET'])

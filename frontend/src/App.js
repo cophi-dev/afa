@@ -120,12 +120,15 @@ function App() {
     const handleTokenChange = event => {
         const newTokenId = event.target.value;
         setTokenId(newTokenId);
-        const defaultAsset = "AFA";
-        
-        if (tokenIds.includes(newTokenId)) {
-            setSelectedAsset(defaultAsset); // Set 'AFA' as the default for selectedAsset
-            // Do not reset secondAsset and thirdAsset
-            fetchAsset(newTokenId, defaultAsset, secondAsset, thirdAsset);
+    
+        // Check if the tokenId has been selected before
+        if (!selectedAsset && !secondAsset && !thirdAsset) {
+            // If selecting tokenId for the first time, default the clothes to "AFA"
+            fetchAsset(newTokenId, 'AFA', '', '');
+            setSelectedAsset('AFA');
+        } else {
+            // Maintain the current state of selected assets
+            fetchAsset(newTokenId, selectedAsset, secondAsset, thirdAsset);
         }
     };
 
