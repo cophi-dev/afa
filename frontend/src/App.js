@@ -125,7 +125,7 @@ function App() {
         if (tokenIds.includes(newTokenId)) {
             setSelectedAsset(defaultAsset); // Set 'AFA' as the default for selectedAsset
             // Do not reset secondAsset and thirdAsset
-            fetchAsset(newTokenId, defaultAsset, secondAsset, thirdAsset);
+            fetchAsset(newTokenId, defaultAsset, secondAsset, thirdAsset, selectedAsset);
         }
     };
 
