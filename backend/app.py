@@ -1,10 +1,12 @@
 from flask import Flask, request, jsonify, send_file, send_from_directory, url_for
+from flask_cors import CORS
 from PIL import Image
 import json
 import os
 from io import BytesIO
 
 app = Flask(__name__, static_folder='public', static_url_path='/')
+CORS(app)
 
 # Use absolute paths for file access
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
