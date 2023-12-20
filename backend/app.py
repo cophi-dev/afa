@@ -73,27 +73,26 @@ def is_minted(token_id):
         app.logger.error(f"Error in is_minted: {e}")
         return False@app.route('/api/get-asset', methods=['GET'])
 
-def compose_ape(ape_id, data):
+def compose_ape(ape_id, data, second_asset_type):
     ape = next((item for item in data["apes"] if str(item["id"]) == ape_id), None)
     if not ape:
-        print(f"Ape with ID {ape_id} not found.")
         return None
 
     attributes = ape["metadata"]["attributes"]
     final_image = Image.new("RGBA", (800, 800), (255, 255, 255, 0))
     layers = {}
 
-    # Add Normal Layers
     for attribute in attributes:
         trait_type = attribute["trait_type"]
         value = attribute["value"]
+        
+        if trait_type == "Clothes" and second_asset_type in special_assets:
+            # Replace the clothes layer with the selected outfit
+            value = second_asset_type
+        
         image_path = get_image_file(trait_type, value)
-        print(f"Loading {trait_type}: {image_path}")
-        try:
-            with Image.open(image_path) as img:
-                layers[trait_type] = img.copy()
-        except FileNotFoundError:
-            print(f"File not found: {image_path}")
+        with Image.open(image_path).convert("RGBA") as img:
+            layers[trait_type] = img.copy()
 
     # Composite the layers onto the final image
     for layer_type in ['Background', 'Fur', 'Eyes', 'Clothes', 'Earring', 'Hat', 'Mouth']:
@@ -107,7 +106,6 @@ def compose_ape(ape_id, data):
 def get_asset():
     token_id = request.args.get('tokenId')
     second_asset_type = request.args.get('secondAssetType', '')
-    third_asset_type = request.args.get('thirdAssetType', '')
 
     try:
         if is_minted(token_id):
@@ -115,16 +113,9 @@ def get_asset():
             with open(db_path, 'r') as file:
                 data = json.load(file)
             
-            # Create base ape image
-            image = compose_ape(token_id, data)
+            image = compose_ape(token_id, data, second_asset_type)  # Pass the new_clothes_asset parameter
             if not image:
                 raise ValueError("Ape not found")
-
-            # Add second and third assets if specified
-            if second_asset_type:
-                image = add_asset(image, second_asset_type, 'special_assets')
-            if third_asset_type:
-                image = add_asset(image, third_asset_type, 'additional_assets')
 
             img_io = BytesIO()
             image.save(img_io, 'PNG')

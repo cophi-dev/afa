@@ -23,7 +23,6 @@ function App() {
     const [selectedAsset, setSelectedAsset] = useState('');
     const [secondAsset, setSecondAsset] = useState('');
     const [thirdAsset, setThirdAsset] = useState('');
-    const [imageUrl, setImageUrl] = useState('./face.png');
     const [currentImageUrl, setCurrentImageUrl] = useState('./face.png'); // New state for the current image URL
     const [showLoader, setShowLoader] = useState(false); // State to control loader visibility
     const [fade, setFade] = useState(false);
@@ -50,32 +49,41 @@ function App() {
     };
 
     const fetchAsset = (newTokenId, newSelectedAsset, newSecondAsset, newThirdAsset) => {
-        if (newTokenId && (newSelectedAsset || newSecondAsset || newThirdAsset)) {
-            setShowLoader(true); // Always show loader
-
-        const assetTypeParam = newSelectedAsset ? `&assetType=${newSelectedAsset}` : '';
-        const secondAssetTypeParam = newSecondAsset ? `&secondAssetType=${newSecondAsset}` : '';
-        const thirdAssetTypeParam = newThirdAsset ? `&thirdAssetType=${newThirdAsset}` : '';
-
-        // Fetch asset
-        fetch(`https://afa-editor.ew.r.appspot.com/api/get-asset?tokenId=${newTokenId}${assetTypeParam}${secondAssetTypeParam}${thirdAssetTypeParam}`)
+        setShowLoader(true);
+    
+        const queryParams = new URLSearchParams({
+            tokenId: newTokenId,
+            assetType: newSelectedAsset || '',
+            secondAssetType: newSecondAsset || '',
+            thirdAssetType: newThirdAsset || '',
+        });
+    
+        if (newSecondAsset) {
+            queryParams.append('newClothesAsset', newSecondAsset);  // Corrected parameter key
+        }
+    
+        // Construct the URL with query parameters
+        const url = `${BASE_URL}/api/get-asset?${queryParams.toString()}`;
+    
+        fetch(url)
         .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.blob();
-            })
-            .then(blob => {
-                const newImageUrl = URL.createObjectURL(blob);
-                applyFadeEffect(); // Apply fade effect
-                setCurrentImageUrl(newImageUrl); // Update the current image URL
-                setShowLoader(false); // Hide loader after loading
-            })
-            .catch(error => {
-                console.error('Error fetching asset:', error);
-                setCurrentImageUrl('./face.png'); // Reset to default image on error
-                setShowLoader(false);
-            });
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            const newImageUrl = URL.createObjectURL(blob);
+            applyFadeEffect(); // Apply fade effect
+            setCurrentImageUrl(newImageUrl); // Update the current image URL
+            setShowLoader(false); // Hide loader after loading
+        })
+        .catch(error => {
+            console.error('Error fetching asset:', error);
+            setCurrentImageUrl('./face.png'); // Reset to default image on error
+            setShowLoader(false);
+        });
+    
 
         // Fetch background color separately
         fetch(`https://afa-editor.ew.r.appspot.com/api/get-background-color?tokenId=${newTokenId}`)
@@ -99,13 +107,12 @@ function App() {
         .catch(error => console.error('Error fetching background color:', error))
         .finally(() => setIsLoading(false));
     }
-};
 
 
     const handleSecondAssetChange = event => {
         const newSecondAsset = event.target.value;
         setSecondAsset(newSecondAsset);
-        setTimeout(() => fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset), 0);
+        fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset);
     };
 
     const handleThirdAssetChange = event => {
@@ -118,11 +125,11 @@ function App() {
         const newTokenId = event.target.value;
         setTokenId(newTokenId);
         const defaultAsset = "AFA";
+        
         if (tokenIds.includes(newTokenId)) {
-            setSelectedAsset(defaultAsset);
-            setSecondAsset('');
-            setThirdAsset('');
-            fetchAsset(newTokenId, defaultAsset, '', '', true); // Pass true for isNewApe
+            setSelectedAsset(defaultAsset); // Set 'AFA' as the default for selectedAsset
+            // Do not reset secondAsset and thirdAsset
+            fetchAsset(newTokenId, defaultAsset, secondAsset, thirdAsset);
         }
     };
 
@@ -175,8 +182,6 @@ function App() {
                         <option value="verified">Verified</option>
                     </select>
                 </div>
-            </div>
-            <div className="dropdown-container">
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">First Hand</h3>
                     <select value={selectedAsset} onChange={handleAssetChange} className="dropdown">

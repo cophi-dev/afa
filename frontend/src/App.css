@@ -129,7 +129,9 @@ body {
     font-size: 0.8em;
     flex-direction: column;
     width: 60%;
-    gap: 0px
+    gap: 0px;
+    display: flex;
+    align-items: center;
   }
   
   .dropdown-section {
