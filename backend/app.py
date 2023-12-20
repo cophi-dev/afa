@@ -23,7 +23,7 @@ special_assets = {
 
 main_assets = {
     'cheers': os.path.join(base_dir, 'memes', 'cheers.png'),
-    'shoe': os.path.join(base_dir, 'memes', 'shoe.png'),
+    'shoe': os.path.join(base_dir, 'memes', 'bape_shoe.png'),
     'peace': os.path.join(base_dir, 'memes', 'peace.png')
     # Add more asset types here as needed
 }
@@ -58,7 +58,7 @@ def get_image_file(trait_type, value):
         return os.path.join(base_dir, "_blank.png")
     
 def add_asset(image, asset_type, asset_dict):
-    asset_path = os.path.join(base_dir, globals()[asset_dict].get(asset_type, '_blank.png'))
+    asset_path = asset_dict.get(asset_type, os.path.join(base_dir, '_blank.png'))
     print(f"Adding asset: {asset_path}")
     try:
         with Image.open(asset_path).convert("RGBA") as asset_image:
@@ -81,6 +81,7 @@ def is_minted(token_id):
 def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type):
     ape = next((item for item in data["apes"] if str(item["id"]) == ape_id), None)
     if not ape:
+        print(f"No ape found with id: {ape_id}")  # Debugging log
         return None
 
     attributes = ape["metadata"]["attributes"]
@@ -90,28 +91,35 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type):
     for attribute in attributes:
         trait_type = attribute["trait_type"]
         value = attribute["value"]
-        
+
+        # Check if a special clothes asset needs to be used
         if trait_type == "Clothes" and second_asset_type in special_assets:
-            value = second_asset_type  # Replace clothes layer
+            print(f"Replacing clothes with special asset: {second_asset_type}")  # Debugging log
+            image_path = special_assets[second_asset_type]
+        else:
+            image_path = get_image_file(trait_type, value)
 
-        image_path = get_image_file(trait_type, value)
-        with Image.open(image_path).convert("RGBA") as img:
-            layers[trait_type] = img.copy()
+        try:
+            with Image.open(image_path).convert("RGBA") as img:
+                layers[trait_type] = img.copy()
+        except FileNotFoundError:
+            print(f"File not found for trait_type {trait_type}, value {value}: {image_path}")  # Debugging log
 
-    # Add main asset if specified
+   # Add main asset if specified
     if asset_type in main_assets:
-        add_asset(final_image, asset_type, 'main_assets')
+        add_asset(final_image, asset_type, main_assets)
 
     # Add third asset if specified
     if third_asset_type in additional_assets:
-        add_asset(final_image, third_asset_type, 'additional_assets')
+        add_asset(final_image, third_asset_type, additional_assets)
 
     # Composite the layers onto the final image
     for layer_type in ['Background', 'Fur', 'Eyes', 'Clothes', 'Earring', 'Hat', 'Mouth']:
         if layer_type in layers:
             final_image.alpha_composite(layers[layer_type], (0, 0))
 
-    return final_image
+    return final_image      
+
 
 @app.route('/api/get-asset', methods=['GET'])
 def get_asset():

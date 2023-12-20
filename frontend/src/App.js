@@ -141,7 +141,7 @@ function App() {
                 <img src={currentImageUrl} alt="Ape" style={{ maxWidth: '100%', height: 'auto' }} />
                 {showLoader && 
                     <div className="loader">
-                        new perspective processing...
+                        processing new perspective...
                     </div>
                 }
             </div>
