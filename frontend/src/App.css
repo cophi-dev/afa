@@ -67,7 +67,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  width: calc(30% - 5px); /* Adjusting width for 2 columns */
+  width: calc(45% - 5px); /* Adjusting width for 2 columns */
 }
 
 .dropdown-header {
@@ -128,7 +128,7 @@ body {
   .dropdown-container {
     font-size: 0.8em;
     flex-direction: column;
-    width: 60%;
+    width: 40%;
     gap: 0px;
     display: flex;
     align-items: center;
@@ -141,7 +141,7 @@ body {
   
   #asset-display {
     order: 0; /* Move the image above the dropdowns */
-    max-width: 60%;
+    width: 80%;
     margin-bottom: 10px;
   }
   
