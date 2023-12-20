@@ -38,7 +38,8 @@ function App() {
                 return response.json();
             })
             .then(data => {
-                setTokenIds(data); // Assuming data is an array of token IDs
+                const sortedTokenIds = data.map(id => parseInt(id)).sort((a, b) => a - b);
+                setTokenIds(sortedTokenIds);
             })
             .catch(error => console.error('Error:', error));
     }, []);
@@ -58,8 +59,11 @@ function App() {
             thirdAssetType: newThirdAsset || '',
         });
     
+        // Start fade-out effect
+        setFade('fade-out');
+    
         // Construct the URL with query parameters
-        const url = `https://afa-editor.ew.r.appspot.com/api/get-asset?${queryParams.toString()}`;
+        const url = `${BASE_URL}/api/get-asset?${queryParams.toString()}`;
     
         fetch(url)
         .then(response => {
@@ -70,14 +74,20 @@ function App() {
         })
         .then(blob => {
             const newImageUrl = URL.createObjectURL(blob);
-            applyFadeEffect(); // Apply fade effect
-            setCurrentImageUrl(newImageUrl); // Update the current image URL
-            setShowLoader(false); // Hide loader after loading
+    
+            // Update the image URL after fade-out transition
+            setTimeout(() => {
+                setCurrentImageUrl(newImageUrl);
+                setFade('fade-in'); // Start fade-in effect
+            }, 500);
+    
+            setShowLoader(false);
         })
         .catch(error => {
             console.error('Error fetching asset:', error);
             setCurrentImageUrl('./face.png'); // Reset to default image on error
             setShowLoader(false);
+            setFade('fade-in'); // Start fade-in effect
         });
     
 

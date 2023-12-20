@@ -99,6 +99,8 @@ body {
   overflow: hidden;
   border: 1px solid var(--text-color, black);
   margin-bottom: 20px;
+  transition: opacity 0.5s ease-in-out;
+
 }
 
 #asset-display img {
@@ -114,6 +116,16 @@ body {
 
 .fade-effect-fade {
   opacity: 0;
+}
+
+.fade-out {
+  opacity: 0;
+  transition: opacity 0.5s ease-out;
+}
+
+.fade-in {
+  opacity: 1;
+  transition: opacity 0.5s ease-in;
 }
 
 /* Responsive Design */
