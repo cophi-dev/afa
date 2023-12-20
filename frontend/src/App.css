@@ -14,6 +14,19 @@ body {
   font-family: 'Arial', sans-serif; /* Example font */
 }
 
+.body-background-fade {
+  transition: background-color 0.5s ease-in-out;
+}
+
+.fade-effect {
+  opacity: 1;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.hidden {
+  opacity: 0;
+}
+
 .banner {
   width: 100%;
   background-color: transparent;

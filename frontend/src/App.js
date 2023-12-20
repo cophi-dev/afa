@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import Loader from './Loader';
 
+const BASE_URL = "https://afa-editor.ew.r.appspot.com";
+
 function Banner() {
     return (
         <div className="banner">
@@ -27,7 +29,7 @@ function App() {
     const rgbToCss = (rgb) => `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
 
     useEffect(() => {
-        fetch('/api/token-ids')
+        fetch('${BASE_URL}/api/token-ids')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -41,43 +43,55 @@ function App() {
     }, []);
 
     const fetchAsset = (newTokenId, newSelectedAsset, newSecondAsset, newThirdAsset) => {
-        if (newTokenId && (newSelectedAsset || newSecondAsset || newThirdAsset)) {
-            setIsLoading(true);
+    if (newTokenId && (newSelectedAsset || newSecondAsset || newThirdAsset)) {
+        setIsLoading(true);
 
-            const assetTypeParam = newSelectedAsset ? `&assetType=${newSelectedAsset}` : '';
-            const secondAssetTypeParam = newSecondAsset ? `&secondAssetType=${newSecondAsset}` : '';
-            const thirdAssetTypeParam = newThirdAsset ? `&thirdAssetType=${newThirdAsset}` : '';
+        const assetTypeParam = newSelectedAsset ? `&assetType=${newSelectedAsset}` : '';
+        const secondAssetTypeParam = newSecondAsset ? `&secondAssetType=${newSecondAsset}` : '';
+        const thirdAssetTypeParam = newThirdAsset ? `&thirdAssetType=${newThirdAsset}` : '';
 
-            fetch(`/api/get-asset?tokenId=${newTokenId}${assetTypeParam}${secondAssetTypeParam}${thirdAssetTypeParam}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.blob();
-                })
-                .then(blob => {
-                    const newImageUrl = URL.createObjectURL(blob);
-                    setFade(false); // Reset fade effect
-                    setImageUrl(newImageUrl); // Update image URL immediately
+        // Fetch asset
+        fetch(`${BASE_URL}/api/get-asset?tokenId=${newTokenId}${assetTypeParam}${secondAssetTypeParam}${thirdAssetTypeParam}`)
+        .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const newImageUrl = URL.createObjectURL(blob);
+                setFade(false); // Reset fade effect
+                setImageUrl(newImageUrl); // Update image URL immediately
+            })
+            .catch(error => {
+                console.error('Error fetching asset:', error);
+                setImageUrl('./face.png');
+            });
 
-                    // Fetch background color
-                    fetch(`/api/get-asset?tokenId=${newTokenId}/api/get-background-color?tokenId=${newTokenId}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            const bgColor = rgbToCss(data.background_color);
-                            const textColor = getContrastYIQ(data.background_color);
-                            document.body.style.backgroundColor = bgColor;
-                            document.documentElement.style.setProperty('--text-color', textColor); // Set CSS variable
-                        })
-                        .catch(error => console.error('Error fetching background color:', error));
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    setImageUrl('./face.png');
-                })
-                .finally(() => setIsLoading(false));
-        }
-    };
+        // Fetch background color separately
+        fetch(`${BASE_URL}/api/get-background-color?tokenId=${newTokenId}`)
+        .then(response => response.json())
+        .then(data => {
+            const bgColor = rgbToCss(data.background_color);
+            const textColor = getContrastYIQ(data.background_color);
+
+            // Apply fade effect
+            document.body.classList.add('body-background-fade');
+
+            // Change background color
+            document.body.style.backgroundColor = bgColor;
+            document.documentElement.style.setProperty('--text-color', textColor);
+
+            // Remove fade effect after transition
+            setTimeout(() => {
+                document.body.classList.remove('body-background-fade');
+            }, 500); // Match this timeout with the transition duration in CSS
+        })
+        .catch(error => console.error('Error fetching background color:', error))
+        .finally(() => setIsLoading(false));
+    }
+};
+
 
     const handleSecondAssetChange = event => {
         const newSecondAsset = event.target.value;
