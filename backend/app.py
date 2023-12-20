@@ -48,15 +48,18 @@ color_map = {
 
 def get_image_file(trait_type, value):
     if value in special_assets:
-        # Special assets are handled differently
-        return special_assets[value]
+        path = special_assets[value]
+        print(f"Accessing special asset: {path}")
+        return path
     elif value:
-        # Regular trait handling
-        return os.path.join(base_dir, trait_type, f"{value}.png")
+        path = os.path.join(base_dir, trait_type, f"{value}.png")
+        print(f"Accessing regular trait: {path}")
+        return path
     else:
-        # Fallback for missing value
-        return os.path.join(base_dir, "_blank.png")
-    
+        path = os.path.join(base_dir, "_blank.png")
+        print(f"Accessing fallback asset: {path}")
+        return path
+
 def add_asset(image, asset_type, asset_dict):
     asset_path = asset_dict.get(asset_type, os.path.join(base_dir, '_blank.png'))
     print(f"Adding asset: {asset_path}")
@@ -103,20 +106,23 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type):
             with Image.open(image_path).convert("RGBA") as img:
                 layers[trait_type] = img.copy()
         except FileNotFoundError:
-            print(f"File not found for trait_type {trait_type}, value {value}: {image_path}")  # Debugging log
-
-   # Add main asset if specified
-    if asset_type in main_assets:
-        add_asset(final_image, asset_type, main_assets)
-
-    # Add third asset if specified
-    if third_asset_type in additional_assets:
-        add_asset(final_image, third_asset_type, additional_assets)
+            print(f"File not found for trait_type {trait_type}, value {value}: {image_path}")
 
     # Composite the layers onto the final image
     for layer_type in ['Background', 'Fur', 'Eyes', 'Clothes', 'Earring', 'Hat', 'Mouth']:
         if layer_type in layers:
             final_image.alpha_composite(layers[layer_type], (0, 0))
+            
+   # Add main asset if specified
+    if asset_type in main_assets:
+        print(f"Adding main asset: {asset_type}")
+        add_asset(final_image, asset_type, main_assets)
+
+    # Add third asset if specified
+    if third_asset_type in additional_assets:
+        print(f"Adding third asset: {third_asset_type}")
+        add_asset(final_image, third_asset_type, additional_assets)
+        
 
     return final_image      
 
