@@ -1,5 +1,14 @@
 .loader {
-    color: #fff;
+    position: absolute; /* Position absolutely within #asset-display */
+    bottom: 0; /* Positioned at the bottom */
+    left: 0;
+    right: 0;
+    height: 80px; /* Adjust the height as needed */
+    background-color: rgba(255, 255, 255, 0.9); /* Slightly transparent white */
+    display: flex;
+    justify-content: center; /* Center the text horizontally */
+    align-items: center; /* Center the text vertically */
+    color: black; /* Adjust text color as needed */
     font-size: 20px;
-    text-align: center;
-}
+    font-weight: bold;
+  }

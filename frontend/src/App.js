@@ -24,6 +24,8 @@ function App() {
     const [secondAsset, setSecondAsset] = useState('');
     const [thirdAsset, setThirdAsset] = useState('');
     const [imageUrl, setImageUrl] = useState('./face.png');
+    const [currentImageUrl, setCurrentImageUrl] = useState('./face.png'); // New state for the current image URL
+    const [showLoader, setShowLoader] = useState(false); // State to control loader visibility
     const [fade, setFade] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const rgbToCss = (rgb) => `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
@@ -42,9 +44,14 @@ function App() {
             .catch(error => console.error('Error:', error));
     }, []);
 
+    const applyFadeEffect = () => {
+        setFade(true);
+        setTimeout(() => setFade(false), 500); // Adjust this timeout to match your CSS transition
+    };
+
     const fetchAsset = (newTokenId, newSelectedAsset, newSecondAsset, newThirdAsset) => {
-    if (newTokenId && (newSelectedAsset || newSecondAsset || newThirdAsset)) {
-        setIsLoading(true);
+        if (newTokenId && (newSelectedAsset || newSecondAsset || newThirdAsset)) {
+            setShowLoader(true); // Always show loader
 
         const assetTypeParam = newSelectedAsset ? `&assetType=${newSelectedAsset}` : '';
         const secondAssetTypeParam = newSecondAsset ? `&secondAssetType=${newSecondAsset}` : '';
@@ -60,12 +67,14 @@ function App() {
             })
             .then(blob => {
                 const newImageUrl = URL.createObjectURL(blob);
-                setFade(false); // Reset fade effect
-                setImageUrl(newImageUrl); // Update image URL immediately
+                applyFadeEffect(); // Apply fade effect
+                setCurrentImageUrl(newImageUrl); // Update the current image URL
+                setShowLoader(false); // Hide loader after loading
             })
             .catch(error => {
                 console.error('Error fetching asset:', error);
-                setImageUrl('./face.png');
+                setCurrentImageUrl('./face.png'); // Reset to default image on error
+                setShowLoader(false);
             });
 
         // Fetch background color separately
@@ -113,7 +122,7 @@ function App() {
             setSelectedAsset(defaultAsset);
             setSecondAsset('');
             setThirdAsset('');
-            fetchAsset(newTokenId, defaultAsset, '', '');
+            fetchAsset(newTokenId, defaultAsset, '', '', true); // Pass true for isNewApe
         }
     };
 
@@ -125,12 +134,13 @@ function App() {
     return (
         <div className="App">
             <Banner />
-            <div id="asset-display" className={fade ? 'fade-effect' : ''} style={{ backgroundColor: isLoading ? document.body.style.backgroundColor : 'transparent' }}>
-                {isLoading ? (
-                    <Loader />
-                ) : (
-                    imageUrl && <img src={imageUrl} alt="Ape" style={{ maxWidth: '100%', height: 'auto' }} />
-                )}
+            <div id="asset-display" className={fade ? 'fade-effect' : ''}>
+                <img src={currentImageUrl} alt="Ape" style={{ maxWidth: '100%', height: 'auto' }} />
+                {showLoader && 
+                    <div className="loader">
+                        new perspective processing...
+                    </div>
+                }
             </div>
             <div className="dropdown-container">
                 {tokenIds.length > 0 && (
