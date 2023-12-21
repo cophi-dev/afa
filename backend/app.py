@@ -8,16 +8,11 @@ from io import BytesIO
 app = Flask(__name__, static_folder='public', static_url_path='/')
 CORS(app, resources={r"/api/*": {"origins": ["https://afa-editor.vercel.app", "http://localhost:3000"]}})
 
-# Use absolute paths for file access
-base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
 
-# Function to switch base directory
-def set_base_dir(hi_res):
-    global base_dir
+def get_base_dir(hi_res):
     if hi_res:
-        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits2'))
-    else:
-        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
+        return os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits2'))
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
 
 
 special_assets = {
@@ -54,19 +49,13 @@ color_map = {
     "Yellow": (224, 223, 171)
 }
 
-def get_image_file(trait_type, value):
+def get_image_file(trait_type, value, hi_res):
+    base_dir = get_base_dir(hi_res)  # Get the correct base directory
     if value in special_assets:
-        path = special_assets[value]
-        print(f"Accessing special asset: {path}")
-        return path
+        return os.path.join(base_dir, 'memes', value + '.png')
     elif value:
-        path = os.path.join(base_dir, trait_type, f"{value}.png")
-        print(f"Accessing regular trait: {path}")
-        return path
-    else:
-        path = os.path.join(base_dir, "_blank.png")
-        print(f"Accessing fallback asset: {path}")
-        return path
+        return os.path.join(base_dir, trait_type, f"{value}.png")
+    return os.path.join(base_dir, "_blank.png")
 
 def add_asset(image, asset_type, asset_dict):
     asset_path = asset_dict.get(asset_type, os.path.join(base_dir, '_blank.png'))
@@ -110,7 +99,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, h
             image_path = special_assets[second_asset_type]
             clothes_added = True
         else:
-            image_path = get_image_file(trait_type, value)
+            image_path = get_image_file(trait_type, value, hi_res)
 
         try:
             with Image.open(image_path).convert("RGBA") as img:
