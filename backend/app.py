@@ -88,7 +88,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type):
         return None
 
     attributes = ape["metadata"]["attributes"]
-    final_image = Image.new("RGBA", (2000, 2000), (255, 255, 255, 0))
+    final_image = Image.new("RGBA", (800, 800), (255, 255, 255, 0))
     layers = {}
     clothes_added = False  # Flag to check if clothes have been added
 
