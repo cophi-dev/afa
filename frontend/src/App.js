@@ -165,6 +165,16 @@ function App() {
                     </div>
                 }
             </div>
+            <div className="hi-res-checkbox">
+                <label className="dropdown-header">
+                    <input 
+                        type="checkbox" 
+                        checked={hiRes} 
+                        onChange={handleHiResChange} 
+                    />
+                    Hi-Res (increases loading times)
+                </label>
+            </div>
             <div className="dropdown-container">
                     <div className="dropdown-section">
                         <h3 className="dropdown-header">Select AFA</h3>
@@ -204,16 +214,6 @@ function App() {
                         <option value="peace">Peace</option>
                         <option value="shoe">BAPE shoe</option>
                     </select>
-                </div>
-                <div className="hi-res-checkbox">
-                    <label>
-                        <input 
-                            type="checkbox" 
-                            checked={hiRes} 
-                            onChange={handleHiResChange} 
-                        />
-                        Hi-Res
-                    </label>
                 </div>
             </div>
         </div>
