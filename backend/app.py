@@ -138,7 +138,8 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, h
 @app.route('/api/get-asset', methods=['GET'])
 def get_asset():
     token_id = request.args.get('tokenId')
-    hi_res = request.args.get('hiRes', 'false') == 'true'
+    hi_res_str = request.args.get('hiRes', 'false')
+    hi_res = hi_res_str.lower() == 'true'
     set_base_dir(hi_res)  # Update base_dir based on hi-res status
     asset_type = request.args.get('assetType', '')
     second_asset_type = request.args.get('secondAssetType', '')
