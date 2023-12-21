@@ -8,6 +8,8 @@ from io import BytesIO
 app = Flask(__name__, static_folder='public', static_url_path='/')
 CORS(app, resources={r"/api/*": {"origins": ["https://afa-editor.vercel.app", "http://localhost:3000"]}})
 
+# Path for the database file
+db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'afa_db.json'))
 
 def get_base_dir(hi_res):
     if hi_res:
@@ -70,13 +72,12 @@ def add_asset(image, asset_type, asset_dict):
     
 def is_minted(token_id):
     try:
-        db_path = os.path.join(os.path.dirname(__file__), 'afa_db.json')
         with open(db_path, 'r') as file:
             minted_apes = json.load(file)
         return token_id in [ape['TOKENID'] for ape in minted_apes]
     except Exception as e:
         app.logger.error(f"Error in is_minted: {e}")
-        return False@app.route('/api/get-asset', methods=['GET'])
+        return False
 
 def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, hi_res=False):
     ape = next((item for item in data["apes"] if str(item["id"]) == ape_id), None)
@@ -141,8 +142,8 @@ def get_asset():
 
     try:
         if is_minted(token_id):
-            db_path = os.path.join(os.path.dirname(__file__), 'db.json')
-            with open(db_path, 'r') as file:
+            bayc_db_path = os.path.join(os.path.dirname(__file__), 'db.json')
+            with open(bayc_db_path, 'r') as file:
                 data = json.load(file)
             
             image = compose_ape(token_id, data, asset_type, second_asset_type, third_asset_type, hi_res)
@@ -167,8 +168,8 @@ def get_asset():
 def get_background_color():
     token_id = request.args.get('tokenId')
     try:
-        db_path = os.path.join(os.path.dirname(__file__), 'db.json')
-        with open(db_path, 'r') as file:
+        bayc_db_path = os.path.join(os.path.dirname(__file__), 'db.json')
+        with open(bayc_db_path, 'r') as file:
             data = json.load(file)
             ape = next((item for item in data["apes"] if str(item["id"]) == token_id), None)
             if ape:
@@ -185,7 +186,6 @@ def get_background_color():
 @app.route('/api/token-ids', methods=['GET'])
 def get_token_ids():
     try:
-        db_path = os.path.join(os.path.dirname(__file__), 'afa_db.json')
         with open(db_path, 'r') as file:
             minted_apes = json.load(file)
         return jsonify([ape['TOKENID'] for ape in minted_apes])
