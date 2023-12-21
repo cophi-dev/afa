@@ -89,7 +89,7 @@ body {
 #asset-display {
   width: 40%; /* Adjust width as needed */
   height: 40%;
-  max-width: 600px;
+  max-width: 500px;
   position: relative;
   display: flex;
   justify-content: center;
