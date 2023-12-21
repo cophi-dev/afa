@@ -11,6 +11,14 @@ CORS(app, resources={r"/api/*": {"origins": ["https://afa-editor.vercel.app", "h
 # Use absolute paths for file access
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
 
+# Function to switch base directory
+def set_base_dir(hi_res):
+    global base_dir
+    if hi_res:
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits2'))
+    else:
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
+
 
 special_assets = {
     'bape_coach': os.path.join(base_dir, 'memes', 'bape_coach.png'),
@@ -135,6 +143,8 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type):
 @app.route('/api/get-asset', methods=['GET'])
 def get_asset():
     token_id = request.args.get('tokenId')
+    hi_res = request.args.get('hiRes', 'false') == 'true'  # Check if hi-res is requested
+    set_base_dir(hi_res)  # Set the base directory based on hi-res flag
     asset_type = request.args.get('assetType', '')
     second_asset_type = request.args.get('secondAssetType', '')
     third_asset_type = request.args.get('thirdAssetType', '')
