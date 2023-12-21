@@ -13,11 +13,12 @@ db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'afa_db.json')
 
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
 
-
-def get_base_dir(hi_res):
+def set_base_dir(hi_res):
+    global base_dir
     if hi_res:
-        return os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits2'))
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits2'))
+    else:
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
 
 
 special_assets = {
@@ -54,8 +55,8 @@ color_map = {
     "Yellow": (224, 223, 171)
 }
 
-def get_image_file(trait_type, value, hi_res):
-    base_dir = get_base_dir(hi_res)  # Get the correct base directory
+def get_image_file(trait_type, value):
+    # Use the global base_dir
     if value in special_assets:
         return os.path.join(base_dir, 'memes', value + '.png')
     elif value:
@@ -137,8 +138,8 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, h
 @app.route('/api/get-asset', methods=['GET'])
 def get_asset():
     token_id = request.args.get('tokenId')
-    hi_res = request.args.get('hiRes', 'false') == 'true'  # Check if hi-res is requested
-    set_base_dir(hi_res)  # Set the base directory based on hi-res flag
+    hi_res = request.args.get('hiRes', 'false') == 'true'
+    set_base_dir(hi_res)  # Update base_dir based on hi-res status
     asset_type = request.args.get('assetType', '')
     second_asset_type = request.args.get('secondAssetType', '')
     third_asset_type = request.args.get('thirdAssetType', '')
