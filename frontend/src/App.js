@@ -159,7 +159,6 @@ function App() {
                 }
             </div>
             <div className="dropdown-container">
-                {tokenIds.length > 0 && (
                     <div className="dropdown-section">
                         <h3 className="dropdown-header">Select AFA</h3>
                         <select value={tokenId} onChange={handleTokenChange} className="dropdown">
@@ -167,7 +166,6 @@ function App() {
                             {tokenIds.map(id => <option key={id} value={id}>{id}</option>)}
                         </select>
                     </div>
-                )}
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Outfit</h3>
                     <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown">
