@@ -11,6 +11,9 @@ CORS(app, resources={r"/api/*": {"origins": ["https://afa-editor.vercel.app", "h
 # Path for the database file
 db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'afa_db.json'))
 
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
+
+
 def get_base_dir(hi_res):
     if hi_res:
         return os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits2'))
