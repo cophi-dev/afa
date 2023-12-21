@@ -6,7 +6,7 @@ import os
 from io import BytesIO
 
 app = Flask(__name__, static_folder='public', static_url_path='/')
-CORS(app, resources={r"/api/*": {"origins": ["https://afa-rho.vercel.app", "http://localhost:3000"]}})
+CORS(app, resources={r"/api/*": {"origins": ["https://afa-editor.vercel.app", "http://localhost:3000"]}})
 
 # Use absolute paths for file access
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
@@ -88,7 +88,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type):
         return None
 
     attributes = ape["metadata"]["attributes"]
-    final_image = Image.new("RGBA", (800, 800), (255, 255, 255, 0))
+    final_image = Image.new("RGBA", (2000, 2000), (255, 255, 255, 0))
     layers = {}
     clothes_added = False  # Flag to check if clothes have been added
 
