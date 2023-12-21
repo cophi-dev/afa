@@ -124,8 +124,10 @@ function App() {
 
     // Handle hi-res checkbox change
     const handleHiResChange = (event) => {
-        setHiRes(event.target.checked);
-        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset); // Refetch assets with new hi-res setting
+        const newHiResStatus = event.target.checked;
+        setHiRes(newHiResStatus);
+        // Re-fetch the asset with the updated hi-res status
+        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, newHiResStatus);
     };
 
     const handleSecondAssetChange = event => {
