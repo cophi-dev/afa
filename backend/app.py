@@ -89,16 +89,17 @@ def is_minted(token_id):
         app.logger.error(f"Error in is_minted: {e}")
         return False@app.route('/api/get-asset', methods=['GET'])
 
-def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type):
+def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, hi_res=False):
     ape = next((item for item in data["apes"] if str(item["id"]) == ape_id), None)
     if not ape:
         print(f"No ape found with id: {ape_id}")
         return None
 
     attributes = ape["metadata"]["attributes"]
-    final_image = Image.new("RGBA", (800, 800), (255, 255, 255, 0))
+    image_size = (2000, 2000) if hi_res else (800, 800)  # Choose size based on hi-res flag
+    final_image = Image.new("RGBA", image_size, (255, 255, 255, 0))
     layers = {}
-    clothes_added = False  # Flag to check if clothes have been added
+    clothes_added = False
 
     for attribute in attributes:
         trait_type = attribute["trait_type"]
@@ -155,7 +156,8 @@ def get_asset():
             with open(db_path, 'r') as file:
                 data = json.load(file)
             
-            image = compose_ape(token_id, data, asset_type, second_asset_type, third_asset_type)
+            image = compose_ape(token_id, data, asset_type, second_asset_type, third_asset_type, hi_res)
+            
             if not image:
                 raise ValueError("Ape not found")
 
