@@ -71,7 +71,7 @@ function App() {
         setFade('fade-out');
     
         // Construct the URL with query parameters
-        const url = `${BASE_URL}/api/get-asset?${queryParams.toString()}`;
+        const url = `$https://afa-editor.ew.r.appspot.com/api/get-asset?${queryParams.toString()}`;
     
         fetch(url)
         .then(response => {
