@@ -126,7 +126,6 @@ function App() {
     const handleHiResChange = (event) => {
         const newHiResStatus = event.target.checked;
         setHiRes(newHiResStatus);
-        // Re-fetch the asset with the updated hi-res status
         fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, newHiResStatus);
     };
 
