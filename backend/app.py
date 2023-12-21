@@ -10,6 +10,8 @@ CORS(app, resources={r"/api/*": {"origins": ["https://afa-editor.vercel.app", "h
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
 special_assets = {
     'bape_coach': os.path.join(base_dir, 'memes', 'bape_coach.png'),
+    'bape_bape': os.path.join(base_dir, 'memes', 'bape_shirt.png'),
+    'jacket': os.path.join(base_dir, 'memes', 'jacket.png'),
     'bape_hoodie_red': os.path.join(base_dir, 'memes', 'bape_hoodie_red.png'),
     'bape_hoodie_green': os.path.join(base_dir, 'memes', 'bape_hoodie_green.png'),
     'adidas_hoodie': os.path.join(base_dir, 'memes', 'adidas_hoodie.png'),

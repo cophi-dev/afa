@@ -157,8 +157,10 @@ function App() {
                         <option value="bape_coach">Bape Coach Jacket</option>
                         <option value="bape_hoodie_red">Bape Hoodie Red</option>
                         <option value="bape_hoodie_green">Bape Hoodie Green</option>
+                        <option value="bape_shirt">Baby Milo Shirt</option>
                         <option value="adidas_hoodie">Adidas Hoodie</option>
                         <option value="adidas_yellow">Adidas Track</option>
+                        <option value="jacket">Jacket</option>
                         <option value="sweater">Christmas sweater</option>
                     </select>
                 </div>
