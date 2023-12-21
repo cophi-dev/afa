@@ -55,17 +55,18 @@ color_map = {
     "Yellow": (224, 223, 171)
 }
 
-def get_image_file(trait_type, value):
-    # Use the global base_dir
+def get_image_file(trait_type, value, hi_res):
+    current_base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits2' if hi_res else 'traits'))
     if value in special_assets:
-        return os.path.join(base_dir, 'memes', value + '.png')
+        return os.path.join(current_base_dir, 'memes', value + '.png')
     elif value:
-        return os.path.join(base_dir, trait_type, f"{value}.png")
-    return os.path.join(base_dir, "_blank.png")
+        return os.path.join(current_base_dir, trait_type, f"{value}.png")
+    return os.path.join(current_base_dir, "_blank.png")
 
-def add_asset(image, asset_type, asset_dict):
-    asset_path = asset_dict.get(asset_type, os.path.join(base_dir, '_blank.png'))
-    print(f"Adding asset: {asset_path}")
+def add_asset(image, asset_type, asset_dict, hi_res):
+    current_base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits2' if hi_res else 'traits'))
+    asset_path = asset_dict.get(asset_type, os.path.join(current_base_dir, '_blank.png'))
+    print(f"Adding asset with hi-res {hi_res}: {asset_path}")
     try:
         with Image.open(asset_path).convert("RGBA") as asset_image:
             image.alpha_composite(asset_image, (0, 0))
@@ -120,18 +121,15 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, h
 
     # Add clothes asset if it wasn't added and is selected
     if second_asset_type in special_assets and not clothes_added:
-        print(f"Adding selected clothes asset: {second_asset_type}")
-        add_asset(final_image, second_asset_type, special_assets)
+        add_asset(final_image, second_asset_type, special_assets, hi_res)
 
     # Add main asset if specified
     if asset_type in main_assets:
-        print(f"Adding main asset: {asset_type}")
-        add_asset(final_image, asset_type, main_assets)
+        add_asset(final_image, asset_type, main_assets, hi_res)
 
     # Add third asset if specified
     if third_asset_type in additional_assets:
-        print(f"Adding third asset: {third_asset_type}")
-        add_asset(final_image, third_asset_type, additional_assets)
+        add_asset(final_image, third_asset_type, additional_assets, hi_res)
 
     return final_image     
 
