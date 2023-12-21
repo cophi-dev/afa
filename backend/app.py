@@ -84,6 +84,7 @@ def is_minted(token_id):
         return False
 
 def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, hi_res=False):
+    set_base_dir(hi_res)
     ape = next((item for item in data["apes"] if str(item["id"]) == ape_id), None)
     if not ape:
         print(f"No ape found with id: {ape_id}")

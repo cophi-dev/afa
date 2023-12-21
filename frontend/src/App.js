@@ -126,7 +126,7 @@ function App() {
     const handleHiResChange = (event) => {
         const newHiResStatus = event.target.checked;
         setHiRes(newHiResStatus);
-        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, newHiResStatus);
+        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset); // Call with the current selections
     };
 
     const handleSecondAssetChange = event => {
