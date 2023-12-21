@@ -4,23 +4,10 @@ from PIL import Image
 import json
 import os
 from io import BytesIO
-
 app = Flask(__name__, static_folder='public', static_url_path='/')
 CORS(app, resources={r"/api/*": {"origins": ["https://afa-editor.vercel.app", "http://localhost:3000"]}})
-
-# Path for the database file
-db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'afa_db.json'))
-
+# Use absolute paths for file access
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
-
-def set_base_dir(hi_res):
-    global base_dir
-    if hi_res:
-        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits2'))
-    else:
-        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
-
-
 special_assets = {
     'bape_coach': os.path.join(base_dir, 'memes', 'bape_coach.png'),
     'bape_hoodie_red': os.path.join(base_dir, 'memes', 'bape_hoodie_red.png'),
@@ -29,20 +16,17 @@ special_assets = {
     'adidas_yellow': os.path.join(base_dir, 'memes', 'adidas_yellow.png'),
     'sweater': os.path.join(base_dir, 'memes', 'sweater.png')
 }
-
 main_assets = {
     'cheers': os.path.join(base_dir, 'memes', 'cheers.png'),
     'shoe': os.path.join(base_dir, 'memes', 'bape_shoe.png'),
     'peace': os.path.join(base_dir, 'memes', 'peace.png')
     # Add more asset types here as needed
 }
-
 additional_assets = {
     'snow': os.path.join(base_dir, 'memes', 'snow.png'),
     'verified': os.path.join(base_dir, 'memes', 'mask2.png')
     # Add more assets as needed
 }
-
 # RGB values for each color name
 color_map = {
     "Aquamarine": (107, 227, 186),
@@ -54,107 +38,95 @@ color_map = {
     "Purple": (108, 94, 111),
     "Yellow": (224, 223, 171)
 }
-
-def get_image_file(trait_type, value, hi_res):
-    current_base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits2' if hi_res else 'traits'))
+def get_image_file(trait_type, value):
     if value in special_assets:
-        return os.path.join(current_base_dir, 'memes', value + '.png')
+        path = special_assets[value]
+        print(f"Accessing special asset: {path}")
+        return path
     elif value:
-        return os.path.join(current_base_dir, trait_type, f"{value}.png")
-    return os.path.join(current_base_dir, "_blank.png")
-
-def add_asset(image, asset_type, asset_dict, hi_res):
-    current_base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits2' if hi_res else 'traits'))
-    asset_path = asset_dict.get(asset_type, os.path.join(current_base_dir, '_blank.png'))
-    print(f"Adding asset with hi-res {hi_res}: {asset_path}")
+        path = os.path.join(base_dir, trait_type, f"{value}.png")
+        print(f"Accessing regular trait: {path}")
+        return path
+    else:
+        path = os.path.join(base_dir, "_blank.png")
+        print(f"Accessing fallback asset: {path}")
+        return path
+def add_asset(image, asset_type, asset_dict):
+    asset_path = asset_dict.get(asset_type, os.path.join(base_dir, '_blank.png'))
+    print(f"Adding asset: {asset_path}")
     try:
         with Image.open(asset_path).convert("RGBA") as asset_image:
             image.alpha_composite(asset_image, (0, 0))
     except FileNotFoundError:
         print(f"File not found: {asset_path}")
     return image
-
     
 def is_minted(token_id):
     try:
+        db_path = os.path.join(os.path.dirname(__file__), 'afa_db.json')
         with open(db_path, 'r') as file:
             minted_apes = json.load(file)
         return token_id in [ape['TOKENID'] for ape in minted_apes]
     except Exception as e:
         app.logger.error(f"Error in is_minted: {e}")
-        return False
-
-def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, hi_res=False):
-    set_base_dir(hi_res)
+        return False@app.route('/api/get-asset', methods=['GET'])
+def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type):
     ape = next((item for item in data["apes"] if str(item["id"]) == ape_id), None)
     if not ape:
         print(f"No ape found with id: {ape_id}")
         return None
 
     attributes = ape["metadata"]["attributes"]
-    image_size = (2000, 2000) if hi_res else (800, 800)  # Choose size based on hi-res flag
-    final_image = Image.new("RGBA", image_size, (255, 255, 255, 0))
+    final_image = Image.new("RGBA", (800, 800), (255, 255, 255, 0))
     layers = {}
-    clothes_added = False
+    clothes_added = False  # Flag to check if clothes have been added
 
     for attribute in attributes:
         trait_type = attribute["trait_type"]
         value = attribute["value"]
-
         if trait_type == "Clothes" and second_asset_type in special_assets:
             print(f"Replacing clothes with special asset: {second_asset_type}")
             image_path = special_assets[second_asset_type]
             clothes_added = True
         else:
-            image_path = get_image_file(trait_type, value, hi_res)
-
+            image_path = get_image_file(trait_type, value)
         try:
             with Image.open(image_path).convert("RGBA") as img:
                 layers[trait_type] = img.copy()
         except FileNotFoundError:
             print(f"File not found for trait_type {trait_type}, value {value}: {image_path}")
-
     # Composite the layers onto the final image
     for layer_type in ['Background', 'Fur', 'Eyes', 'Clothes', 'Earring', 'Hat', 'Mouth']:
         if layer_type in layers:
             final_image.alpha_composite(layers[layer_type], (0, 0))
-
     # Add clothes asset if it wasn't added and is selected
     if second_asset_type in special_assets and not clothes_added:
-        add_asset(final_image, second_asset_type, special_assets, hi_res)
-
+        print(f"Adding selected clothes asset: {second_asset_type}")
+        add_asset(final_image, second_asset_type, special_assets)
     # Add main asset if specified
     if asset_type in main_assets:
-        add_asset(final_image, asset_type, main_assets, hi_res)
-
+        print(f"Adding main asset: {asset_type}")
+        add_asset(final_image, asset_type, main_assets)
     # Add third asset if specified
     if third_asset_type in additional_assets:
-        add_asset(final_image, third_asset_type, additional_assets, hi_res)
-
+        print(f"Adding third asset: {third_asset_type}")
+        add_asset(final_image, third_asset_type, additional_assets)
     return final_image     
-
-
 @app.route('/api/get-asset', methods=['GET'])
 def get_asset():
     token_id = request.args.get('tokenId')
-    hi_res_str = request.args.get('hiRes', 'false')
-    hi_res = hi_res_str.lower() == 'true'
-    set_base_dir(hi_res)  # Update base_dir based on hi-res status
     asset_type = request.args.get('assetType', '')
     second_asset_type = request.args.get('secondAssetType', '')
     third_asset_type = request.args.get('thirdAssetType', '')
-
     try:
         if is_minted(token_id):
-            bayc_db_path = os.path.join(os.path.dirname(__file__), 'db.json')
-            with open(bayc_db_path, 'r') as file:
+            db_path = os.path.join(os.path.dirname(__file__), 'db.json')
+            with open(db_path, 'r') as file:
                 data = json.load(file)
             
-            image = compose_ape(token_id, data, asset_type, second_asset_type, third_asset_type, hi_res)
-            
+            image = compose_ape(token_id, data, asset_type, second_asset_type, third_asset_type)
             if not image:
                 raise ValueError("Ape not found")
-
             img_io = BytesIO()
             image.save(img_io, 'PNG')
             img_io.seek(0)
@@ -166,14 +138,12 @@ def get_asset():
     except Exception as e:
         print(f"Error processing Token ID {token_id}: {e}")
         return jsonify({'error': 'Internal Server Error'}), 500
-
-
 @app.route('/api/get-background-color', methods=['GET'])
 def get_background_color():
     token_id = request.args.get('tokenId')
     try:
-        bayc_db_path = os.path.join(os.path.dirname(__file__), 'db.json')
-        with open(bayc_db_path, 'r') as file:
+        db_path = os.path.join(os.path.dirname(__file__), 'db.json')
+        with open(db_path, 'r') as file:
             data = json.load(file)
             ape = next((item for item in data["apes"] if str(item["id"]) == token_id), None)
             if ape:
@@ -186,17 +156,16 @@ def get_background_color():
     except Exception as e:
         print(f"Error processing Token ID {token_id}: {e}")
         return jsonify({'error': 'Internal Server Error'}), 500
-
 @app.route('/api/token-ids', methods=['GET'])
 def get_token_ids():
     try:
+        db_path = os.path.join(os.path.dirname(__file__), 'afa_db.json')
         with open(db_path, 'r') as file:
             minted_apes = json.load(file)
         return jsonify([ape['TOKENID'] for ape in minted_apes])
     except Exception as e:
         app.logger.error(f"Error in get_token_ids: {e}")
         return jsonify({'error': str(e)}), 500
-
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def catch_all(path):
@@ -206,7 +175,5 @@ def catch_all(path):
     else:
         # Serve index.html for all other routes to enable SPA routing
         return send_from_directory(app.static_folder, '/index.html')
-
 if __name__ == '__main__':
     app.run(debug=True)
-

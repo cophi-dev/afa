@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import Loader from './Loader';
-
 const BASE_URL = "https://afa-editor.ew.r.appspot.com";
-
 function Banner() {
     return (
         <div className="banner">
@@ -11,25 +9,21 @@ function Banner() {
         </div>
     );
 }
-
 function getContrastYIQ(rgb) {
     const yiq = ((rgb[0]*299)+(rgb[1]*587)+(rgb[2]*114))/1000;
     return (yiq >= 128) ? 'black' : 'white';
 }
-
 function App() {
     const [tokenIds, setTokenIds] = useState([]);
     const [tokenId, setTokenId] = useState('');
     const [selectedAsset, setSelectedAsset] = useState('');
     const [secondAsset, setSecondAsset] = useState('');
     const [thirdAsset, setThirdAsset] = useState('');
-    const [hiRes, setHiRes] = useState(false);
     const [currentImageUrl, setCurrentImageUrl] = useState('./face.png'); // New state for the current image URL
     const [showLoader, setShowLoader] = useState(false); // State to control loader visibility
     const [fade, setFade] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const rgbToCss = (rgb) => `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
-
     useEffect(() => {
         fetch(`https://afa-editor.ew.r.appspot.com/api/token-ids`)
             .then(response => {
@@ -44,34 +38,25 @@ function App() {
             })
             .catch(error => console.error('Error:', error));
     }, []);
-
     const applyFadeEffect = () => {
         setFade(true);
         setTimeout(() => setFade(false), 500); // Adjust this timeout to match your CSS transition
     };
-
     const fetchAsset = (newTokenId, newSelectedAsset, newSecondAsset, newThirdAsset) => {
-        if (!newTokenId) {
-            console.log("No token ID selected");
-            setCurrentImageUrl('./face.png');
-            return;
-        }
         setShowLoader(true);
-
     
         const queryParams = new URLSearchParams({
             tokenId: newTokenId,
             assetType: newSelectedAsset || '',
             secondAssetType: newSecondAsset || '',
             thirdAssetType: newThirdAsset || '',
-            hiRes: hiRes
         });
     
         // Start fade-out effect
         setFade('fade-out');
     
         // Construct the URL with query parameters
-        const url = `https://afa-editor.ew.r.appspot.com/api/get-asset?${queryParams.toString()}`;
+        const url = `${BASE_URL}/api/get-asset?${queryParams.toString()}`;
     
         fetch(url)
         .then(response => {
@@ -98,21 +83,17 @@ function App() {
             setFade('fade-in'); // Start fade-in effect
         });
     
-
         // Fetch background color separately
         fetch(`https://afa-editor.ew.r.appspot.com/api/get-background-color?tokenId=${newTokenId}`)
         .then(response => response.json())
         .then(data => {
             const bgColor = rgbToCss(data.background_color);
             const textColor = getContrastYIQ(data.background_color);
-
             // Apply fade effect
             document.body.classList.add('body-background-fade');
-
             // Change background color
             document.body.style.backgroundColor = bgColor;
             document.documentElement.style.setProperty('--text-color', textColor);
-
             // Remove fade effect after transition
             setTimeout(() => {
                 document.body.classList.remove('body-background-fade');
@@ -121,26 +102,16 @@ function App() {
         .catch(error => console.error('Error fetching background color:', error))
         .finally(() => setIsLoading(false));
     }
-
-    // Handle hi-res checkbox change
-    const handleHiResChange = (event) => {
-        const newHiResStatus = event.target.checked;
-        setHiRes(newHiResStatus);
-        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset); // Call with the current selections
-    };
-
     const handleSecondAssetChange = event => {
         const newSecondAsset = event.target.value;
         setSecondAsset(newSecondAsset);
         fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset);
     };
-
     const handleThirdAssetChange = event => {
         const newThirdAsset = event.target.value;
         setThirdAsset(newThirdAsset);
         setTimeout(() => fetchAsset(tokenId, selectedAsset, secondAsset, newThirdAsset), 0);
     };
-
     const handleTokenChange = event => {
         const newTokenId = event.target.value;
         setTokenId(newTokenId);
@@ -155,12 +126,10 @@ function App() {
             fetchAsset(newTokenId, selectedAsset, secondAsset, thirdAsset);
         }
     };
-
     const handleAssetChange = event => {
         setSelectedAsset(event.target.value);
         fetchAsset(tokenId, event.target.value, secondAsset, thirdAsset);
     };
-
     return (
         <div className="App">
             <Banner />
@@ -172,16 +141,6 @@ function App() {
                     </div>
                 }
             </div>
-            <div className="hi-res-checkbox">
-                <label className="dropdown-header">
-                    <input 
-                        type="checkbox" 
-                        checked={hiRes} 
-                        onChange={handleHiResChange} 
-                    />
-                    Hi-Res (increases loading times)
-                </label>
-            </div>
             <div className="dropdown-container">
                     <div className="dropdown-section">
                         <h3 className="dropdown-header">Select AFA</h3>
@@ -192,7 +151,7 @@ function App() {
                     </div>
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Outfit</h3>
-                    <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId}>
+                    <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown">
                         <option value="">Select</option>
                         <option value="AFA">AFA</option>
                         <option value="bape_coach">Bape Coach Jacket</option>
@@ -207,7 +166,7 @@ function App() {
             <div className="dropdown-container">
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Extra</h3>
-                    <select value={thirdAsset} onChange={handleThirdAssetChange} className="dropdown" disabled={!tokenId}>
+                    <select value={thirdAsset} onChange={handleThirdAssetChange} className="dropdown">
                         <option value="">Select</option>
                         <option value="snow">Snow</option>
                         <option value="verified">Verified</option>
@@ -215,7 +174,7 @@ function App() {
                 </div>
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">First Hand</h3>
-                    <select value={selectedAsset} onChange={handleAssetChange} className="dropdown" disabled={!tokenId}>
+                    <select value={selectedAsset} onChange={handleAssetChange} className="dropdown">
                         <option value="">Select</option>
                         <option value="cheers">Cheers</option>
                         <option value="peace">Peace</option>
@@ -226,5 +185,4 @@ function App() {
         </div>
     );
 }
-
 export default App;
