@@ -23,6 +23,7 @@ function App() {
     const [selectedAsset, setSelectedAsset] = useState('');
     const [secondAsset, setSecondAsset] = useState('');
     const [thirdAsset, setThirdAsset] = useState('');
+    const [hiRes, setHiRes] = useState(false);
     const [currentImageUrl, setCurrentImageUrl] = useState('./face.png'); // New state for the current image URL
     const [showLoader, setShowLoader] = useState(false); // State to control loader visibility
     const [fade, setFade] = useState(false);
@@ -57,6 +58,7 @@ function App() {
             assetType: newSelectedAsset || '',
             secondAssetType: newSecondAsset || '',
             thirdAssetType: newThirdAsset || '',
+            hiRes: hiRes
         });
     
         // Start fade-out effect
@@ -114,6 +116,11 @@ function App() {
         .finally(() => setIsLoading(false));
     }
 
+    // Handle hi-res checkbox change
+    const handleHiResChange = (event) => {
+        setHiRes(event.target.checked);
+        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset); // Refetch assets with new hi-res setting
+    };
 
     const handleSecondAssetChange = event => {
         const newSecondAsset = event.target.value;
@@ -197,6 +204,16 @@ function App() {
                         <option value="peace">Peace</option>
                         <option value="shoe">BAPE shoe</option>
                     </select>
+                </div>
+                <div className="hi-res-checkbox">
+                    <label>
+                        <input 
+                            type="checkbox" 
+                            checked={hiRes} 
+                            onChange={handleHiResChange} 
+                        />
+                        Hi-Res
+                    </label>
                 </div>
             </div>
         </div>
