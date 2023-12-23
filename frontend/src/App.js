@@ -7,7 +7,9 @@ const BASE_URL = "https://afa-editor.ew.r.appspot.com";
 function Banner() {
     return (
         <div className="banner">
-            <img src="./logo.png" alt="Logo" className="banner-logo" />
+            <a href="http://www.apefacingapes.com" target="_blank" rel="noopener noreferrer">
+                <img src="./logo.png" alt="Logo" className="banner-logo" />
+            </a>
         </div>
     );
 }
