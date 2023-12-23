@@ -173,6 +173,7 @@ function App() {
                     <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId}>
                         <option value="">Select</option>
                         <option value="AFA">AFA</option>
+                        <option value="sweater">Christmas sweater</option>
                         <option value="bape_coach">Bape Coach Jacket</option>
                         <option value="bape_hoodie_red">Bape Hoodie Red</option>
                         <option value="bape_hoodie_green">Bape Hoodie Green</option>
@@ -180,7 +181,6 @@ function App() {
                         <option value="adidas_hoodie">Adidas Hoodie</option>
                         <option value="adidas_yellow">Adidas Track</option>
                         <option value="jacket">Jacket</option>
-                        <option value="sweater">Christmas sweater</option>
                     </select>
                 </div>
                 <div className="dropdown-section">
@@ -202,7 +202,7 @@ function App() {
                     </select>
                 </div>
                 <div className="dropdown-section">
-                    <h3 className="dropdown-header">Hands</h3>
+                    <h3 className="dropdown-header">Hand</h3>
                     <select value={selectedAsset} onChange={handleAssetChange} className="dropdown" disabled={!tokenId}>
                         <option value="">Select</option>
                         <option value="cheers">Cheers</option>
