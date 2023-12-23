@@ -170,7 +170,7 @@ function App() {
                     </div>
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Outfit</h3>
-                    <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown">
+                    <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId}>
                         <option value="">Select</option>
                         <option value="AFA">AFA</option>
                         <option value="bape_coach">Bape Coach Jacket</option>
@@ -185,7 +185,7 @@ function App() {
                 </div>
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Mouth</h3>
-                    <select value={mouthAsset} onChange={handleMouthAssetChange} className="dropdown">
+                    <select value={mouthAsset} onChange={handleMouthAssetChange} className="dropdown" disabled={!tokenId}>
                         <option value="">Select</option>
                         <option value="big_smile">Big Smile</option>
                         <option value="tree">Christmas Tree</option>
@@ -195,15 +195,15 @@ function App() {
             <div className="dropdown-container">
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Extra</h3>
-                    <select value={thirdAsset} onChange={handleThirdAssetChange} className="dropdown">
+                    <select value={thirdAsset} onChange={handleThirdAssetChange} className="dropdown" disabled={!tokenId}>
                         <option value="">Select</option>
                         <option value="snow">Snow</option>
                         <option value="verified">Verified</option>
                     </select>
                 </div>
                 <div className="dropdown-section">
-                    <h3 className="dropdown-header">First Hand</h3>
-                    <select value={selectedAsset} onChange={handleAssetChange} className="dropdown">
+                    <h3 className="dropdown-header">Hands</h3>
+                    <select value={selectedAsset} onChange={handleAssetChange} className="dropdown" disabled={!tokenId}>
                         <option value="">Select</option>
                         <option value="cheers">Cheers</option>
                         <option value="peace">Peace</option>
