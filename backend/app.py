@@ -20,6 +20,7 @@ special_assets = {
     'adidas_hoodie': os.path.join(base_dir, 'memes', 'adidas_hoodie.png'),
     'adidas_yellow': os.path.join(base_dir, 'memes', 'adidas_yellow.png'),
     'sweater': os.path.join(base_dir, 'memes', 'sweater.png')
+    'naked': os.path.join(base_dir, '_blank.png')
 }
 
 main_assets = {

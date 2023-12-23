@@ -181,6 +181,7 @@ function App() {
                         <option value="adidas_hoodie">Adidas Hoodie</option>
                         <option value="adidas_yellow">Adidas Track</option>
                         <option value="jacket">Jacket</option>
+                        <option value="naked">No Clothes</option>
                     </select>
                 </div>
                 <div className="dropdown-section">
