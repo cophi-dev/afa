@@ -8,7 +8,7 @@
     display: flex;
     justify-content: center; /* Center the text horizontally */
     align-items: center; /* Center the text vertically */
+    color: black; /* Adjust text color as needed */
     font-size: 20px;
-    color: var(--text-color, black); /* default to black if --text-color is not set */
     font-family: 'Arial', sans-serif; /* Example font */
   }
