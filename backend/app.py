@@ -19,7 +19,7 @@ special_assets = {
     'bape_hoodie_green': os.path.join(base_dir, 'memes', 'bape_hoodie_green.png'),
     'adidas_hoodie': os.path.join(base_dir, 'memes', 'adidas_hoodie.png'),
     'adidas_yellow': os.path.join(base_dir, 'memes', 'adidas_yellow.png'),
-    'sweater': os.path.join(base_dir, 'memes', 'sweater.png')
+    'sweater': os.path.join(base_dir, 'memes', 'sweater.png'),
     'naked': os.path.join(base_dir, '_blank.png')
 }
 
@@ -102,7 +102,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         return None
 
     attributes = ape["metadata"]["attributes"]
-    final_image = Image.new("RGBA", (800, 800), (255, 255, 255, 0))
+    final_image = Image.new("RGBA", (1000, 1000), (255, 255, 255, 0))
     layers = {}
     clothes_added = False
     mouth_added = False  # Flag to check if mouth asset has been added
