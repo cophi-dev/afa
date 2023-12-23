@@ -43,7 +43,9 @@ mouth_assets = {
 
 additional_assets = {
     'snow': os.path.join(base_dir, 'memes', 'snow.png'),
-    'verified': os.path.join(base_dir, 'memes', 'mask2.png')
+    'verified': os.path.join(base_dir, 'memes', 'mask2.png'),
+    'transparent': os.path.join(base_dir, '_blank.png')
+
     # Add more assets as needed
 }
 # RGB values for each color name
@@ -106,6 +108,8 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     layers = {}
     clothes_added = False
     mouth_added = False  # Flag to check if mouth asset has been added
+    background_transparent = False
+
 
     # Conditions for specific types of 'big_smile'
     has_multicolor_smile = any(attr["trait_type"] == "Mouth" and attr["value"] == "Grin Multicolored" for attr in attributes)
@@ -144,11 +148,16 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         trait_type = attribute["trait_type"]
         value = attribute["value"]
 
-        if trait_type == "Clothes" and second_asset_type in special_assets:
+        if trait_type == "Background" and third_asset_type == 'transparent':
+            print("Applying transparent background")
+            image_path = additional_assets['transparent']
+            background_transparent = True
+        elif trait_type == "Background" and not background_transparent:
+            image_path = get_image_file(trait_type, value)
+        elif trait_type == "Clothes" and second_asset_type in special_assets and not clothes_added:
             print(f"Replacing clothes with special asset: {second_asset_type}")
             image_path = special_assets[second_asset_type]
             clothes_added = True
-         # Modify the mouth asset selection logic
         elif trait_type == "Mouth" and not mouth_added:
             mouth_added = True
             if mouth_asset_type == 'big_smile':

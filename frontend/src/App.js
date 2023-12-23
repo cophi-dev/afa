@@ -200,6 +200,7 @@ function App() {
                         <option value="">Select</option>
                         <option value="snow">Snow</option>
                         <option value="verified">Verified</option>
+                        <option value="transparent">Transparent Background</option>
                     </select>
                 </div>
                 <div className="dropdown-section">
