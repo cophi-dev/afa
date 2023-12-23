@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import Loader from './Loader';
 const BASE_URL = "https://afa-editor.ew.r.appspot.com";
+
 function Banner() {
     return (
         <div className="banner">
@@ -9,21 +11,25 @@ function Banner() {
         </div>
     );
 }
+
 function getContrastYIQ(rgb) {
     const yiq = ((rgb[0]*299)+(rgb[1]*587)+(rgb[2]*114))/1000;
     return (yiq >= 128) ? 'black' : 'white';
 }
+
 function App() {
     const [tokenIds, setTokenIds] = useState([]);
     const [tokenId, setTokenId] = useState('');
     const [selectedAsset, setSelectedAsset] = useState('');
     const [secondAsset, setSecondAsset] = useState('');
     const [thirdAsset, setThirdAsset] = useState('');
+    const [mouthAsset, setMouthAsset] = useState('');
     const [currentImageUrl, setCurrentImageUrl] = useState('./face.png'); // New state for the current image URL
     const [showLoader, setShowLoader] = useState(false); // State to control loader visibility
     const [fade, setFade] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const rgbToCss = (rgb) => `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+    
     useEffect(() => {
         fetch(`https://afa-editor.ew.r.appspot.com/api/token-ids`)
             .then(response => {
@@ -38,11 +44,13 @@ function App() {
             })
             .catch(error => console.error('Error:', error));
     }, []);
+    
     const applyFadeEffect = () => {
         setFade(true);
         setTimeout(() => setFade(false), 500); // Adjust this timeout to match your CSS transition
     };
-    const fetchAsset = (newTokenId, newSelectedAsset, newSecondAsset, newThirdAsset) => {
+    
+    const fetchAsset = (newTokenId, newSelectedAsset, newSecondAsset, newThirdAsset, newMouthAsset) => {
         setShowLoader(true);
     
         const queryParams = new URLSearchParams({
@@ -50,13 +58,14 @@ function App() {
             assetType: newSelectedAsset || '',
             secondAssetType: newSecondAsset || '',
             thirdAssetType: newThirdAsset || '',
+            mouthAssetType: newMouthAsset || ''
         });
     
         // Start fade-out effect
         setFade('fade-out');
     
         // Construct the URL with query parameters
-        const url = `${BASE_URL}/api/get-asset?${queryParams.toString()}`;
+        const url = `https://afa-editor.ew.r.appspot.com/api/get-asset?${queryParams.toString()}`;
     
         fetch(url)
         .then(response => {
@@ -102,33 +111,41 @@ function App() {
         .catch(error => console.error('Error fetching background color:', error))
         .finally(() => setIsLoading(false));
     }
+    
     const handleSecondAssetChange = event => {
         const newSecondAsset = event.target.value;
         setSecondAsset(newSecondAsset);
-        fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset);
+        fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset, mouthAsset);
     };
+    
+    const handleMouthAssetChange = event => {
+        const newMouthAsset = event.target.value;
+        setMouthAsset(newMouthAsset);
+        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, newMouthAsset);
+    };
+    
     const handleThirdAssetChange = event => {
         const newThirdAsset = event.target.value;
         setThirdAsset(newThirdAsset);
-        setTimeout(() => fetchAsset(tokenId, selectedAsset, secondAsset, newThirdAsset), 0);
+        setTimeout(() => fetchAsset(tokenId, selectedAsset, secondAsset, newThirdAsset, mouthAsset), 0);
     };
     const handleTokenChange = event => {
         const newTokenId = event.target.value;
         setTokenId(newTokenId);
     
         // Check if the tokenId has been selected before
-        if (!selectedAsset && !secondAsset && !thirdAsset) {
+        if (!selectedAsset && !secondAsset && !thirdAsset && !mouthAsset) {
             // If selecting tokenId for the first time, default the clothes to "AFA"
             fetchAsset(newTokenId, 'AFA', '', '');
             setSelectedAsset('AFA');
         } else {
             // Maintain the current state of selected assets
-            fetchAsset(newTokenId, selectedAsset, secondAsset, thirdAsset);
+            fetchAsset(newTokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset);
         }
     };
     const handleAssetChange = event => {
         setSelectedAsset(event.target.value);
-        fetchAsset(tokenId, event.target.value, secondAsset, thirdAsset);
+        fetchAsset(tokenId, event.target.value, secondAsset, thirdAsset, mouthAsset);
     };
     return (
         <div className="App">
@@ -162,6 +179,14 @@ function App() {
                         <option value="adidas_yellow">Adidas Track</option>
                         <option value="jacket">Jacket</option>
                         <option value="sweater">Christmas sweater</option>
+                    </select>
+                </div>
+                <div className="dropdown-section">
+                    <h3 className="dropdown-header">Mouth</h3>
+                    <select value={mouthAsset} onChange={handleMouthAssetChange} className="dropdown">
+                        <option value="">Select</option>
+                        <option value="big_smile">Big Smile</option>
+                        <option value="tree">Christmas Tree</option>
                     </select>
                 </div>
             </div>
