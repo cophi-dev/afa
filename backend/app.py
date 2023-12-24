@@ -41,6 +41,10 @@ mouth_assets = {
     # Add more asset types here as needed
 }
 
+hat_assets = {
+    'christmas_hat': os.path.join(base_dir, 'memes', 'christmas_hat', 'christmas_hat.png')
+}
+
 additional_assets = {
     'snow': os.path.join(base_dir, 'memes', 'snow.png'),
     'verified': os.path.join(base_dir, 'memes', 'mask2.png'),
@@ -88,6 +92,10 @@ def get_image_file(trait_type, value):
         path = mouth_assets[value]
         print(f"Accessing mouth asset: {path}")
         return path
+    elif value in hat_assets:
+        path = hat_assets[value]
+        print(f"Accessing hat asset: {path}")
+        return path
     elif value in additional_assets:
         path = additional_assets[value]
         print(f"Accessing selfie asset: {path}")
@@ -121,7 +129,7 @@ def is_minted(token_id):
         app.logger.error(f"Error in is_minted: {e}")
         return False@app.route('/api/get-asset', methods=['GET'])
 
-def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, mouth_asset_type):
+def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, mouth_asset_type, hat_asset_type):
     ape = next((item for item in data["apes"] if str(item["id"]) == ape_id), None)
     if not ape:
         print(f"No ape found with id: {ape_id}")
@@ -133,6 +141,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     layers = {}
     clothes_added = False
     mouth_added = False  # Flag to check if mouth asset has been added
+    hat_added = False  # Flag to check if mouth asset has been added
     background_transparent = False
     head_added = False
 
@@ -255,6 +264,10 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             print(f"Replacing clothes with special asset: {second_asset_type}")
             image_path = special_assets[second_asset_type]
             clothes_added = True
+        elif trait_type == "Hat" and hat_asset_type in hat_assets and not hat_added:
+            print(f"Replacing clothes with special asset: {hat_asset_type}")
+            image_path = hat_assets[hat_asset_type]
+            hat_added = True
         elif trait_type == "Clothes" and third_asset_type == 'selfie':
             print("Applying no Clothes")
             image_path = additional_assets['selfie']
@@ -294,6 +307,11 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     if mouth_asset_type in mouth_assets and not mouth_added:
         print(f"Adding selected mouth asset: {mouth_asset_type}")
         add_asset(final_image, mouth_asset_type, mouth_assets)
+    
+    # Add hat asset if it wasn't added and is selected
+    if hat_asset_type in hat_assets and not hat_added:
+        print(f"Adding selected hat asset: {hat_asset_type}")
+        add_asset(final_image, hat_asset_type, hat_assets)
 
     # Add main asset if specified
     if asset_type in main_assets:
@@ -315,13 +333,14 @@ def get_asset():
     second_asset_type = request.args.get('secondAssetType', '')
     third_asset_type = request.args.get('thirdAssetType', '')
     mouth_asset_type = request.args.get('mouthAssetType', '')
+    hat_asset_type = request.args.get('hatAssetType', '')
     try:
         if is_minted(token_id):
             db_path = os.path.join(os.path.dirname(__file__), 'db.json')
             with open(db_path, 'r') as file:
                 data = json.load(file)
             
-            image = compose_ape(token_id, data, asset_type, second_asset_type, third_asset_type, mouth_asset_type)
+            image = compose_ape(token_id, data, asset_type, second_asset_type, third_asset_type, mouth_asset_type, hat_asset_type)
             if not image:
                 raise ValueError("Ape not found")
             img_io = BytesIO()

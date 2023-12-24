@@ -26,6 +26,7 @@ function App() {
     const [secondAsset, setSecondAsset] = useState('');
     const [thirdAsset, setThirdAsset] = useState('');
     const [mouthAsset, setMouthAsset] = useState('');
+    const [hatAsset, setHatAsset] = useState('');
     const [currentImageUrl, setCurrentImageUrl] = useState('./overview.gif'); // New state for the current image URL
     const [showLoader, setShowLoader] = useState(false); // State to control loader visibility
     const [fade, setFade] = useState(false);
@@ -49,16 +50,16 @@ function App() {
 
     useEffect(() => {
         if (tokenId) {
-            fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset);
+            fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset);
         }
-    }, [tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset]);
+    }, [tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset]);
     
     const applyFadeEffect = () => {
         setFade(true);
         setTimeout(() => setFade(false), 500); // Adjust this timeout to match your CSS transition
     };
     
-    const fetchAsset = (newTokenId, newSelectedAsset, newSecondAsset, newThirdAsset, newMouthAsset) => {
+    const fetchAsset = (newTokenId, newSelectedAsset, newSecondAsset, newThirdAsset, newMouthAsset, newHatAsset) => {
         setShowLoader(true);
     
         const queryParams = new URLSearchParams({
@@ -66,7 +67,8 @@ function App() {
             assetType: newSelectedAsset || '',
             secondAssetType: newSecondAsset || '',
             thirdAssetType: newThirdAsset || '',
-            mouthAssetType: newMouthAsset || ''
+            mouthAssetType: newMouthAsset || '',
+            hatAssetType: newHatAsset || ''
         });
     
         // Start fade-out effect
@@ -123,13 +125,19 @@ function App() {
     const handleSecondAssetChange = event => {
         const newSecondAsset = event.target.value;
         setSecondAsset(newSecondAsset);
-        fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset, mouthAsset);
+        fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset, mouthAsset, hatAsset);
     };
     
     const handleMouthAssetChange = event => {
         const newMouthAsset = event.target.value;
         setMouthAsset(newMouthAsset);
-        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, newMouthAsset);
+        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, newMouthAsset, hatAsset);
+    };
+
+    const handleHatAssetChange = event => {
+        const newHatAsset = event.target.value;
+        setHatAsset(newHatAsset);
+        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, newHatAsset);
     };
     
     const handleThirdAssetChange = event => {
@@ -140,6 +148,7 @@ function App() {
             setSecondAsset('');
             setMouthAsset('');
             setSelectedAsset('');
+            setHatAsset('');
     
             // Call fetchAsset after a slight delay to ensure state updates have been processed
             setTimeout(() => {
@@ -159,12 +168,12 @@ function App() {
             setSelectedAsset('AFA');
         } else {
             // Maintain the current state of selected assets
-            fetchAsset(newTokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset);
+            fetchAsset(newTokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset);
         }
     };
     const handleAssetChange = event => {
         setSelectedAsset(event.target.value);
-        fetchAsset(tokenId, event.target.value, secondAsset, thirdAsset, mouthAsset);
+        fetchAsset(tokenId, event.target.value, secondAsset, thirdAsset, mouthAsset, hatAsset);
     };
     return (
         <div className="App">
@@ -177,6 +186,7 @@ function App() {
                     </div>
                 }
             </div>
+
             <div className="dropdown-container">
                     <div className="dropdown-section">
                         <h3 className="dropdown-header">Select AFA</h3>
@@ -201,6 +211,9 @@ function App() {
                         <option value="naked">No Clothes</option>
                     </select>
                 </div>
+            </div>
+            
+            <div className="dropdown-container">
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Mouth</h3>
                     <select value={mouthAsset} onChange={handleMouthAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie'}>
@@ -209,8 +222,27 @@ function App() {
                         <option value="tree">Christmas Tree</option>
                     </select>
                 </div>
+
+                <div className="dropdown-section">
+                    <h3 className="dropdown-header">Hat</h3>
+                    <select value={hatAsset} onChange={handleHatAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie'}>
+                        <option value="">Select</option>
+                        <option value="christmas_hat">Christmas Hat</option>
+                    </select>
+                </div>
             </div>
+
             <div className="dropdown-container">
+                <div className="dropdown-section">
+                    <h3 className="dropdown-header">Hand</h3>
+                    <select value={selectedAsset} onChange={handleAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie'}>
+                        <option value="">Select</option>
+                        <option value="cheers">Cheers</option>
+                        <option value="peace">Peace</option>
+                        <option value="shoe">BAPE shoe</option>
+                    </select>
+                </div>
+
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Extra</h3>
                     <select value={thirdAsset} onChange={handleThirdAssetChange} className="dropdown" disabled={!tokenId}>
@@ -219,15 +251,6 @@ function App() {
                         <option value="verified">Verified</option>
                         <option value="transparent">Transparent Background</option>
                         <option value="selfie">Selfie Head</option>
-                    </select>
-                </div>
-                <div className="dropdown-section">
-                    <h3 className="dropdown-header">Hand</h3>
-                    <select value={selectedAsset} onChange={handleAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie'}>
-                        <option value="">Select</option>
-                        <option value="cheers">Cheers</option>
-                        <option value="peace">Peace</option>
-                        <option value="shoe">BAPE shoe</option>
                     </select>
                 </div>
             </div>
