@@ -150,7 +150,7 @@ function App() {
             setSelectedAsset('');    
             // Call fetchAsset after a slight delay to ensure state updates have been processed
             setTimeout(() => {
-                fetchAsset(tokenId, '', '', newThirdAsset, hatAsset);
+                fetchAsset(tokenId, '', '', newThirdAsset, '', hatAsset);
             }, 0);
         }
     };
