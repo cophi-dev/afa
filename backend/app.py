@@ -43,6 +43,8 @@ mouth_assets = {
 
 hat_assets = {
     'christmas_hat': os.path.join(base_dir, 'memes', 'christmas_hat.png')
+    'christmas_hat2': os.path.join(base_dir, 'memes', 'christmas_hat2.png')
+    'christmas_hat3': os.path.join(base_dir, 'memes', 'christmas_hat3.png')
 }
 
 additional_assets = {
