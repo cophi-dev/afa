@@ -26,7 +26,7 @@ function App() {
     const [secondAsset, setSecondAsset] = useState('');
     const [thirdAsset, setThirdAsset] = useState('');
     const [mouthAsset, setMouthAsset] = useState('');
-    const [currentImageUrl, setCurrentImageUrl] = useState('./face.png'); // New state for the current image URL
+    const [currentImageUrl, setCurrentImageUrl] = useState('./overview.gif'); // New state for the current image URL
     const [showLoader, setShowLoader] = useState(false); // State to control loader visibility
     const [fade, setFade] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
