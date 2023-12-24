@@ -135,8 +135,12 @@ function App() {
     const handleThirdAssetChange = event => {
         const newThirdAsset = event.target.value;
         setThirdAsset(newThirdAsset);
+    
         if (newThirdAsset === 'selfie') {
-            setSecondAsset('');
+            // Reset other traits when 'Selfie' is selected
+            setSecondAsset(''); // Reset the clothes (second dropdown)
+            setMouthAsset('');  // Reset the mouth (mouth dropdown)
+            setSelectedAsset(''); // Reset the hand (selected asset dropdown)
         }
     };
 
