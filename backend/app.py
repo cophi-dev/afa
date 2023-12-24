@@ -265,7 +265,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             image_path = special_assets[second_asset_type]
             clothes_added = True
         elif trait_type == "Hat" and hat_asset_type in hat_assets and not hat_added:
-            print(f"Replacing clothes with special asset: {hat_asset_type}")
+            print(f"Replacing hat with hat asset: {hat_asset_type}")
             image_path = hat_assets[hat_asset_type]
             hat_added = True
         elif trait_type == "Clothes" and third_asset_type == 'selfie':
