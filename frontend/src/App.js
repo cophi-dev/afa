@@ -147,9 +147,7 @@ function App() {
         if (newThirdAsset === 'selfie') {
             setSecondAsset('');
             setMouthAsset('');
-            setSelectedAsset('');
-            setHatAsset('');
-    
+            setSelectedAsset('');    
             // Call fetchAsset after a slight delay to ensure state updates have been processed
             setTimeout(() => {
                 fetchAsset(tokenId, '', '', newThirdAsset, '');
@@ -225,7 +223,7 @@ function App() {
 
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Hat</h3>
-                    <select value={hatAsset} onChange={handleHatAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie'}>
+                    <select value={hatAsset} onChange={handleHatAssetChange} className="dropdown" disabled={!tokenId}>
                         <option value="">Select</option>
                         <option value="christmas_hat">Christmas Hat</option>
                     </select>
