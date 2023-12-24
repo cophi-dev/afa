@@ -148,7 +148,8 @@ function App() {
             setSecondAsset('');
             setMouthAsset('');
             setSelectedAsset('');    
-            // Call fetchAsset after a slight delay to ensure state updates have been processed
+            
+            // Call fetchAsset with the current hatAsset state
             setTimeout(() => {
                 fetchAsset(tokenId, '', '', newThirdAsset, '', hatAsset);
             }, 0);
