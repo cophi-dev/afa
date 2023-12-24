@@ -25,6 +25,7 @@ special_assets = {
 
 main_assets = {
     'cheers': os.path.join(base_dir, 'memes', 'cheers.png'),
+    'candle': os.path.join(base_dir, 'memes', 'candle.png'),
     'shoe': os.path.join(base_dir, 'memes', 'bape_shoe.png'),
     'peace': os.path.join(base_dir, 'memes', 'peace.png')
     # Add more asset types here as needed
@@ -42,8 +43,8 @@ mouth_assets = {
 }
 
 hat_assets = {
-    'christmas_hat': os.path.join(base_dir, 'memes', 'christmas_hat.png')
-    'christmas_hat2': os.path.join(base_dir, 'memes', 'christmas_hat2.png')
+    'christmas_hat': os.path.join(base_dir, 'memes', 'christmas_hat.png'),
+    'christmas_hat2': os.path.join(base_dir, 'memes', 'christmas_hat2.png'),
     'christmas_hat3': os.path.join(base_dir, 'memes', 'christmas_hat3.png')
 }
 
