@@ -150,7 +150,7 @@ function App() {
             setSelectedAsset('');    
             // Call fetchAsset after a slight delay to ensure state updates have been processed
             setTimeout(() => {
-                fetchAsset(tokenId, '', '', newThirdAsset, '');
+                fetchAsset(tokenId, '', '', newThirdAsset);
             }, 0);
         }
     };
@@ -160,7 +160,7 @@ function App() {
         setTokenId(newTokenId);
     
         // Check if the tokenId has been selected before
-        if (!selectedAsset && !secondAsset && !thirdAsset && !mouthAsset) {
+        if (!selectedAsset && !secondAsset && !thirdAsset && !mouthAsset&& !hatAsset ) {
             // If selecting tokenId for the first time, default the clothes to "AFA"
             fetchAsset(newTokenId, 'AFA', '', '');
             setSelectedAsset('AFA');
