@@ -137,10 +137,14 @@ function App() {
         setThirdAsset(newThirdAsset);
     
         if (newThirdAsset === 'selfie') {
-            // Reset other traits when 'Selfie' is selected
-            setSecondAsset(''); // Reset the clothes (second dropdown)
-            setMouthAsset('');  // Reset the mouth (mouth dropdown)
-            setSelectedAsset(''); // Reset the hand (selected asset dropdown)
+            setSecondAsset('');
+            setMouthAsset('');
+            setSelectedAsset('');
+    
+            // Call fetchAsset after a slight delay to ensure state updates have been processed
+            setTimeout(() => {
+                fetchAsset(tokenId, '', '', newThirdAsset, '');
+            }, 0);
         }
     };
 
