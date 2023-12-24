@@ -46,6 +46,12 @@ function App() {
             })
             .catch(error => console.error('Error:', error));
     }, []);
+
+    useEffect(() => {
+        if (tokenId) {
+            fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset);
+        }
+    }, [tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset]);
     
     const applyFadeEffect = () => {
         setFade(true);
@@ -89,7 +95,7 @@ function App() {
         })
         .catch(error => {
             console.error('Error fetching asset:', error);
-            setCurrentImageUrl('./face.png'); // Reset to default image on error
+            setCurrentImageUrl('./overview.gif'); // Reset to default image on error
             setShowLoader(false);
             setFade('fade-in'); // Start fade-in effect
         });
@@ -129,8 +135,11 @@ function App() {
     const handleThirdAssetChange = event => {
         const newThirdAsset = event.target.value;
         setThirdAsset(newThirdAsset);
-        setTimeout(() => fetchAsset(tokenId, selectedAsset, secondAsset, newThirdAsset, mouthAsset), 0);
+        if (newThirdAsset === 'selfie') {
+            setSecondAsset('');
+        }
     };
+
     const handleTokenChange = event => {
         const newTokenId = event.target.value;
         setTokenId(newTokenId);
@@ -170,7 +179,7 @@ function App() {
                     </div>
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Outfit</h3>
-                    <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId}>
+                    <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie'}>
                         <option value="">Select</option>
                         <option value="AFA">AFA</option>
                         <option value="sweater">Christmas sweater</option>
@@ -186,7 +195,7 @@ function App() {
                 </div>
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Mouth</h3>
-                    <select value={mouthAsset} onChange={handleMouthAssetChange} className="dropdown" disabled={!tokenId}>
+                    <select value={mouthAsset} onChange={handleMouthAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie'}>
                         <option value="">Select</option>
                         <option value="big_smile">Big Smile</option>
                         <option value="tree">Christmas Tree</option>
@@ -201,11 +210,12 @@ function App() {
                         <option value="snow">Snow</option>
                         <option value="verified">Verified</option>
                         <option value="transparent">Transparent Background</option>
+                        <option value="selfie">Selfie Head</option>
                     </select>
                 </div>
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Hand</h3>
-                    <select value={selectedAsset} onChange={handleAssetChange} className="dropdown" disabled={!tokenId}>
+                    <select value={selectedAsset} onChange={handleAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie'}>
                         <option value="">Select</option>
                         <option value="cheers">Cheers</option>
                         <option value="peace">Peace</option>

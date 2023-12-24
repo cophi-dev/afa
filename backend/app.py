@@ -44,10 +44,30 @@ mouth_assets = {
 additional_assets = {
     'snow': os.path.join(base_dir, 'memes', 'snow.png'),
     'verified': os.path.join(base_dir, 'memes', 'mask2.png'),
-    'transparent': os.path.join(base_dir, '_blank.png')
-
+    'transparent': os.path.join(base_dir, '_blank.png'),
+    'selfie': os.path.join(base_dir, '_blank.png'),
+    'head_black': os.path.join(base_dir, 'Heads', 'head_black.png'),
+    'head_blue': os.path.join(base_dir, 'Heads', 'head_blue.png'),
+    'head_brown': os.path.join(base_dir, 'Heads', 'head_brown.png'),
+    'head_cheetah': os.path.join(base_dir, 'Heads', 'head_cheetah.png'),
+    'head_cream': os.path.join(base_dir, 'Heads', 'head_cream.png'),
+    'head_dark_brown': os.path.join(base_dir, 'Heads', 'head_dark_brown.png'),
+    'head_death_bot': os.path.join(base_dir, 'Heads', 'head_death_bot.png'),
+    'head_dmt': os.path.join(base_dir, 'Heads', 'head_dmt.png'),
+    'head_golden_brown': os.path.join(base_dir, 'Heads', 'head_golden_brown.png'),
+    'head_gray': os.path.join(base_dir, 'Heads', 'head_gray.png'),
+    'head_noise': os.path.join(base_dir, 'Heads', 'head_noise.png'),
+    'head_pink': os.path.join(base_dir, 'Heads', 'head_pink.png'),
+    'head_red': os.path.join(base_dir, 'Heads', 'head_red.png'),
+    'head_robot': os.path.join(base_dir, 'Heads', 'head_robot.png'),
+    'head_solid_gold': os.path.join(base_dir, 'Heads', 'head_solid_gold.png'),
+    'head_tan': os.path.join(base_dir, 'Heads', 'head_tan.png'),
+    'head_trippy': os.path.join(base_dir, 'Heads', 'head_trippy.png'),
+    'head_white': os.path.join(base_dir, 'Heads', 'head_white.png'),
+    'head_zombie': os.path.join(base_dir, 'Heads', 'head_zombie.png')
     # Add more assets as needed
 }
+
 # RGB values for each color name
 color_map = {
     "Aquamarine": (107, 227, 186),
@@ -67,6 +87,10 @@ def get_image_file(trait_type, value):
     elif value in mouth_assets:
         path = mouth_assets[value]
         print(f"Accessing mouth asset: {path}")
+        return path
+    elif value in additional_assets:
+        path = additional_assets[value]
+        print(f"Accessing selfie asset: {path}")
         return path
     elif value:
         path = os.path.join(base_dir, trait_type, f"{value}.png")
@@ -102,6 +126,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     if not ape:
         print(f"No ape found with id: {ape_id}")
         return None
+        
 
     attributes = ape["metadata"]["attributes"]
     final_image = Image.new("RGBA", (1000, 1000), (255, 255, 255, 0))
@@ -109,9 +134,29 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     clothes_added = False
     mouth_added = False  # Flag to check if mouth asset has been added
     background_transparent = False
-
+    head_added = False
 
     # Conditions for specific types of 'big_smile'
+    has_black_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Black" for attr in attributes)
+    has_blue_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Blue" for attr in attributes)
+    has_brown_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Brown" for attr in attributes)
+    has_cheetah_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Cheetah" for attr in attributes)
+    has_cream_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Cream" for attr in attributes)
+    has_dark_brown_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Dark Brown" for attr in attributes)
+    has_death_bot_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Death Bot" for attr in attributes)
+    has_dmt_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Dmt" for attr in attributes)
+    has_golden_brown_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Golden Brown" for attr in attributes)
+    has_gray_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Gray" for attr in attributes)
+    has_noise_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Noise" for attr in attributes)
+    has_pink_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Pink" for attr in attributes)
+    has_red_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Red" for attr in attributes)
+    has_robot_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Robot" for attr in attributes)
+    has_solid_gold_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Solid Gold" for attr in attributes)
+    has_tan_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Tan" for attr in attributes)
+    has_trippy_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Trippy" for attr in attributes)
+    has_white_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "White" for attr in attributes)
+    has_zombie_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Zombie" for attr in attributes)
+    
     has_multicolor_smile = any(attr["trait_type"] == "Mouth" and attr["value"] == "Grin Multicolored" for attr in attributes)
     has_diamond_smile = any(attr["trait_type"] == "Mouth" and attr["value"] == "Grin Diamond Grill" for attr in attributes)
     has_gold_smile = any(attr["trait_type"] == "Mouth" and attr["value"] == "Grin Gold Grill" for attr in attributes)
@@ -137,6 +182,47 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         specific_smile = 'gold_smile'
     elif has_unshaven_mouth:
         specific_smile = 'unshaven_smile'
+    
+    specific_head = None
+    if has_black_fur:
+        specific_head = 'head_black'
+    elif has_blue_fur:
+        specific_head = 'head_blue'
+    elif has_brown_fur:
+        specific_head = 'head_brown'
+    elif has_cheetah_fur:
+        specific_head = 'head_cheetah'
+    elif has_cream_fur:
+        specific_head = 'head_cream'
+    elif has_dark_brown_fur:
+        specific_head = 'head_dark_brown'
+    elif has_death_bot_fur:
+        specific_head = 'head_death_bot'
+    elif has_dmt_fur:
+        specific_head = 'head_dmt'
+    elif has_golden_brown_fur:
+        specific_head = 'head_golden_brown'
+    elif has_gray_fur:
+        specific_head = 'head_gray'
+    elif has_noise_fur:
+        specific_head = 'head_noise'
+    elif has_pink_fur:
+        specific_head = 'head_pink'
+    elif has_red_fur:
+        specific_head = 'head_red'
+    elif has_robot_fur:
+        specific_head = 'head_robot'
+    elif has_solid_gold_fur:
+        specific_head = 'head_solid_gold'
+    elif has_tan_fur:
+        specific_head = 'head_tan'
+    elif has_trippy_fur:
+        specific_head = 'head_trippy'
+    elif has_white_fur:
+        specific_head = 'head_white'
+    elif has_zombie_fur:
+        specific_head = 'head_zombie'
+   
    
     specific_tree = None
     if has_unshaven_mouth:
@@ -148,16 +234,35 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         trait_type = attribute["trait_type"]
         value = attribute["value"]
 
+       
         if trait_type == "Background" and third_asset_type == 'transparent':
             print("Applying transparent background")
             image_path = additional_assets['transparent']
             background_transparent = True
+        elif trait_type == "Background" and third_asset_type == 'selfie':
+            print("Applying transparent background")
+            image_path = additional_assets['selfie']
+            head_added = True
+        elif trait_type == "Fur" and third_asset_type == 'selfie':
+            print("Applying Head")
+            image_path = additional_assets[specific_head if specific_head in additional_assets else 'transparent']
+            head_added = True
+        elif trait_type == "Background" and not background_transparent:
+            image_path = get_image_file(trait_type, value)
         elif trait_type == "Background" and not background_transparent:
             image_path = get_image_file(trait_type, value)
         elif trait_type == "Clothes" and second_asset_type in special_assets and not clothes_added:
             print(f"Replacing clothes with special asset: {second_asset_type}")
             image_path = special_assets[second_asset_type]
             clothes_added = True
+        elif trait_type == "Clothes" and third_asset_type == 'selfie':
+            print("Applying no Clothes")
+            image_path = additional_assets['selfie']
+            head_added = True
+        elif trait_type == "Clothes"and third_asset_type == 'selfie' and clothes_added:
+            print("Applying no Clothes")
+            image_path = additional_assets['selfie']
+            head_added = True
         elif trait_type == "Mouth" and not mouth_added:
             mouth_added = True
             if mouth_asset_type == 'big_smile':
