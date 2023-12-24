@@ -53,6 +53,15 @@ function App() {
             fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset);
         }
     }, [tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset]);
+
+    useEffect(() => {
+        if (thirdAsset === 'selfie') {
+            setSecondAsset('');
+            setMouthAsset('');
+            setSelectedAsset('');
+        }
+    }, [thirdAsset]);
+    
     
     const applyFadeEffect = () => {
         setFade(true);
