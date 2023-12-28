@@ -249,6 +249,8 @@ function App() {
                         <option value="">Select</option>
                         <option value="gm_espresso">GM Espresso</option>
                         <option value="cheers">Cheers</option>
+                        <option value="apecoin_hands1">Apecoine Hands 1</option>
+                        <option value="apecoin_hands2">Apecoine Hands </option>
                         <option value="candle">Candle</option>
                         <option value="peace">Peace</option>
                         <option value="shoe">BAPE shoe</option>

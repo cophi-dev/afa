@@ -27,6 +27,8 @@ main_assets = {
     'gm_espresso': os.path.join(base_dir, 'memes', 'gm_espresso.png'),
     'cheers': os.path.join(base_dir, 'memes', 'cheers.png'),
     'candle': os.path.join(base_dir, 'memes', 'candle.png'),
+    'apecoin_hands1': os.path.join(base_dir, 'memes', 'apecoin_hands1.png'),
+    'apecoin_hands2': os.path.join(base_dir, 'memes', 'apecoin_hands2.png'),
     'shoe': os.path.join(base_dir, 'memes', 'bape_shoe.png'),
     'peace': os.path.join(base_dir, 'memes', 'peace.png')
     # Add more asset types here as needed
@@ -132,6 +134,7 @@ def is_minted(token_id):
     except Exception as e:
         app.logger.error(f"Error in is_minted: {e}")
         return False@app.route('/api/get-asset', methods=['GET'])
+    
 
 def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, mouth_asset_type, hat_asset_type):
     ape = next((item for item in data["apes"] if str(item["id"]) == ape_id), None)
@@ -184,6 +187,26 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         "Bored Unshaven Pizza",
         "Bored Unshaven"
     } for attr in attributes)
+
+    specific_hats = {
+        "Short Mohawk",
+        "Girl's Hair Pink",
+        "Girl's Hair Short",
+        "Commie Hat",
+        "Laurel Wreath",
+        "christmas_hat",
+        "christmas_hat2",
+        "christmas_hat3"
+    }
+
+    has_crazy_eyes = any(attr["trait_type"] == "Eyes" and attr["value"] == "Crazy" for attr in attributes)
+    print(f"Has Crazy Eyes: {has_crazy_eyes}")
+    has_specific_hat = any(attr["trait_type"] == "Hat" and attr["value"] in specific_hats for attr in attributes)
+
+    
+    # Check if the selected hat asset is in the specific hats list
+    has_selected_specific_hat = hat_asset_type in specific_hats
+
 
     # Determine the specific 'big_smile' asset based on conditions
     specific_smile = None
@@ -326,6 +349,14 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     if third_asset_type in additional_assets:
         print(f"Adding third asset: {third_asset_type}")
         add_asset(final_image, third_asset_type, additional_assets)
+
+    if has_crazy_eyes and (has_specific_hat or has_selected_specific_hat):
+        crazy_left_eye_path = os.path.join(base_dir, "Special Cases/Eyes/Crazy Left Eye.png")
+        try:
+            with Image.open(crazy_left_eye_path).convert("RGBA") as crazy_left_eye:
+                final_image.alpha_composite(crazy_left_eye, (0, 0))
+        except FileNotFoundError:
+            print(f"File not found for Crazy Left Eye: {crazy_left_eye_path}")
 
     return final_image
      
