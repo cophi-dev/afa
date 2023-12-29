@@ -51,6 +51,10 @@ hat_assets = {
     'christmas_hat3': os.path.join(base_dir, 'memes', 'christmas_hat3.png')
 }
 
+eyes_assets = {
+    'star_glasses': os.path.join(base_dir, 'memes', 'star_glasses.png')
+}
+
 additional_assets = {
     'snow': os.path.join(base_dir, 'memes', 'snow.png'),
     'verified': os.path.join(base_dir, 'memes', 'mask2.png'),
@@ -98,6 +102,10 @@ def get_image_file(trait_type, value):
         path = mouth_assets[value]
         print(f"Accessing mouth asset: {path}")
         return path
+    elif value in eyes_assets:
+        path = eyes_assets[value]
+        print(f"Accessing eyes asset: {path}")
+        return path
     elif value in hat_assets:
         path = hat_assets[value]
         print(f"Accessing hat asset: {path}")
@@ -136,7 +144,7 @@ def is_minted(token_id):
         return False@app.route('/api/get-asset', methods=['GET'])
     
 
-def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, mouth_asset_type, hat_asset_type):
+def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, mouth_asset_type, hat_asset_type, eyes_asset_type):
     ape = next((item for item in data["apes"] if str(item["id"]) == ape_id), None)
     if not ape:
         print(f"No ape found with id: {ape_id}")
@@ -334,6 +342,11 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     if mouth_asset_type in mouth_assets and not mouth_added:
         print(f"Adding selected mouth asset: {mouth_asset_type}")
         add_asset(final_image, mouth_asset_type, mouth_assets)
+   
+    # Add eyes asset if it wasn't added
+    if eyes_asset_type in mouth_assets:
+        print(f"Adding selected eyes asset: {eyes_asset_type}")
+        add_asset(final_image, eyes_asset_type, eyes_assets)
     
     # Add hat asset if it wasn't added and is selected
     if hat_asset_type in hat_assets and not hat_added:
@@ -369,13 +382,14 @@ def get_asset():
     third_asset_type = request.args.get('thirdAssetType', '')
     mouth_asset_type = request.args.get('mouthAssetType', '')
     hat_asset_type = request.args.get('hatAssetType', '')
+    eyes_asset_type = request.args.get('eyesAssetType', '')
     try:
         if is_minted(token_id):
             db_path = os.path.join(os.path.dirname(__file__), 'db.json')
             with open(db_path, 'r') as file:
                 data = json.load(file)
             
-            image = compose_ape(token_id, data, asset_type, second_asset_type, third_asset_type, mouth_asset_type, hat_asset_type)
+            image = compose_ape(token_id, data, asset_type, second_asset_type, third_asset_type, mouth_asset_type, hat_asset_type, eyes_asset_type)
             if not image:
                 raise ValueError("Ape not found")
             img_io = BytesIO()
