@@ -27,6 +27,7 @@ function App() {
     const [thirdAsset, setThirdAsset] = useState('');
     const [mouthAsset, setMouthAsset] = useState('');
     const [hatAsset, setHatAsset] = useState('');
+    const [eyesAsset, setEyesAsset] = useState('');
     const [currentImageUrl, setCurrentImageUrl] = useState('./overview.gif'); // New state for the current image URL
     const [showLoader, setShowLoader] = useState(false); // State to control loader visibility
     const [fade, setFade] = useState(false);
@@ -50,9 +51,9 @@ function App() {
 
     useEffect(() => {
         if (tokenId) {
-            fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset);
+            fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset);
         }
-    }, [tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset]);
+    }, [tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset]);
 
     useEffect(() => {
         if (thirdAsset === 'selfie') {
@@ -68,7 +69,7 @@ function App() {
         setTimeout(() => setFade(false), 500); // Adjust this timeout to match your CSS transition
     };
     
-    const fetchAsset = (newTokenId, newSelectedAsset, newSecondAsset, newThirdAsset, newMouthAsset, newHatAsset) => {
+    const fetchAsset = (newTokenId, newSelectedAsset, newSecondAsset, newThirdAsset, newMouthAsset, newHatAsset, newEyesAsset) => {
         setShowLoader(true);
     
         const queryParams = new URLSearchParams({
@@ -77,6 +78,7 @@ function App() {
             secondAssetType: newSecondAsset || '',
             thirdAssetType: newThirdAsset || '',
             mouthAssetType: newMouthAsset || '',
+            eyesAssetType: newEyesAsset || '',
             hatAssetType: newHatAsset || ''
         });
     
@@ -134,19 +136,25 @@ function App() {
     const handleSecondAssetChange = event => {
         const newSecondAsset = event.target.value;
         setSecondAsset(newSecondAsset);
-        fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset, mouthAsset, hatAsset);
+        fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset);
     };
     
     const handleMouthAssetChange = event => {
         const newMouthAsset = event.target.value;
         setMouthAsset(newMouthAsset);
-        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, newMouthAsset, hatAsset);
+        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, newMouthAsset, hatAsset, eyesAsset);
+    };
+  
+    const handleEyesAssetChange = event => {
+        const newEyesAsset = event.target.value;
+        setEyesAsset(newEyesAsset);
+        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, newEyesAsset, mouthAsset, hatAsset, eyesAsset);
     };
 
     const handleHatAssetChange = event => {
         const newHatAsset = event.target.value;
         setHatAsset(newHatAsset);
-        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, newHatAsset);
+        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, newHatAsset, eyesAsset);
     };
     
     const handleThirdAssetChange = event => {
@@ -160,7 +168,7 @@ function App() {
             
             // Call fetchAsset with the current hatAsset state
             setTimeout(() => {
-                fetchAsset(tokenId, '', '', newThirdAsset, '', hatAsset);
+                fetchAsset(tokenId, '', '', newThirdAsset, '', hatAsset, eyesAsset);
             }, 0);
         }
     };
@@ -170,18 +178,18 @@ function App() {
         setTokenId(newTokenId);
     
         // Check if the tokenId has been selected before
-        if (!selectedAsset && !secondAsset && !thirdAsset && !mouthAsset&& !hatAsset ) {
+        if (!selectedAsset && !secondAsset && !thirdAsset && !mouthAsset && !hatAsset && !eyesAsset) {
             // If selecting tokenId for the first time, default the clothes to "AFA"
             fetchAsset(newTokenId, 'AFA', '', '');
             setSelectedAsset('AFA');
         } else {
             // Maintain the current state of selected assets
-            fetchAsset(newTokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset);
+            fetchAsset(newTokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset);
         }
     };
     const handleAssetChange = event => {
         setSelectedAsset(event.target.value);
-        fetchAsset(tokenId, event.target.value, secondAsset, thirdAsset, mouthAsset, hatAsset);
+        fetchAsset(tokenId, event.target.value, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset);
     };
     return (
         <div className="App">
@@ -238,6 +246,13 @@ function App() {
                         <option value="christmas_hat">Christmas Hat</option>
                         <option value="christmas_hat2">Christmas Hat 2</option>
                         <option value="christmas_hat3">Christmas Hat 3</option>
+                    </select>
+                </div>
+                <div className="dropdown-section">
+                    <h3 className="dropdown-header">Eyes</h3>
+                    <select value={hatAsset} onChange={handleEyesAssetChange} className="dropdown" disabled={!tokenId}>
+                        <option value="">Select</option>
+                        <option value="star_glasses">Star Glasses</option>
                     </select>
                 </div>
             </div>
