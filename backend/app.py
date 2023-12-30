@@ -20,7 +20,7 @@ special_assets = {
     'adidas_hoodie': os.path.join(base_dir, 'memes', 'adidas_hoodie.png'),
     'adidas_yellow': os.path.join(base_dir, 'memes', 'adidas_yellow.png'),
     'sweater': os.path.join(base_dir, 'memes', 'sweater.png'),
-    'blazer': os.path.join(base_dir, 'memes', 'blazer.png')
+    'blazer': os.path.join(base_dir, 'memes', 'blazer.png'),
     'naked': os.path.join(base_dir, '_blank.png')
 }
 
@@ -31,8 +31,8 @@ main_assets = {
     'apecoin_hands1': os.path.join(base_dir, 'memes', 'apecoin_hands1.png'),
     'apecoin_hands2': os.path.join(base_dir, 'memes', 'apecoin_hands2.png'),
     'shoe': os.path.join(base_dir, 'memes', 'bape_shoe.png'),
-    'peace': os.path.join(base_dir, 'memes', 'peace.png')
-    'ballon_moon': os.path.join(base_dir, 'memes', 'balloon_moon.png')
+    'peace': os.path.join(base_dir, 'memes', 'peace.png'),
+    'ballon_moon': os.path.join(base_dir, 'memes', 'balloon_moon.png'),
     'fireworks': os.path.join(base_dir, 'memes', 'fireworks.png')
     # Add more asset types here as needed
 }
@@ -51,7 +51,7 @@ mouth_assets = {
 hat_assets = {
     'christmas_hat': os.path.join(base_dir, 'memes', 'christmas_hat.png'),
     'christmas_hat2': os.path.join(base_dir, 'memes', 'christmas_hat2.png'),
-    'christmas_hat3': os.path.join(base_dir, 'memes', 'christmas_hat3.png')
+    'christmas_hat3': os.path.join(base_dir, 'memes', 'christmas_hat3.png'),
     'glitter_cowboy_hat': os.path.join(base_dir, 'memes', 'glitter_cowboy_hat.png')
 }
 
