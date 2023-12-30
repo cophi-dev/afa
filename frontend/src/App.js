@@ -264,9 +264,11 @@ function App() {
                     <h3 className="dropdown-header">Hand</h3>
                     <select value={selectedAsset} onChange={handleAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie'}>
                         <option value="">Select</option>
+                        <option value="balloon_fireworks">Balloon & Fireworks</option>
+                        <option value="fireworks">Fireworks</option>
                         <option value="gm_espresso">GM Espresso</option>
                         <option value="cheers">Cheers</option>
-                        <option value="fireworks">Fireworks</option>
+                        <option value="matchstick">Matchstick</option>
                         <option value="balloon_moon">2024 Balloon</option>
                         <option value="apecoin_hands1">Apecoin Hands 1</option>
                         <option value="apecoin_hands2">Apecoin Hands </option>
