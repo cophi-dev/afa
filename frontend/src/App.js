@@ -268,8 +268,8 @@ function App() {
                         <option value="cheers">Cheers</option>
                         <option value="fireworks">Fireworks</option>
                         <option value="balloon_moon">2024 Balloon</option>
-                        <option value="apecoin_hands1">Apecoine Hands 1</option>
-                        <option value="apecoin_hands2">Apecoine Hands </option>
+                        <option value="apecoin_hands1">Apecoin Hands 1</option>
+                        <option value="apecoin_hands2">Apecoin Hands </option>
                         <option value="candle">Candle</option>
                         <option value="peace">Peace</option>
                         <option value="shoe">BAPE shoe</option>
