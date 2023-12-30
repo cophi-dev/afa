@@ -148,7 +148,7 @@ function App() {
     const handleEyesAssetChange = event => {
         const newEyesAsset = event.target.value;
         setEyesAsset(newEyesAsset);
-        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, newEyesAsset, mouthAsset, hatAsset, eyesAsset);
+        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, newEyesAsset);
     };
 
     const handleHatAssetChange = event => {
@@ -250,7 +250,7 @@ function App() {
                 </div>
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Eyes</h3>
-                    <select value={hatAsset} onChange={handleEyesAssetChange} className="dropdown" disabled={!tokenId}>
+                    <select value={eyesAsset} onChange={handleEyesAssetChange} className="dropdown" disabled={!tokenId}>
                         <option value="">Select</option>
                         <option value="star_glasses">Star Glasses</option>
                     </select>
