@@ -20,6 +20,7 @@ special_assets = {
     'adidas_hoodie': os.path.join(base_dir, 'memes', 'adidas_hoodie.png'),
     'adidas_yellow': os.path.join(base_dir, 'memes', 'adidas_yellow.png'),
     'sweater': os.path.join(base_dir, 'memes', 'sweater.png'),
+    'blazer': os.path.join(base_dir, 'memes', 'blazer.png')
     'naked': os.path.join(base_dir, '_blank.png')
 }
 
@@ -31,6 +32,8 @@ main_assets = {
     'apecoin_hands2': os.path.join(base_dir, 'memes', 'apecoin_hands2.png'),
     'shoe': os.path.join(base_dir, 'memes', 'bape_shoe.png'),
     'peace': os.path.join(base_dir, 'memes', 'peace.png')
+    'ballon_moon': os.path.join(base_dir, 'memes', 'balloon_moon.png')
+    'fireworks': os.path.join(base_dir, 'memes', 'fireworks.png')
     # Add more asset types here as needed
 }
 
@@ -49,6 +52,7 @@ hat_assets = {
     'christmas_hat': os.path.join(base_dir, 'memes', 'christmas_hat.png'),
     'christmas_hat2': os.path.join(base_dir, 'memes', 'christmas_hat2.png'),
     'christmas_hat3': os.path.join(base_dir, 'memes', 'christmas_hat3.png')
+    'glitter_cowboy_hat': os.path.join(base_dir, 'memes', 'glitter_cowboy_hat.png')
 }
 
 eyes_assets = {
@@ -57,6 +61,7 @@ eyes_assets = {
 
 additional_assets = {
     'snow': os.path.join(base_dir, 'memes', 'snow.png'),
+    'confetti': os.path.join(base_dir, 'memes', 'confetti.png'),
     'verified': os.path.join(base_dir, 'memes', 'mask2.png'),
     'transparent': os.path.join(base_dir, '_blank.png'),
     'selfie': os.path.join(base_dir, '_blank.png'),
@@ -154,12 +159,14 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     attributes = ape["metadata"]["attributes"]
     final_image = Image.new("RGBA", (1000, 1000), (255, 255, 255, 0))
     layers = {}
+    
+     # Flags for asset additions
     clothes_added = False
-    mouth_added = False  # Flag to check if mouth asset has been added
-    hat_added = False  # Flag to check if mouth asset has been added
-    eyes_added = False  # Flag to check if mouth asset has been added
+    mouth_added = False
+    hat_added = False
     background_transparent = False
     head_added = False
+    eyes_added = False
 
     # Conditions for specific types of 'big_smile'
     has_black_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Black" for attr in attributes)
@@ -215,8 +222,6 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     # Check if the selected hat asset is in the specific hats list
     has_selected_specific_hat = hat_asset_type in specific_hats
 
-
-    eyes_subfolder = 'memes/silvester_eyes'
 
     # Determine the specific 'big_smile' asset based on conditions
     specific_smile = None
@@ -301,9 +306,13 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             print(f"Replacing clothes with special asset: {second_asset_type}")
             image_path = special_assets[second_asset_type]
             clothes_added = True
-        elif trait_type == "Eyes" and eyes_asset_type in eyes_assets and not eyes_added:
-            print(f"Replacing eyes with special asset: {eyes_asset_type}")
-            image_path = eyes_assets[eyes_asset_type]
+        elif trait_type == "Eyes":
+            if eyes_asset_type == 'star_glasses':
+                # Fetch eyes from the memes/silvester_eyes folder
+                image_path = os.path.join(base_dir, 'memes', 'silvester_eyes', f"{value}.png")
+            else:
+                # Fetch eyes from the regular eyes folder
+                image_path = os.path.join(base_dir, 'Eyes', f"{value}.png")
             eyes_added = True
         elif trait_type == "Hat" and hat_asset_type in hat_assets and not hat_added:
             print(f"Replacing hat with hat asset: {hat_asset_type}")
@@ -313,10 +322,6 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             print("Applying no Clothes")
             image_path = additional_assets['selfie']
             head_added = True
-        elif trait_type == "Eyes" and eyes_asset_type == 'star_glasses':
-            # Get eyes asset from the special subfolder
-            image_path = os.path.join(base_dir, eyes_subfolder, f"{value}.png")
-            print(f"Accessing special eyes asset: {image_path}")
         elif trait_type == "Clothes"and third_asset_type == 'selfie' and clothes_added:
             print("Applying no Clothes")
             image_path = additional_assets['selfie']
@@ -348,6 +353,8 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         print(f"Adding selected clothes asset: {second_asset_type}")
         add_asset(final_image, second_asset_type, special_assets)
 
+ 
+
     # Add mouth asset if it wasn't added and is selected
     if mouth_asset_type in mouth_assets and not mouth_added:
         print(f"Adding selected mouth asset: {mouth_asset_type}")
@@ -357,11 +364,6 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     if hat_asset_type in hat_assets and not hat_added:
         print(f"Adding selected hat asset: {hat_asset_type}")
         add_asset(final_image, hat_asset_type, hat_assets)
-
-    # Add eyes asset if it wasn't added
-    if eyes_asset_type in mouth_assets:
-        print(f"Adding selected eyes asset: {eyes_asset_type}")
-        add_asset(final_image, eyes_asset_type, eyes_assets)
 
     # Add main asset if specified
     if asset_type in main_assets:
