@@ -216,8 +216,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     has_selected_specific_hat = hat_asset_type in specific_hats
 
 
-    has_star_glasses = any(attr["trait_type"] == "Eyes" and attr["value"] == "star_glasses" for attr in attributes)
-    eyes_subfolder = 'memes/silvester_eyes' if has_star_glasses else 'Eyes'
+    eyes_subfolder = 'memes/silvester_eyes'
 
     # Determine the specific 'big_smile' asset based on conditions
     specific_smile = None
@@ -314,7 +313,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             print("Applying no Clothes")
             image_path = additional_assets['selfie']
             head_added = True
-        elif trait_type == "Eyes" and has_star_glasses:
+        elif trait_type == "Eyes" and eyes_asset_type == 'star_glasses':
             # Get eyes asset from the special subfolder
             image_path = os.path.join(base_dir, eyes_subfolder, f"{value}.png")
             print(f"Accessing special eyes asset: {image_path}")
