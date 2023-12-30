@@ -33,7 +33,9 @@ main_assets = {
     'shoe': os.path.join(base_dir, 'memes', 'bape_shoe.png'),
     'peace': os.path.join(base_dir, 'memes', 'peace.png'),
     'balloon_moon': os.path.join(base_dir, 'memes', 'balloon_moon.png'),
-    'fireworks': os.path.join(base_dir, 'memes', 'fireworks.png')
+    'fireworks': os.path.join(base_dir, 'memes', 'fireworks.png'),
+    'balloon_fireworks': os.path.join(base_dir, 'memes', 'balloon_fireworks.png'),
+    'matchstick': os.path.join(base_dir, 'memes', 'matchstick.png')
     # Add more asset types here as needed
 }
 
