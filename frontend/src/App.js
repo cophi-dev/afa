@@ -216,7 +216,7 @@ function App() {
                     <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie'}>
                         <option value="">Select</option>
                         <option value="AFA">AFA</option>
-                        <option value="sweater">Christmas sweater</option>
+                        <option value="blazer">Blazer</option>
                         <option value="bape_coach">Bape Coach Jacket</option>
                         <option value="bape_hoodie_red">Bape Hoodie Red</option>
                         <option value="bape_hoodie_green">Bape Hoodie Green</option>
@@ -224,6 +224,7 @@ function App() {
                         <option value="adidas_hoodie">Adidas Hoodie</option>
                         <option value="adidas_yellow">Adidas Track</option>
                         <option value="jacket">Jacket</option>
+                        <option value="sweater">Christmas sweater</option>
                         <option value="naked">No Clothes</option>
                     </select>
                 </div>
@@ -243,6 +244,7 @@ function App() {
                     <h3 className="dropdown-header">Hat</h3>
                     <select value={hatAsset} onChange={handleHatAssetChange} className="dropdown" disabled={!tokenId}>
                         <option value="">Select</option>
+                        <option value="glitter_cowboy">Glitter Cowboy Hat</option>
                         <option value="christmas_hat">Christmas Hat</option>
                         <option value="christmas_hat2">Christmas Hat 2</option>
                         <option value="christmas_hat3">Christmas Hat 3</option>
@@ -264,6 +266,8 @@ function App() {
                         <option value="">Select</option>
                         <option value="gm_espresso">GM Espresso</option>
                         <option value="cheers">Cheers</option>
+                        <option value="fireworks">Fireworks</option>
+                        <option value="balloon_moon">2024 Balloon</option>
                         <option value="apecoin_hands1">Apecoine Hands 1</option>
                         <option value="apecoin_hands2">Apecoine Hands </option>
                         <option value="candle">Candle</option>
@@ -276,6 +280,7 @@ function App() {
                     <h3 className="dropdown-header">Extra</h3>
                     <select value={thirdAsset} onChange={handleThirdAssetChange} className="dropdown" disabled={!tokenId}>
                         <option value="">Select</option>
+                        <option value="confetti">Confetto</option>
                         <option value="snow">Snow</option>
                         <option value="verified">Verified</option>
                         <option value="transparent">Transparent Background</option>
