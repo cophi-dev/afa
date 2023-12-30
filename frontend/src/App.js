@@ -280,7 +280,7 @@ function App() {
                     <h3 className="dropdown-header">Extra</h3>
                     <select value={thirdAsset} onChange={handleThirdAssetChange} className="dropdown" disabled={!tokenId}>
                         <option value="">Select</option>
-                        <option value="confetti">Confetto</option>
+                        <option value="confetti">Confetti</option>
                         <option value="snow">Snow</option>
                         <option value="verified">Verified</option>
                         <option value="transparent">Transparent Background</option>
