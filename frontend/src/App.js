@@ -67,11 +67,19 @@ function App() {
         }
     }, [thirdAsset]);
     
-    
-    const applyFadeEffect = () => {
-        setFade(true);
-        setTimeout(() => setFade(false), 500); // Adjust this timeout to match your CSS transition
-    };
+    // Fetches elite token IDs once when the component mounts
+    useEffect(() => {
+        console.log('Fetching elite token IDs...');
+        const url = 'https://afa-editor.ew.r.appspot.com/api/elite-token-ids';
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                console.log('Parsed JSON data:', data);
+                setEliteTokenIds(data);
+            })
+            .catch(error => console.error('Error fetching elite token IDs:', error));
+    }, []);
+
     
     const fetchAsset = (newTokenId, newSelectedAsset, newSecondAsset, newThirdAsset, newMouthAsset, newHatAsset, newEyesAsset, newClubAsset) => {
         setShowLoader(true);
@@ -137,22 +145,7 @@ function App() {
         .catch(error => console.error('Error fetching background color:', error))
         .finally(() => setIsLoading(false));
     }
-
-    useEffect(() => {
-        // Fetch elite token IDs
-        fetch('https://afa-editor.ew.r.appspot.com/api/elite-token-ids') // Adjust the API endpoint as necessary
-            .then(response => response.json())
-            .then(data => {
-                setEliteTokenIds(data);
-            })
-            .catch(error => console.error('Error fetching elite token IDs:', error));
-    }, []);
     
-    // Add a useEffect hook to update isEliteEligible when tokenId changes
-    useEffect(() => {
-        const isEligible = eliteTokenIds.includes(parseInt(tokenId));
-        setIsEliteEligible(isEligible);
-    }, [tokenId, eliteTokenIds]);
     
     const handleSecondAssetChange = event => {
         const newSecondAsset = event.target.value;
@@ -215,15 +208,19 @@ function App() {
 
     const handleTokenChange = event => {
         const newTokenId = event.target.value;
+        console.log(`Token ID selected: ${newTokenId}`);
         setTokenId(newTokenId);
-
-         // Check if the new token ID is eligible for elite assets
-        if (clubAsset === 'elite') {
-            // If the new token ID is not eligible for elite, reset the clubAsset
+    
+        // Convert both values to strings to ensure proper comparison
+        const newIsEliteEligible = eliteTokenIds.includes(newTokenId);
+        console.log(`Is token ID ${newTokenId} elite eligible: ${newIsEliteEligible}`);
+        setIsEliteEligible(newIsEliteEligible);
+    
+        if (clubAsset === 'elite' && !newIsEliteEligible) {
+            // Reset the clubAsset if the new token ID is not eligible for elite
             setClubAsset('');
         }
     
-        // Check if the tokenId has been selected before
         if (!selectedAsset && !secondAsset && !thirdAsset && !mouthAsset && !hatAsset && !eyesAsset && !clubAsset) {
             // If selecting tokenId for the first time, default the clothes to "AFA"
             fetchAsset(newTokenId, 'AFA', '', '');
@@ -233,12 +230,11 @@ function App() {
             fetchAsset(newTokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, '');
         }
     };
+
     const handleAssetChange = event => {
         setSelectedAsset(event.target.value);
         fetchAsset(tokenId, event.target.value, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
     };
-
-    const isElite = eliteTokenIds.includes(parseInt(tokenId));
 
 
     return (
@@ -342,7 +338,7 @@ function App() {
                     <h3 className="dropdown-header">Club Assets</h3>
                     <select value={clubAsset} onChange={handleClubAssetChange} className="dropdown" disabled={!tokenId}>
                         <option value="">Select</option>
-                        <option value="elite">Elite Ape Club</option>
+                        <option value="elite" disabled={!isEliteEligible}>Elite Ape Club</option>
                     </select>
                 </div>
 
