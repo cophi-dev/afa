@@ -262,7 +262,6 @@ function App() {
                     <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}>
                         <option value="">Select</option>
                         <option value="AFA">AFA</option>
-                        <option value="blazer">Blazer</option>
                         <option value="bape_coach">Bape Coach Jacket</option>
                         <option value="bape_hoodie_red">Bape Hoodie Red</option>
                         <option value="bape_hoodie_green">Bape Hoodie Green</option>
@@ -270,7 +269,8 @@ function App() {
                         <option value="adidas_hoodie">Adidas Hoodie</option>
                         <option value="adidas_yellow">Adidas Track</option>
                         <option value="jacket">Jacket</option>
-                        <option value="sweater">Christmas sweater</option>
+                        {/* <option value="sweater">Christmas sweater</option> */}
+                        <option value="blazer">Blazer</option>
                         <option value="naked">No Clothes</option>
                     </select>
                 </div>
@@ -282,7 +282,7 @@ function App() {
                     <select value={mouthAsset} onChange={handleMouthAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}>
                         <option value="">Select</option>
                         <option value="big_smile">Big Smile</option>
-                        <option value="tree">Christmas Tree</option>
+                        {/* <option value="tree">Christmas Tree</option> */}
                     </select>
                 </div>
 
@@ -291,9 +291,9 @@ function App() {
                     <select value={hatAsset} onChange={handleHatAssetChange} className="dropdown" disabled={!tokenId || clubAsset}>
                         <option value="">Select</option>
                         <option value="glitter_cowboy_hat">Glitter Cowboy Hat</option>
-                        <option value="christmas_hat">Christmas Hat</option>
+                        {/* <option value="christmas_hat">Christmas Hat</option>
                         <option value="christmas_hat2">Christmas Hat 2</option>
-                        <option value="christmas_hat3">Christmas Hat 3</option>
+                        <option value="christmas_hat3">Christmas Hat 3</option> */}
                     </select>
                 </div>
                 <div className="dropdown-section">
