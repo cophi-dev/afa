@@ -61,6 +61,10 @@ eyes_assets = {
     'star_glasses': os.path.join(base_dir, 'memes', 'star_glasses.png')
 }
 
+club_assets = {
+    'elite': os.path.join(base_dir, 'memes', 'elite.png')
+}
+
 additional_assets = {
     'snow': os.path.join(base_dir, 'memes', 'snow.png'),
     'confetti': os.path.join(base_dir, 'memes', 'confetti.png'),
@@ -117,6 +121,10 @@ def get_image_file(trait_type, value):
         path = hat_assets[value]
         print(f"Accessing hat asset: {path}")
         return path
+    elif value in club_assets:
+        path = club_assets[value]
+        print(f"Accessing club asset: {path}")
+        return path
     elif value in additional_assets:
         path = additional_assets[value]
         print(f"Accessing selfie asset: {path}")
@@ -151,7 +159,17 @@ def is_minted(token_id):
         return False@app.route('/api/get-asset', methods=['GET'])
     
 
-def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, mouth_asset_type, hat_asset_type, eyes_asset_type):
+#def is_elite(token_id):
+ #   try:
+  #      elite_path = os.path.join(os.path.dirname(__file__), 'elite.json')
+   #     with open(elite_path, 'r') as file:
+    #        elite_ids = json.load(file)
+     #   return token_id in elite_ids
+    #except Exception as e:
+     #   app.logger.error(f"Error in is_elite: {e}")
+      #  return False
+
+def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, mouth_asset_type, hat_asset_type, eyes_asset_type, club_asset_type):
     ape = next((item for item in data["apes"] if str(item["id"]) == ape_id), None)
     if not ape:
         print(f"No ape found with id: {ape_id}")
@@ -161,8 +179,12 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     attributes = ape["metadata"]["attributes"]
     final_image = Image.new("RGBA", (1000, 1000), (255, 255, 255, 0))
     layers = {}
+
+    # Check if elite asset is selected
+    is_elite_selected = club_asset_type == 'elite'
+
     
-     # Flags for asset additions
+    # Flags for asset additions
     clothes_added = False
     mouth_added = False
     hat_added = False
@@ -224,6 +246,11 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     # Check if the selected hat asset is in the specific hats list
     has_selected_specific_hat = hat_asset_type in specific_hats
 
+    # Resize the composed ape (excluding background) if elite asset is selected
+    if is_elite_selected:
+        ape_composed = final_image.copy()
+        ape_composed = ape_composed.resize((int(1000 * 0.7), int(1000 * 0.7)), Image.ANTIALIAS)
+        final_image.paste(ape_composed, (int(1000 * 0.15), int(1000 * 0.15)), ape_composed)
 
     # Determine the specific 'big_smile' asset based on conditions
     specific_smile = None
@@ -275,8 +302,8 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         specific_head = 'head_white'
     elif has_zombie_fur:
         specific_head = 'head_zombie'
-   
-   
+
+
     specific_tree = None
     if has_unshaven_mouth:
         specific_tree = 'tree_unshaven'
@@ -287,7 +314,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         trait_type = attribute["trait_type"]
         value = attribute["value"]
 
-       
+    
         if trait_type == "Background" and third_asset_type == 'transparent':
             print("Applying transparent background")
             image_path = additional_assets['transparent']
@@ -300,6 +327,11 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             print("Applying Head")
             image_path = additional_assets[specific_head if specific_head in additional_assets else 'transparent']
             head_added = True
+        elif trait_type == "Background" and club_asset_type == 'elite':
+            # If elite asset is selected, use a black background
+            print("Applying black background for elite asset")
+            image_path = additional_assets['transparent']  # Use transparent as placeholder
+            background_black = True
         elif trait_type == "Background" and not background_transparent:
             image_path = get_image_file(trait_type, value)
         elif trait_type == "Background" and not background_transparent:
@@ -350,22 +382,34 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         if layer_type in layers:
             final_image.alpha_composite(layers[layer_type], (0, 0))
 
+    # Apply elite asset logic
+    if is_elite_selected:
+        # Resize to 70% and set black background
+        resized_ape = final_image.resize((int(1000 * 0.75), int(1000 * 0.75)), Image.ANTIALIAS)
+        final_image = Image.new("RGBA", (1000, 1000), (0, 0, 0, 255))
+        final_image.paste(resized_ape, (int(1000 * 0.15), int(1000 * 0.15)), resized_ape)
+
+
     # Add clothes asset if it wasn't added and is selected
     if second_asset_type in special_assets and not clothes_added:
         print(f"Adding selected clothes asset: {second_asset_type}")
         add_asset(final_image, second_asset_type, special_assets)
 
- 
 
     # Add mouth asset if it wasn't added and is selected
     if mouth_asset_type in mouth_assets and not mouth_added:
         print(f"Adding selected mouth asset: {mouth_asset_type}")
         add_asset(final_image, mouth_asset_type, mouth_assets)
-       
+    
     # Add hat asset if it wasn't added and is selected
     if hat_asset_type in hat_assets and not hat_added:
         print(f"Adding selected hat asset: {hat_asset_type}")
         add_asset(final_image, hat_asset_type, hat_assets)
+    
+    # Add club asset if it wasn't added and is selected
+    if club_asset_type in club_assets:
+        print(f"Adding selected club asset: {club_asset_type}")
+        add_asset(final_image, club_asset_type, club_assets)
 
     # Add main asset if specified
     if asset_type in main_assets:
@@ -386,7 +430,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             print(f"File not found for Crazy Left Eye: {crazy_left_eye_path}")
 
     return final_image
-     
+    
 
 @app.route('/api/get-asset', methods=['GET'])
 def get_asset():
@@ -397,13 +441,14 @@ def get_asset():
     mouth_asset_type = request.args.get('mouthAssetType', '')
     hat_asset_type = request.args.get('hatAssetType', '')
     eyes_asset_type = request.args.get('eyesAssetType', '')
+    club_asset_type = request.args.get('clubAssetType', '')
     try:
         if is_minted(token_id):
             db_path = os.path.join(os.path.dirname(__file__), 'db.json')
             with open(db_path, 'r') as file:
                 data = json.load(file)
             
-            image = compose_ape(token_id, data, asset_type, second_asset_type, third_asset_type, mouth_asset_type, hat_asset_type, eyes_asset_type)
+            image = compose_ape(token_id, data, asset_type, second_asset_type, third_asset_type, mouth_asset_type, hat_asset_type, eyes_asset_type, club_asset_type)
             if not image:
                 raise ValueError("Ape not found")
             img_io = BytesIO()
