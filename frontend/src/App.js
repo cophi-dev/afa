@@ -21,12 +21,16 @@ function getContrastYIQ(rgb) {
 
 function App() {
     const [tokenIds, setTokenIds] = useState([]);
+    const [eliteTokenIds, setEliteTokenIds] = useState([]); 
+    // Add a new state for elite eligibility
+    const [isEliteEligible, setIsEliteEligible] = useState(false);
     const [tokenId, setTokenId] = useState('');
     const [selectedAsset, setSelectedAsset] = useState('');
     const [secondAsset, setSecondAsset] = useState('');
     const [thirdAsset, setThirdAsset] = useState('');
     const [mouthAsset, setMouthAsset] = useState('');
     const [hatAsset, setHatAsset] = useState('');
+    const [clubAsset, setClubAsset] = useState('');
     const [eyesAsset, setEyesAsset] = useState('');
     const [currentImageUrl, setCurrentImageUrl] = useState('./overview.gif'); // New state for the current image URL
     const [showLoader, setShowLoader] = useState(false); // State to control loader visibility
@@ -51,9 +55,9 @@ function App() {
 
     useEffect(() => {
         if (tokenId) {
-            fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset);
+            fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
         }
-    }, [tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset]);
+    }, [tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset]);
 
     useEffect(() => {
         if (thirdAsset === 'selfie') {
@@ -69,7 +73,7 @@ function App() {
         setTimeout(() => setFade(false), 500); // Adjust this timeout to match your CSS transition
     };
     
-    const fetchAsset = (newTokenId, newSelectedAsset, newSecondAsset, newThirdAsset, newMouthAsset, newHatAsset, newEyesAsset) => {
+    const fetchAsset = (newTokenId, newSelectedAsset, newSecondAsset, newThirdAsset, newMouthAsset, newHatAsset, newEyesAsset, newClubAsset) => {
         setShowLoader(true);
     
         const queryParams = new URLSearchParams({
@@ -79,7 +83,8 @@ function App() {
             thirdAssetType: newThirdAsset || '',
             mouthAssetType: newMouthAsset || '',
             eyesAssetType: newEyesAsset || '',
-            hatAssetType: newHatAsset || ''
+            hatAssetType: newHatAsset || '',
+            clubAssetType: newClubAsset || ''
         });
     
         // Start fade-out effect
@@ -132,29 +137,64 @@ function App() {
         .catch(error => console.error('Error fetching background color:', error))
         .finally(() => setIsLoading(false));
     }
+
+    useEffect(() => {
+        // Fetch elite token IDs
+        fetch('https://afa-editor.ew.r.appspot.com/api/elite-token-ids') // Adjust the API endpoint as necessary
+            .then(response => response.json())
+            .then(data => {
+                setEliteTokenIds(data);
+            })
+            .catch(error => console.error('Error fetching elite token IDs:', error));
+    }, []);
+    
+    // Add a useEffect hook to update isEliteEligible when tokenId changes
+    useEffect(() => {
+        const isEligible = eliteTokenIds.includes(parseInt(tokenId));
+        setIsEliteEligible(isEligible);
+    }, [tokenId, eliteTokenIds]);
     
     const handleSecondAssetChange = event => {
         const newSecondAsset = event.target.value;
         setSecondAsset(newSecondAsset);
-        fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset);
+        fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
     };
     
     const handleMouthAssetChange = event => {
         const newMouthAsset = event.target.value;
         setMouthAsset(newMouthAsset);
-        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, newMouthAsset, hatAsset, eyesAsset);
+        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, newMouthAsset, hatAsset, eyesAsset, clubAsset);
     };
   
     const handleEyesAssetChange = event => {
         const newEyesAsset = event.target.value;
         setEyesAsset(newEyesAsset);
-        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, newEyesAsset);
+        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, newEyesAsset, clubAsset);
     };
 
     const handleHatAssetChange = event => {
         const newHatAsset = event.target.value;
         setHatAsset(newHatAsset);
-        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, newHatAsset, eyesAsset);
+        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, newHatAsset, eyesAsset, clubAsset);
+    };
+
+    const handleClubAssetChange = event => {
+        const newClubAsset = event.target.value;
+        setClubAsset(newClubAsset);
+    
+        if (newClubAsset === 'elite') {
+            setSecondAsset('');
+            setThirdAsset('');
+            setMouthAsset('');
+            setHatAsset('');
+            setEyesAsset('');
+            setSelectedAsset('');    
+            
+            // Call fetchAsset with the current clubAsset state
+            setTimeout(() => {
+                fetchAsset(tokenId, '', '', '', '', '', '', newClubAsset);
+            }, 0);
+        }
     };
     
     const handleThirdAssetChange = event => {
@@ -168,7 +208,7 @@ function App() {
             
             // Call fetchAsset with the current hatAsset state
             setTimeout(() => {
-                fetchAsset(tokenId, '', '', newThirdAsset, '', hatAsset, eyesAsset);
+                fetchAsset(tokenId, '', '', newThirdAsset, '', hatAsset, eyesAsset, '');
             }, 0);
         }
     };
@@ -176,21 +216,31 @@ function App() {
     const handleTokenChange = event => {
         const newTokenId = event.target.value;
         setTokenId(newTokenId);
+
+         // Check if the new token ID is eligible for elite assets
+        if (clubAsset === 'elite') {
+            // If the new token ID is not eligible for elite, reset the clubAsset
+            setClubAsset('');
+        }
     
         // Check if the tokenId has been selected before
-        if (!selectedAsset && !secondAsset && !thirdAsset && !mouthAsset && !hatAsset && !eyesAsset) {
+        if (!selectedAsset && !secondAsset && !thirdAsset && !mouthAsset && !hatAsset && !eyesAsset && !clubAsset) {
             // If selecting tokenId for the first time, default the clothes to "AFA"
             fetchAsset(newTokenId, 'AFA', '', '');
             setSelectedAsset('AFA');
         } else {
             // Maintain the current state of selected assets
-            fetchAsset(newTokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset);
+            fetchAsset(newTokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, '');
         }
     };
     const handleAssetChange = event => {
         setSelectedAsset(event.target.value);
-        fetchAsset(tokenId, event.target.value, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset);
+        fetchAsset(tokenId, event.target.value, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
     };
+
+    const isElite = eliteTokenIds.includes(parseInt(tokenId));
+
+
     return (
         <div className="App">
             <Banner />
@@ -213,7 +263,7 @@ function App() {
                     </div>
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Outfit</h3>
-                    <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie'}>
+                    <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}>
                         <option value="">Select</option>
                         <option value="AFA">AFA</option>
                         <option value="blazer">Blazer</option>
@@ -233,7 +283,7 @@ function App() {
             <div className="dropdown-container">
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Mouth</h3>
-                    <select value={mouthAsset} onChange={handleMouthAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie'}>
+                    <select value={mouthAsset} onChange={handleMouthAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}>
                         <option value="">Select</option>
                         <option value="big_smile">Big Smile</option>
                         <option value="tree">Christmas Tree</option>
@@ -242,7 +292,7 @@ function App() {
 
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Hat</h3>
-                    <select value={hatAsset} onChange={handleHatAssetChange} className="dropdown" disabled={!tokenId}>
+                    <select value={hatAsset} onChange={handleHatAssetChange} className="dropdown" disabled={!tokenId || clubAsset}>
                         <option value="">Select</option>
                         <option value="glitter_cowboy_hat">Glitter Cowboy Hat</option>
                         <option value="christmas_hat">Christmas Hat</option>
@@ -252,9 +302,20 @@ function App() {
                 </div>
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Eyes</h3>
-                    <select value={eyesAsset} onChange={handleEyesAssetChange} className="dropdown" disabled={!tokenId}>
+                    <select value={eyesAsset} onChange={handleEyesAssetChange} className="dropdown" disabled={!tokenId || clubAsset}>
                         <option value="">Select</option>
                         <option value="star_glasses">Star Glasses</option>
+                    </select>
+                </div>
+                <div className="dropdown-section">
+                    <h3 className="dropdown-header">Extra</h3>
+                    <select value={thirdAsset} onChange={handleThirdAssetChange} className="dropdown" disabled={!tokenId || clubAsset}>
+                        <option value="">Select</option>
+                        <option value="confetti">Confetti</option>
+                        <option value="snow">Snow</option>
+                        <option value="selfie">Selfie Head</option>
+                        <option value="transparent">Transparent Background</option>
+                        <option value="verified">Verified</option>
                     </select>
                 </div>
             </div>
@@ -262,33 +323,29 @@ function App() {
             <div className="dropdown-container">
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Hand</h3>
-                    <select value={selectedAsset} onChange={handleAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie'}>
+                    <select value={selectedAsset} onChange={handleAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}>
                         <option value="">Select</option>
-                        <option value="balloon_fireworks">Balloon & Fireworks</option>
-                        <option value="fireworks">Fireworks</option>
                         <option value="gm_espresso">GM Espresso</option>
                         <option value="cheers">Cheers</option>
-                        <option value="matchstick">Matchstick</option>
-                        <option value="balloon_moon">2024 Balloon</option>
+                        <option value="peace">Peace</option>
                         <option value="apecoin_hands1">Apecoin Hands 1</option>
                         <option value="apecoin_hands2">Apecoin Hands </option>
                         <option value="candle">Candle</option>
-                        <option value="peace">Peace</option>
                         <option value="shoe">BAPE shoe</option>
+                        <option value="balloon_fireworks">Balloon & Fireworks</option>
+                        <option value="fireworks">Fireworks</option>
+                        <option value="matchstick">Matchstick</option>
+                        <option value="balloon_moon">2024 Balloon</option>
+                    </select>
+                </div>
+                <div className="dropdown-section">
+                    <h3 className="dropdown-header">Club Assets</h3>
+                    <select value={clubAsset} onChange={handleClubAssetChange} className="dropdown" disabled={!tokenId}>
+                        <option value="">Select</option>
+                        <option value="elite">Elite Ape Club</option>
                     </select>
                 </div>
 
-                <div className="dropdown-section">
-                    <h3 className="dropdown-header">Extra</h3>
-                    <select value={thirdAsset} onChange={handleThirdAssetChange} className="dropdown" disabled={!tokenId}>
-                        <option value="">Select</option>
-                        <option value="confetti">Confetti</option>
-                        <option value="snow">Snow</option>
-                        <option value="verified">Verified</option>
-                        <option value="transparent">Transparent Background</option>
-                        <option value="selfie">Selfie Head</option>
-                    </select>
-                </div>
             </div>
         </div>
     );
