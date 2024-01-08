@@ -131,7 +131,6 @@ def get_image_file(trait_type, value):
         return path
     elif value:
         path = os.path.join(base_dir, trait_type, f"{value}.png")
-        print(f"Accessing regular trait: {path}")
         return path
     else:
         path = os.path.join(base_dir, "_blank.png")
@@ -159,15 +158,15 @@ def is_minted(token_id):
         return False@app.route('/api/get-asset', methods=['GET'])
     
 
-#def is_elite(token_id):
- #   try:
-  #      elite_path = os.path.join(os.path.dirname(__file__), 'elite.json')
-   #     with open(elite_path, 'r') as file:
-    #        elite_ids = json.load(file)
-     #   return token_id in elite_ids
-    #except Exception as e:
-     #   app.logger.error(f"Error in is_elite: {e}")
-      #  return False
+# Modify this function to return a list of elite token IDs as strings
+def load_elite_ids():
+    elite_path = os.path.join(os.path.dirname(__file__), 'elite.json')
+    with open(elite_path, 'r') as file:
+        elite_data = json.load(file)
+    return [str(item['TOKENID']) for item in elite_data]
+
+elite_ids = load_elite_ids()
+
 
 def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, mouth_asset_type, hat_asset_type, eyes_asset_type, club_asset_type):
     ape = next((item for item in data["apes"] if str(item["id"]) == ape_id), None)
@@ -240,7 +239,6 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     }
 
     has_crazy_eyes = any(attr["trait_type"] == "Eyes" and attr["value"] == "Crazy" for attr in attributes)
-    print(f"Has Crazy Eyes: {has_crazy_eyes}")
     has_specific_hat = any(attr["trait_type"] == "Hat" and attr["value"] in specific_hats for attr in attributes)
     
     # Check if the selected hat asset is in the specific hats list
@@ -385,7 +383,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     # Apply elite asset logic
     if is_elite_selected:
         # Resize to 70% and set black background
-        resized_ape = final_image.resize((int(1000 * 0.75), int(1000 * 0.75)), Image.ANTIALIAS)
+        resized_ape = final_image.resize((int(1000 * 0.7), int(1000 * 0.7)), Image.ANTIALIAS)
         final_image = Image.new("RGBA", (1000, 1000), (0, 0, 0, 255))
         final_image.paste(resized_ape, (int(1000 * 0.15), int(1000 * 0.15)), resized_ape)
 
@@ -441,7 +439,14 @@ def get_asset():
     mouth_asset_type = request.args.get('mouthAssetType', '')
     hat_asset_type = request.args.get('hatAssetType', '')
     eyes_asset_type = request.args.get('eyesAssetType', '')
+    token_id = request.args.get('tokenId')
     club_asset_type = request.args.get('clubAssetType', '')
+
+    # Check if elite asset is requested and if token_id is not in elite list
+    if club_asset_type == 'elite' and token_id not in elite_ids:
+        # Return a message indicating the token ID is not eligible for elite assets
+        return jsonify({'error': 'Token ID not eligible for elite assets'}), 200
+
     try:
         if is_minted(token_id):
             db_path = os.path.join(os.path.dirname(__file__), 'db.json')
@@ -492,6 +497,17 @@ def get_token_ids():
     except Exception as e:
         app.logger.error(f"Error in get_token_ids: {e}")
         return jsonify({'error': str(e)}), 500
+    
+@app.route('/api/elite-token-ids', methods=['GET'])
+def get_elite_token_ids():
+    try:
+        elite_path = os.path.join(os.path.dirname(__file__), 'elite.json')
+        with open(elite_path, 'r') as file:
+            elite_ids = json.load(file)
+        return jsonify([ape['TOKENID'] for ape in elite_ids])
+    except Exception as e:
+        print(f"Error in get_elite_token_ids: {e}")
+        return jsonify({'error': 'Internal Server Error'}), 500
 
 @app.route('/', defaults={'path': ''})
 
