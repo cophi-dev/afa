@@ -26,6 +26,7 @@ special_assets = {
 
 main_assets = {
     'gm_espresso': os.path.join(base_dir, 'memes', 'gm_espresso.png'),
+    'otherside': os.path.join(base_dir, 'memes', 'otherside.png'),
     'cheers': os.path.join(base_dir, 'memes', 'cheers.png'),
     'candle': os.path.join(base_dir, 'memes', 'candle.png'),
     'apecoin_hands1': os.path.join(base_dir, 'memes', 'apecoin_hands1.png'),
