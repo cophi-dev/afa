@@ -308,6 +308,7 @@ function App() {
                     <select value={thirdAsset} onChange={handleThirdAssetChange} className="dropdown" disabled={!tokenId || clubAsset}>
                         <option value="">Select</option>
                         <option value="hex_dark">Hex Dark</option>
+                        <option value="hex_light">Hex Light</option>
                         <option value="confetti">Confetti</option>
                         <option value="snow">Snow</option>
                         <option value="selfie">Selfie Head</option>
