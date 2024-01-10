@@ -68,6 +68,7 @@ club_assets = {
 
 additional_assets = {
     'hex_dark': os.path.join(base_dir, 'memes', 'hex_dark.png'),
+    'hex_light': os.path.join(base_dir, 'memes', 'hex_light.png'),
     'snow': os.path.join(base_dir, 'memes', 'snow.png'),
     'confetti': os.path.join(base_dir, 'memes', 'confetti.png'),
     'verified': os.path.join(base_dir, 'memes', 'mask2.png'),
