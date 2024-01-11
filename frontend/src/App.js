@@ -262,6 +262,7 @@ function App() {
                     <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}>
                         <option value="">Select</option>
                         <option value="AFA">AFA</option>
+                        <option value="btc_hoodie">BTC Hoodie</option>
                         <option value="bape_coach">Bape Coach Jacket</option>
                         <option value="bape_hoodie_red">Bape Hoodie Red</option>
                         <option value="bape_hoodie_green">Bape Hoodie Green</option>
@@ -300,6 +301,7 @@ function App() {
                     <h3 className="dropdown-header">Eyes</h3>
                     <select value={eyesAsset} onChange={handleEyesAssetChange} className="dropdown" disabled={!tokenId || clubAsset}>
                         <option value="">Select</option>
+                        <option value="btc_eyes">BTC Coin</option>
                         <option value="star_glasses">Star Glasses</option>
                     </select>
                 </div>
