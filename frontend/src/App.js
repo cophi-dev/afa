@@ -325,6 +325,7 @@ function App() {
                     <h3 className="dropdown-header">Hand</h3>
                     <select value={selectedAsset} onChange={handleAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}>
                         <option value="">Select</option>
+                        <option value="banana">Banana Hand</option>
                         <option value="otherside">Otherside Bottle</option>
                         <option value="gm_espresso">GM Espresso</option>
                         <option value="cheers">Cheers</option>

@@ -27,6 +27,7 @@ special_assets = {
 
 main_assets = {
     'gm_espresso': os.path.join(base_dir, 'memes', 'gm_espresso.png'),
+    'banana': os.path.join(base_dir, 'memes', 'banana_hand.png'),
     'otherside': os.path.join(base_dir, 'memes', 'otherside.png'),
     'cheers': os.path.join(base_dir, 'memes', 'cheers.png'),
     'candle': os.path.join(base_dir, 'memes', 'candle.png'),
@@ -347,6 +348,9 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             if eyes_asset_type == 'star_glasses':
                 # Fetch eyes from the memes/silvester_eyes folder
                 image_path = os.path.join(base_dir, 'memes', 'silvester_eyes', f"{value}.png")
+            elif eyes_asset_type in eyes_assets and not eyes_added:
+                print(f"Replacing Eyes with eyes asset: {eyes_asset_type}")
+                image_path = eyes_assets[eyes_asset_type]
             else:
                 # Fetch eyes from the regular eyes folder
                 image_path = os.path.join(base_dir, 'Eyes', f"{value}.png")
