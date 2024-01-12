@@ -24,6 +24,9 @@ function App() {
     const [eliteTokenIds, setEliteTokenIds] = useState([]); 
     // Add a new state for elite eligibility
     const [isEliteEligible, setIsEliteEligible] = useState(false);
+    const [dubaiTokenIds, setDubaiTokenIds] = useState([]); 
+    // Add a new state for elite eligibility
+    const [isDubaiEligible, setIsDubaiEligible] = useState(false);
     const [tokenId, setTokenId] = useState('');
     const [selectedAsset, setSelectedAsset] = useState('');
     const [secondAsset, setSecondAsset] = useState('');
@@ -78,6 +81,19 @@ function App() {
                 setEliteTokenIds(data);
             })
             .catch(error => console.error('Error fetching elite token IDs:', error));
+    }, []);
+
+    // Fetches dubai token IDs once when the component mounts
+    useEffect(() => {
+        console.log('Fetching dubai token IDs...');
+        const url = 'https://afa-editor.ew.r.appspot.com/api/dubai-token-ids';
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                console.log('Parsed JSON data:', data);
+                setDubaiTokenIds(data);
+            })
+            .catch(error => console.error('Error fetching dubai token IDs:', error));
     }, []);
 
     
@@ -175,7 +191,7 @@ function App() {
         const newClubAsset = event.target.value;
         setClubAsset(newClubAsset);
     
-        if (newClubAsset === 'elite') {
+        if (newClubAsset === ('elite' || 'dubai')) {
             setSecondAsset('');
             setThirdAsset('');
             setMouthAsset('');
@@ -218,6 +234,16 @@ function App() {
     
         if (clubAsset === 'elite' && !newIsEliteEligible) {
             // Reset the clubAsset if the new token ID is not eligible for elite
+            setClubAsset('');
+        }
+        
+        // Convert both values to strings to ensure proper comparison
+        const newIsDubaiEligible = dubaiTokenIds.includes(newTokenId);
+        console.log(`Is token ID ${newTokenId} dubai eligible: ${newIsDubaiEligible}`);
+        setIsDubaiEligible(newIsDubaiEligible);
+    
+        if (clubAsset === 'dubai' && !newIsDubaiEligible) {
+            // Reset the clubAsset if the new token ID is not eligible for dubai
             setClubAsset('');
         }
     
@@ -344,6 +370,7 @@ function App() {
                     <h3 className="dropdown-header">Club Assets</h3>
                     <select value={clubAsset} onChange={handleClubAssetChange} className="dropdown" disabled={!tokenId}>
                         <option value="">Select</option>
+                        <option value="dubai" disabled={!isDubaiEligible}>Dubai Ape Yacht Club</option>
                         <option value="elite" disabled={!isEliteEligible}>Elite Apes HK</option>
                     </select>
                 </div>
