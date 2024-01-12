@@ -66,6 +66,7 @@ eyes_assets = {
 }
 
 club_assets = {
+    'dubai': os.path.join(base_dir, 'memes', 'dubai.png'),
     'elite': os.path.join(base_dir, 'memes', 'elite.png')
 }
 
@@ -173,6 +174,15 @@ def load_elite_ids():
 
 elite_ids = load_elite_ids()
 
+# Modify this function to return a list of dubai token IDs as strings
+def load_dubai_ids():
+    dubai_path = os.path.join(os.path.dirname(__file__), 'dubai.json')
+    with open(dubai_path, 'r') as file:
+        dubai_data = json.load(file)
+    return [str(item['TOKENID']) for item in dubai_data]
+
+dubai_ids = load_dubai_ids()
+
 
 def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, mouth_asset_type, hat_asset_type, eyes_asset_type, club_asset_type):
     ape = next((item for item in data["apes"] if str(item["id"]) == ape_id), None)
@@ -187,6 +197,8 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
 
     # Check if elite asset is selected
     is_elite_selected = club_asset_type == 'elite'
+    # Check if dubai asset is selected
+    is_dubai_selected = club_asset_type == 'dubai'
 
     
     # Flags for asset additions
@@ -336,6 +348,10 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             print("Applying black background for elite asset")
             image_path = additional_assets['transparent']  # Use transparent as placeholder
             background_black = True
+        elif trait_type == "Hat" and club_asset_type == 'dubai':
+            # If dubai asset is selected, use a black background
+            print("Replacing the Hat for dubai asset")
+            image_path = additional_assets['transparent']  # Use transparent as placeholder
         elif trait_type == "Background" and not background_transparent:
             image_path = get_image_file(trait_type, value)
         elif trait_type == "Background" and not background_transparent:
@@ -455,6 +471,10 @@ def get_asset():
     if club_asset_type == 'elite' and token_id not in elite_ids:
         # Return a message indicating the token ID is not eligible for elite assets
         return jsonify({'error': 'Token ID not eligible for elite assets'}), 200
+    # Check if elite asset is requested and if token_id is not in elite list
+    if club_asset_type == 'dubai' and token_id not in dubai_ids:
+        # Return a message indicating the token ID is not eligible for elite assets
+        return jsonify({'error': 'Token ID not eligible for dubai assets'}), 200
 
     try:
         if is_minted(token_id):
@@ -516,6 +536,17 @@ def get_elite_token_ids():
         return jsonify([ape['TOKENID'] for ape in elite_ids])
     except Exception as e:
         print(f"Error in get_elite_token_ids: {e}")
+        return jsonify({'error': 'Internal Server Error'}), 500
+
+@app.route('/api/dubai-token-ids', methods=['GET'])
+def get_dubai_token_ids():
+    try:
+        dubai_path = os.path.join(os.path.dirname(__file__), 'dubai.json')
+        with open(dubai_path, 'r') as file:
+            dubai_ids = json.load(file)
+        return jsonify([ape['TOKENID'] for ape in dubai_ids])
+    except Exception as e:
+        print(f"Error in get_dubai_token_ids: {e}")
         return jsonify({'error': 'Internal Server Error'}), 500
 
 @app.route('/', defaults={'path': ''})
