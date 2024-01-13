@@ -404,10 +404,16 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         except FileNotFoundError:
             print(f"File not found for trait_type {trait_type}, value {value}: {image_path}")
 
-    # Composite the layers onto the final image
+    # Add Dubai asset if it is selected
+    if is_dubai_selected:
+        print(f"Adding Dubai asset: {club_assets['dubai']}")
+        add_asset(final_image, 'dubai', club_assets)
+
+    # Composite all the layers onto the final image
     for layer_type in ['Background', 'Fur', 'Eyes', 'Clothes', 'Earring', 'Hat', 'Mouth']:
         if layer_type in layers:
             final_image.alpha_composite(layers[layer_type], (0, 0))
+
 
     # Apply elite asset logic
     if is_elite_selected:
