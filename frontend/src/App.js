@@ -381,7 +381,7 @@ function App() {
                     <h3 className="dropdown-header">Club Assets</h3>
                     <select value={clubAsset} onChange={handleClubAssetChange} className="dropdown" disabled={!tokenId}>
                         <option value="">Select</option>
-                        <option value="dubai" disabled>Dubai Ape Yacht Club</option>
+                        <option value="dubai" disabled={clubAsset === 'dubai'}>Dubai Ape Yacht Club</option>
                         <option value="elite" disabled={!isEliteEligible}>Elite Apes HK</option>
                     </select>
                 </div>
