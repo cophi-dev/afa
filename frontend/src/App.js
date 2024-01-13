@@ -191,7 +191,7 @@ function App() {
         const newClubAsset = event.target.value;
         setClubAsset(newClubAsset);
     
-        if (newClubAsset === ('elite' || 'dubai')) {
+        if (newClubAsset === ('elite')) {
             setSecondAsset('');
             setThirdAsset('');
             setMouthAsset('');
@@ -203,6 +203,9 @@ function App() {
             setTimeout(() => {
                 fetchAsset(tokenId, '', '', '', '', '', '', newClubAsset);
             }, 0);
+        }
+        else {
+            fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, newClubAsset);
         }
     };
     

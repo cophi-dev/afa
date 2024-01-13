@@ -434,6 +434,15 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         print(f"Adding selected club asset: {club_asset_type}")
         add_asset(final_image, club_asset_type, club_assets)
 
+    if is_dubai_selected:
+        print(f"Adding Dubai asset: {club_assets['dubai']}")
+        add_asset(final_image, 'dubai', club_assets)
+        # Reapply the mouth asset if it was added earlier
+        if mouth_added:
+            print("Reapplying mouth asset after Dubai asset")
+            add_asset(final_image, mouth_asset_type, mouth_assets)
+
+
     # Add main asset if specified
     if asset_type in main_assets:
         print(f"Adding main asset: {asset_type}")
