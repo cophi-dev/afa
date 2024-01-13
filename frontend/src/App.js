@@ -350,7 +350,7 @@ function App() {
                         <option value="hex_light">Hex Light</option>
                         <option value="confetti">Confetti</option>
                         <option value="snow">Snow</option>
-                        <option value="selfie" disabled={isDubaiEligible}>Selfie Head</option>
+                        <option value="selfie" disabled={clubAsset === 'dubai'}>Selfie Head</option>
                         <option value="transparent">Transparent Background</option>
                         <option value="verified">Verified</option>
                     </select>
@@ -381,7 +381,7 @@ function App() {
                     <h3 className="dropdown-header">Club Assets</h3>
                     <select value={clubAsset} onChange={handleClubAssetChange} className="dropdown" disabled={!tokenId}>
                         <option value="">Select</option>
-                        <option value="dubai" disabled={clubAsset === 'dubai'}>Dubai Ape Yacht Club</option>
+                        <option value="dubai" disabled>Dubai Ape Yacht Club</option>
                         <option value="elite" disabled={!isEliteEligible}>Elite Apes HK</option>
                     </select>
                 </div>
