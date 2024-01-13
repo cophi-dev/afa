@@ -404,6 +404,10 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         except FileNotFoundError:
             print(f"File not found for trait_type {trait_type}, value {value}: {image_path}")
 
+    # Add club asset if it wasn't added and is selected
+    if club_asset_type in club_assets:
+        print(f"Adding selected club asset: {club_asset_type}")
+        add_asset(final_image, club_asset_type, club_assets)
     # Add Dubai asset if it is selected
     if is_dubai_selected:
         print(f"Adding Dubai asset: {club_assets['dubai']}")
@@ -439,10 +443,6 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         print(f"Adding selected hat asset: {hat_asset_type}")
         add_asset(final_image, hat_asset_type, hat_assets)
     
-    # Add club asset if it wasn't added and is selected
-    if club_asset_type in club_assets:
-        print(f"Adding selected club asset: {club_asset_type}")
-        add_asset(final_image, club_asset_type, club_assets)
 
 
     # Add main asset if specified
