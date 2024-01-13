@@ -203,6 +203,7 @@ function App() {
             }, 0);
         }
         else if (newClubAsset === ('dubai')) {
+            setSecondAsset('');
             setThirdAsset('');
             setMouthAsset('');
             setHatAsset('');
@@ -211,7 +212,7 @@ function App() {
             
             // Call fetchAsset with the current clubAsset state
             setTimeout(() => {
-                fetchAsset(tokenId, '', secondAsset, thirdAsset, mouthAsset, '', '', newClubAsset);
+                fetchAsset(tokenId, '', '', thirdAsset, mouthAsset, '', '', newClubAsset);
             }, 0);
         }
     };
