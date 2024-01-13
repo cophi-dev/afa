@@ -193,8 +193,6 @@ function App() {
     
         if (newClubAsset === ('elite')) {
             setSecondAsset('');
-            setThirdAsset('');
-            setMouthAsset('');
             setHatAsset('');
             setEyesAsset('');
             setSelectedAsset('');    
@@ -204,8 +202,17 @@ function App() {
                 fetchAsset(tokenId, '', '', '', '', '', '', newClubAsset);
             }, 0);
         }
-        else {
-            fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, newClubAsset);
+        else if (newClubAsset === ('dubai')) {
+            setThirdAsset('');
+            setMouthAsset('');
+            setHatAsset('');
+            setEyesAsset('');
+            setSelectedAsset('');    
+            
+            // Call fetchAsset with the current clubAsset state
+            setTimeout(() => {
+                fetchAsset(tokenId, '', secondAsset, thirdAsset, mouthAsset, '', '', newClubAsset);
+            }, 0);
         }
     };
     
