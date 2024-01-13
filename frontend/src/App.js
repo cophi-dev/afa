@@ -360,7 +360,7 @@ function App() {
                         <option value="banana">Banana Hand</option>
                         <option value="otherside">Otherside Bottle</option>
                         <option value="gm_espresso">GM Espresso</option>
-                        <option value="cheers">Cheers</option>
+                        <option value="cheers" disabled={clubAsset === 'dubai'}>Cheers</option>
                         <option value="peace">Peace</option>
                         <option value="apecoin_hands1">Apecoin Hands 1</option>
                         <option value="apecoin_hands2">Apecoin Hands </option>
