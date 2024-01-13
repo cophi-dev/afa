@@ -316,7 +316,7 @@ function App() {
             <div className="dropdown-container">
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Mouth</h3>
-                    <select value={mouthAsset} onChange={handleMouthAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}>
+                    <select value={mouthAsset} onChange={handleMouthAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset === 'elite'}>
                         <option value="">Select</option>
                         <option value="big_smile">Big Smile</option>
                         {/* <option value="tree">Christmas Tree</option> */}
@@ -335,7 +335,7 @@ function App() {
                 </div>
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Eyes</h3>
-                    <select value={eyesAsset} onChange={handleEyesAssetChange} className="dropdown" disabled={!tokenId || clubAsset}>
+                    <select value={eyesAsset} onChange={handleEyesAssetChange} className="dropdown" disabled={!tokenId || clubAsset === 'elite'}>
                         <option value="">Select</option>
                         <option value="btc_eyes">BTC Coin</option>
                         <option value="star_glasses">Star Glasses</option>
@@ -343,7 +343,7 @@ function App() {
                 </div>
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Extra</h3>
-                    <select value={thirdAsset} onChange={handleThirdAssetChange} className="dropdown" disabled={!tokenId || clubAsset}>
+                    <select value={thirdAsset} onChange={handleThirdAssetChange} className="dropdown" disabled={!tokenId || clubAsset === 'elite'}>
                         <option value="">Select</option>
                         <option value="hex_dark">Hex Dark</option>
                         <option value="hex_light">Hex Light</option>
@@ -359,7 +359,7 @@ function App() {
             <div className="dropdown-container">
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Hand</h3>
-                    <select value={selectedAsset} onChange={handleAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}>
+                    <select value={selectedAsset} onChange={handleAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset === 'elite'}>
                         <option value="">Select</option>
                         <option value="banana">Banana Hand</option>
                         <option value="otherside">Otherside Bottle</option>

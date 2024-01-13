@@ -208,6 +208,8 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     background_transparent = False
     head_added = False
     eyes_added = False
+    mouth_asset_path = None
+
 
     # Conditions for specific types of 'big_smile'
     has_black_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Black" for attr in attributes)
@@ -335,6 +337,14 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             print("Applying transparent background")
             image_path = additional_assets['transparent']
             background_transparent = True
+        elif trait_type == "Mouth":
+            if mouth_asset_type in mouth_assets:
+                # Use the selected mouth asset
+                mouth_asset_path = mouth_assets[mouth_asset_type]
+            else:
+                # Use the default mouth asset
+                mouth_asset_path = os.path.join(base_dir, 'Mouth', f"{value}.png")
+            # Don't add the mouth asset yet, just record its path
         elif trait_type == "Background" and third_asset_type == 'selfie':
             print("Applying transparent background")
             image_path = additional_assets['selfie']
@@ -352,6 +362,10 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             # If dubai asset is selected, use a black background
             print("Replacing the Hat for dubai asset")
             image_path = additional_assets['transparent']  # Use transparent as placeholder
+        elif trait_type == "Mouth" and club_asset_type == 'dubai':
+            # If dubai asset is selected, use a black background
+            print("Overlay mouth layer")
+            image_path = os.path.join(base_dir, 'Mouth', f"{value}.png")
         elif trait_type == "Background" and not background_transparent:
             image_path = get_image_file(trait_type, value)
         elif trait_type == "Background" and not background_transparent:
@@ -434,14 +448,19 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         print(f"Adding selected club asset: {club_asset_type}")
         add_asset(final_image, club_asset_type, club_assets)
 
-    if is_dubai_selected:
-        print(f"Adding Dubai asset: {club_assets['dubai']}")
-        add_asset(final_image, 'dubai', club_assets)
-        # Reapply the mouth asset if it was added earlier
-        if mouth_added:
-            print("Reapplying mouth asset after Dubai asset")
-            add_asset(final_image, mouth_asset_type, mouth_assets)
+    # Add club asset if it's selected
+    if club_asset_type in club_assets:
+        print(f"Adding selected club asset: {club_asset_type}")
+        add_asset(final_image, club_asset_type, club_assets)
 
+    # Reapply the mouth asset after Dubai asset if it's selected
+    if is_dubai_selected and mouth_asset_path:
+        print("Reapplying mouth asset after Dubai asset")
+        try:
+            with Image.open(mouth_asset_path).convert("RGBA") as mouth_image:
+                final_image.alpha_composite(mouth_image, (0, 0))
+        except FileNotFoundError:
+            print(f"File not found: {mouth_asset_path}")
 
     # Add main asset if specified
     if asset_type in main_assets:
