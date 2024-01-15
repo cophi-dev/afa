@@ -73,6 +73,7 @@ club_assets = {
 additional_assets = {
     'hex_dark': os.path.join(base_dir, 'memes', 'hex_dark.png'),
     'hex_light': os.path.join(base_dir, 'memes', 'hex_light.png'),
+    'small_ape': 'resize_to_small', 
     'snow': os.path.join(base_dir, 'memes', 'snow.png'),
     'confetti': os.path.join(base_dir, 'memes', 'confetti.png'),
     'verified': os.path.join(base_dir, 'memes', 'mask2.png'),
@@ -375,6 +376,14 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
                 # Fetch eyes from the regular eyes folder
                 image_path = os.path.join(base_dir, 'Eyes', f"{value}.png")
             eyes_added = True
+        elif third_asset_type == 'small_ape':
+            # Apply resizing and repositioning logic
+            resized_ape = final_image.resize((int(final_image.width * 0.3), int(final_image.height * 0.3)), Image.ANTIALIAS)
+            position_x = (final_image.width - resized_ape.width) // 2
+            position_y = final_image.height - resized_ape.height
+            new_canvas = Image.new("RGBA", final_image.size, (255, 255, 255, 0))
+            new_canvas.paste(resized_ape, (position_x, position_y), resized_ape)
+            final_image = new_canvas  # Update the final image to the new canvas
         elif trait_type == "Hat" and hat_asset_type in hat_assets and not hat_added:
             print(f"Replacing hat with hat asset: {hat_asset_type}")
             image_path = hat_assets[hat_asset_type]
