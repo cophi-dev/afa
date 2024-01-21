@@ -323,8 +323,9 @@ function App() {
                     <h3 className="dropdown-header">Hat</h3>
                     <select value={hatAsset} onChange={handleHatAssetChange} className="dropdown" disabled={!tokenId || clubAsset}>
                         <option value="">Select</option>
-                        <option value="glitter_cowboy_hat">Glitter Cowboy Hat</option>
                         <option value="pudgy_hat">Pudgy Penguins Hat</option>
+                        <option value="pudgy_hat2">Pudgy Penguins Hat 2</option>
+                        <option value="glitter_cowboy_hat">Glitter Cowboy Hat</option>
                         {/* <option value="christmas_hat">Christmas Hat</option>
                         <option value="christmas_hat2">Christmas Hat 2</option>
                         <option value="christmas_hat3">Christmas Hat 3</option> */}
