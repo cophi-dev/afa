@@ -56,6 +56,7 @@ mouth_assets = {
 hat_assets = {
     'pudgy_hat': os.path.join(base_dir, 'memes', 'pudgy_hat.png'),
     'pudgy_hat2': os.path.join(base_dir, 'memes', 'pudgy_hat2.png'),
+    'plunger': os.path.join(base_dir, 'memes', 'plunger.png'),
     'christmas_hat': os.path.join(base_dir, 'memes', 'christmas_hat.png'),
     'christmas_hat2': os.path.join(base_dir, 'memes', 'christmas_hat2.png'),
     'christmas_hat3': os.path.join(base_dir, 'memes', 'christmas_hat3.png'),
@@ -64,6 +65,7 @@ hat_assets = {
 
 eyes_assets = {
     'btc_eyes': os.path.join(base_dir, 'memes', 'btc_eyes.png'),
+    'dookey_eyes': os.path.join(base_dir, 'memes', 'dookey_eyes.png'),
     'star_glasses': os.path.join(base_dir, 'memes', 'star_glasses.png')
 }
 
@@ -73,6 +75,7 @@ club_assets = {
 }
 
 additional_assets = {
+    'unclogged': os.path.join(base_dir, 'memes', 'unclogged.png'),
     'hex_dark': os.path.join(base_dir, 'memes', 'hex_dark.png'),
     'hex_light': os.path.join(base_dir, 'memes', 'hex_light.png'),
     'small_ape': 'resize_to_small', 
