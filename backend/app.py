@@ -54,6 +54,7 @@ mouth_assets = {
 }
 
 hat_assets = {
+    'pudgy_hat': os.path.join(base_dir, 'memes', 'pudgy_hat.png'),
     'christmas_hat': os.path.join(base_dir, 'memes', 'christmas_hat.png'),
     'christmas_hat2': os.path.join(base_dir, 'memes', 'christmas_hat2.png'),
     'christmas_hat3': os.path.join(base_dir, 'memes', 'christmas_hat3.png'),
@@ -194,6 +195,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
 
     attributes = ape["metadata"]["attributes"]
     final_image = Image.new("RGBA", (1000, 1000), (255, 255, 255, 0))
+    
     layers = {}
 
     # Check if elite asset is selected
@@ -376,14 +378,6 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
                 # Fetch eyes from the regular eyes folder
                 image_path = os.path.join(base_dir, 'Eyes', f"{value}.png")
             eyes_added = True
-        elif third_asset_type == 'small_ape':
-            # Apply resizing and repositioning logic
-            resized_ape = final_image.resize((int(final_image.width * 0.3), int(final_image.height * 0.3)), Image.ANTIALIAS)
-            position_x = (final_image.width - resized_ape.width) // 2
-            position_y = final_image.height - resized_ape.height
-            new_canvas = Image.new("RGBA", final_image.size, (255, 255, 255, 0))
-            new_canvas.paste(resized_ape, (position_x, position_y), resized_ape)
-            final_image = new_canvas  # Update the final image to the new canvas
         elif trait_type == "Hat" and hat_asset_type in hat_assets and not hat_added:
             print(f"Replacing hat with hat asset: {hat_asset_type}")
             image_path = hat_assets[hat_asset_type]
@@ -476,6 +470,24 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
                 final_image.alpha_composite(crazy_left_eye, (0, 0))
         except FileNotFoundError:
             print(f"File not found for Crazy Left Eye: {crazy_left_eye_path}")
+
+     # Check if 'small_ape' is selected
+    if third_asset_type == 'small_ape':
+        # Resize logic for the ape image
+        scale_factor = 0.3  # Example scale factor
+        resized_width = int(final_image.width * scale_factor)
+        resized_height = int(final_image.height * scale_factor)
+        resized_ape = final_image.resize((resized_width, resized_height), Image.ANTIALIAS)
+
+        # Create a new canvas and place the resized ape in the center
+        final_image = Image.new("RGBA", (1000, 1000), (255, 255, 255, 0))
+        position_x = (final_image.width - resized_width) // 2
+        position_y = (final_image.height - resized_height)
+        for layer_type in ['Background']:
+            if layer_type in layers:
+                final_image.alpha_composite(layers[layer_type], (0, 0))
+        final_image.paste(resized_ape, (position_x, position_y), resized_ape)
+
 
     return final_image
     
