@@ -13,6 +13,7 @@ base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
 
 special_assets = {
     'cats_shirt': os.path.join(base_dir, 'memes', 'cats_shirt.png'),
+    'applied_primate_coat': os.path.join(base_dir, 'memes', 'applied_primate_coat.png'),
     'btc_hoodie': os.path.join(base_dir, 'memes', 'btc_hoodie.png'),
     'bape_coach': os.path.join(base_dir, 'memes', 'bape_coach.png'),
     'bape_shirt': os.path.join(base_dir, 'memes', 'bape_shirt.png'),
