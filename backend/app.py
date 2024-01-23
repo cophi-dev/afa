@@ -50,6 +50,7 @@ mouth_assets = {
     'diamond_smile': os.path.join(base_dir, 'memes', 'smile', 'diamond.png'),
     'gold_smile': os.path.join(base_dir, 'memes', 'smile', 'gold.png'),
     'unshaven_smile': os.path.join(base_dir, 'memes', 'smile', 'unshaven.png'),
+    'doodles_rainbow': os.path.join(base_dir, 'memes', 'doodles_rainbow.png'),
     'tree': os.path.join(base_dir, 'memes', 'tree.png'),
     'tree_unshaven': os.path.join(base_dir, 'memes', 'tree_unshaven.png')
     # Add more asset types here as needed
