@@ -334,6 +334,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     specific_tree = None
     if has_unshaven_mouth:
         specific_tree = 'tree_unshaven'
+    
     # else use the default 'big_smile'
 
     # Loop through attributes and compose image
@@ -399,11 +400,10 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             image_path = additional_assets['selfie']
             head_added = True
         elif trait_type == "Mouth" and not mouth_added:
-            mouth_added = True
             if mouth_asset_type == 'big_smile':
                 image_path = mouth_assets[specific_smile if specific_smile in mouth_assets else 'big_smile']
-            elif mouth_asset_type == 'tree':
-                image_path = mouth_assets[specific_tree if specific_tree in mouth_assets else 'tree']
+            elif mouth_asset_type == 'doodles_rainbow':
+                image_path = 'doodles_rainbow'
             else:
                 image_path = get_image_file(trait_type, value)
         else:

@@ -295,7 +295,7 @@ function App() {
                         <option value="">Select</option>
                         <option value="AFA">AFA</option>
                         <option value="cats_shirt">Cool Cats Shirt</option>
-                        {/*<option value="applied_primate_coat">Applied Primate Lab Coat</option>*/}
+                        <option value="applied_primate_coat">Applied Primate Lab Coat</option>
                         <option value="bape_coach">Bape Coach Jacket</option>
                         <option value="bape_hoodie_red">Bape Hoodie Red</option>
                         <option value="bape_hoodie_green">Bape Hoodie Green</option>
