@@ -7,6 +7,13 @@
   min-height: 90vh;
 }
 
+@font-face {
+  font-family: 'Megazoid';
+  src: url('/fontsMegazoid-Regular.ttf') format('ttf');
+  font-weight: normal;
+  font-style: normal;
+}
+
 body {
   margin: 0;
   color: var(--text-color, black); /* default to black if --text-color is not set */
@@ -75,6 +82,7 @@ body {
   font-size: 1.2em;
   color: var(--text-color, white);
   margin-bottom: 5px;
+  font-family: 'Megazoid'
 }
 
 
