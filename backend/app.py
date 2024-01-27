@@ -112,14 +112,14 @@ additional_assets = {
 
 # RGB values for each color name
 color_map = {
-    "Aquamarine": (107, 227, 186),
-    "Army Green": (112, 113, 61),
-    "Blue": (176, 227, 242),
-    "Gray": (204, 205, 206),
-    "New Punk Blue": (69, 102, 122),
-    "Orange": (226, 153, 70),
-    "Purple": (108, 94, 111),
-    "Yellow": (224, 223, 171)
+    "Aquamarine": (96, 204, 167, 0.8),
+    "Army Green": (100, 101, 54, 0.8),
+    "Blue": (158, 204, 217, 0.8),
+    "Gray": (183, 184, 185, 0.8),
+    "New Punk Blue": (62, 91, 109, 0.8),
+    "Orange": (203, 137, 63, 0.8),
+    "Purple": (97, 84, 99, 0.8),
+    "Yellow": (201, 200, 153, 0.8)
 }
 def get_image_file(trait_type, value):
     if value in special_assets:
@@ -403,7 +403,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             if mouth_asset_type == 'big_smile':
                 image_path = mouth_assets[specific_smile if specific_smile in mouth_assets else 'big_smile']
             elif mouth_asset_type == 'doodles_rainbow':
-                image_path = 'doodles_rainbow'
+                image_path = mouth_assets['doodles_rainbow']
             else:
                 image_path = get_image_file(trait_type, value)
         else:
@@ -430,9 +430,9 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         print(f"Adding Dubai asset: {club_assets['dubai']}")
         add_asset(final_image, 'dubai', club_assets)
     # Composite all the layers onto the final image
-    for layer_type in ['Mouth']:
-        if layer_type in layers:
-            final_image.alpha_composite(layers[layer_type], (0, 0))
+        for layer_type in ['Mouth']:
+            if layer_type in layers:
+                final_image.alpha_composite(layers[layer_type], (0, 0))
 
 
     # Apply elite asset logic
@@ -449,10 +449,6 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         add_asset(final_image, second_asset_type, special_assets)
 
 
-    # Add mouth asset if it wasn't added and is selected
-    if mouth_asset_type in mouth_assets and not mouth_added:
-        print(f"Adding selected mouth asset: {mouth_asset_type}")
-        add_asset(final_image, mouth_asset_type, mouth_assets)
     
     # Add hat asset if it wasn't added and is selected
     if hat_asset_type in hat_assets and not hat_added:
@@ -470,6 +466,11 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     if third_asset_type in additional_assets:
         print(f"Adding third asset: {third_asset_type}")
         add_asset(final_image, third_asset_type, additional_assets)
+
+    # Composite all the layers onto the final image
+    for layer_type in ['Mouth']:
+        if layer_type in layers:
+            final_image.alpha_composite(layers[layer_type], (0, 0))
 
     if has_crazy_eyes and (has_specific_hat or has_selected_specific_hat):
         crazy_left_eye_path = os.path.join(base_dir, "Special Cases/Eyes/Crazy Left Eye.png")
@@ -552,9 +553,9 @@ def get_background_color():
             ape = next((item for item in data["apes"] if str(item["id"]) == token_id), None)
             if ape:
                 background_color = next((attr['value'] for attr in ape["metadata"]["attributes"] if attr['trait_type'] == 'Background'), 'Default')
-                rgb = color_map.get(background_color, (0, 0, 0))
-                print(f"Background color RGB for token ID {token_id}: {rgb}")
-                return jsonify({'background_color': rgb})
+                rgba = color_map.get(background_color, (0, 0, 0, 1))
+                print(f"Background color RGB for token ID {token_id}: {rgba}")
+                return jsonify({'background_color': rgba})
             else:
                 raise ValueError("Ape not found")
     except Exception as e:

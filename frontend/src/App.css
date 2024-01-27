@@ -97,9 +97,9 @@ body {
   justify-content: center;
   align-items: center;
   background-color: #f0f0f0;
-  border-radius: 8px;
+  border-radius: 30px;
   overflow: hidden;
-  border: 1px solid var(--text-color, black);
+  border: 0px solid var(--text-color, black);
   margin-bottom: 20px;
   transition: opacity 2s ease-in-out;
 
