@@ -112,14 +112,14 @@ additional_assets = {
 
 # RGB values for each color name
 color_map = {
-    "Aquamarine": (96, 204, 167, 0.8),
-    "Army Green": (100, 101, 54, 0.8),
-    "Blue": (158, 204, 217, 0.8),
-    "Gray": (183, 184, 185, 0.8),
-    "New Punk Blue": (62, 91, 109, 0.8),
-    "Orange": (203, 137, 63, 0.8),
-    "Purple": (97, 84, 99, 0.8),
-    "Yellow": (201, 200, 153, 0.8)
+    "Aquamarine": (96, 204, 167, 0.4),
+    "Army Green": (100, 101, 54, 0.4),
+    "Blue": (158, 204, 217, 0.4),
+    "Gray": (183, 184, 185, 0.4),
+    "New Punk Blue": (62, 91, 109, 0.4),
+    "Orange": (203, 137, 63, 0.4),
+    "Purple": (97, 84, 99, 0.4),
+    "Yellow": (201, 200, 153, 0.4)
 }
 def get_image_file(trait_type, value):
     if value in special_assets:
