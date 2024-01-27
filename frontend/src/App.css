@@ -9,7 +9,7 @@
 
 @font-face {
   font-family: 'Megazoid';
-  src: url('/fonts/Megazoid-Regular.ttf') format('ttf');
+  src: url('/fonts/Megazoid-Regular.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }
@@ -51,13 +51,13 @@ body {
 
 .App-header {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: space-around;
   width: 80%;
   padding: 20px;
   box-sizing: border-box;
-  background-color: rgba(255, 255, 255, 0.8); /* Opaque background */
+  background-color: rgba(255, 255, 255, 0.4); /* Opaque background */
   border-radius: 10px;
   margin: 20px 0;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: adds a subtle shadow */
