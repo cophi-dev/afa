@@ -296,6 +296,7 @@ function App() {
                         <option value="AFA">AFA</option>
                         <option value="cats_shirt">Cool Cats Shirt</option>
                         <option value="singe_hoodie">Singe Hoodie</option>
+                        <option value="singe_hoodie_glow">Singe Hoodie Glow</option>
                         <option value="applied_primate_coat">Applied Primate Lab Coat</option>
                         <option value="bape_coach">Bape Coach Jacket</option>
                         <option value="bape_hoodie_red">Bape Hoodie Red</option>
