@@ -110,7 +110,23 @@ additional_assets = {
     'head_trippy': os.path.join(base_dir, 'Heads', 'head_trippy.png'),
     'head_white': os.path.join(base_dir, 'Heads', 'head_white.png'),
     'head_zombie': os.path.join(base_dir, 'Heads', 'head_zombie.png'),
+    'hoodie_black': os.path.join(base_dir, 'Hoodie_Fur', 'Black.png'),
     'hoodie_blue': os.path.join(base_dir, 'Hoodie_Fur', 'Blue.png'),
+    'hoodie_brown': os.path.join(base_dir, 'Hoodie_Fur', 'Brown.png'),
+    'hoodie_cheetah': os.path.join(base_dir, 'Hoodie_Fur', 'Cheetah.png'),
+    'hoodie_cream': os.path.join(base_dir, 'Hoodie_Fur', 'Cream.png'),
+    'hoodie_dark_brown': os.path.join(base_dir, 'Hoodie_Fur', 'Dark Brown.png'),
+    'hoodie_dmt': os.path.join(base_dir, 'Hoodie_Fur', 'Dmt.png'),
+    'hoodie_golden_brown': os.path.join(base_dir, 'Hoodie_Fur', 'Golden Brown.png'),
+    'hoodie_gray': os.path.join(base_dir, 'Hoodie_Fur', 'Gray.png'),
+    'hoodie_noise': os.path.join(base_dir, 'Hoodie_Fur', 'Noise.png'),
+    'hoodie_pink': os.path.join(base_dir, 'Hoodie_Fur', 'Pink.png'),
+    'hoodie_red': os.path.join(base_dir, 'Hoodie_Fur', 'Red.png'),
+    'hoodie_solid_gold': os.path.join(base_dir, 'Hoodie_Fur', 'Solid Gold.png'),
+    'hoodie_tan': os.path.join(base_dir, 'Hoodie_Fur', 'Tan.png'),
+    'hoodie_trippy': os.path.join(base_dir, 'Hoodie_Fur', 'Trippy.png'),
+    'hoodie_white': os.path.join(base_dir, 'Hoodie_Fur', 'White.png'),
+    'hoodie_zombie': os.path.join(base_dir, 'Hoodie_Fur', 'Zombie.png'),
     'background_glow': os.path.join(base_dir, 'memes', 'background_glow.png')
     # Add more assets as needed
 }
@@ -299,43 +315,61 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     specific_head = None
     if has_black_fur:
         specific_head = 'head_black'
+        hoodie_head = 'hoodie_black'
     elif has_blue_fur:
         specific_head = 'head_blue',
         hoodie_head = 'hoodie_blue'
     elif has_brown_fur:
         specific_head = 'head_brown'
+        hoodie_head = 'hoodie_brown'
     elif has_cheetah_fur:
         specific_head = 'head_cheetah'
+        hoodie_head = 'hoodie_brown'
     elif has_cream_fur:
         specific_head = 'head_cream'
+        hoodie_head = 'hoodie_cream'
     elif has_dark_brown_fur:
         specific_head = 'head_dark_brown'
+        hoodie_head = 'hoodie_dark_brown'
     elif has_death_bot_fur:
         specific_head = 'head_death_bot'
+        hoodie_head = 'hoodie_death_bot'
     elif has_dmt_fur:
         specific_head = 'head_dmt'
+        hoodie_head = 'hoodie_dmt'
     elif has_golden_brown_fur:
         specific_head = 'head_golden_brown'
+        hoodie_head = 'hoodie_golden_brown'
     elif has_gray_fur:
         specific_head = 'head_gray'
+        hoodie_head = 'hoodie_gray'
     elif has_noise_fur:
         specific_head = 'head_noise'
+        hoodie_head = 'hoodie_noise'
     elif has_pink_fur:
         specific_head = 'head_pink'
+        hoodie_head = 'hoodie_pink'
     elif has_red_fur:
         specific_head = 'head_red'
+        hoodie_head = 'hoodie_red'
     elif has_robot_fur:
         specific_head = 'head_robot'
+        hoodie_head = 'hoodie_robot'
     elif has_solid_gold_fur:
         specific_head = 'head_solid_gold'
+        hoodie_head = 'hoodie_solid_gold'
     elif has_tan_fur:
         specific_head = 'head_tan'
+        hoodie_head = 'hoodie_tan'
     elif has_trippy_fur:
         specific_head = 'head_trippy'
+        hoodie_head = 'hoodie_trippy'
     elif has_white_fur:
         specific_head = 'head_white'
+        hoodie_head = 'hoodie_white'
     elif has_zombie_fur:
         specific_head = 'head_zombie'
+        hoodie_head = 'hoodie_zombie'
 
 
     specific_tree = None
@@ -363,6 +397,8 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             image_path = additional_assets[specific_head if specific_head in additional_assets else 'transparent']
             head_added = True
         elif trait_type == "Fur" and second_asset_type == 'singe_hoodie':
+            image_path = additional_assets[hoodie_head if hoodie_head in additional_assets else 'transparent']
+        elif trait_type == "Fur" and second_asset_type == 'singe_hoodie_glow':
             image_path = additional_assets[hoodie_head if hoodie_head in additional_assets else 'transparent']
         elif trait_type == "Background" and second_asset_type == 'singe_hoodie_glow':
             image_path = additional_assets['background_glow']
