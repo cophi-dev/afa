@@ -24,7 +24,8 @@ special_assets = {
     'adidas_yellow': os.path.join(base_dir, 'memes', 'adidas_yellow.png'),
     'sweater': os.path.join(base_dir, 'memes', 'sweater.png'),
     'blazer': os.path.join(base_dir, 'memes', 'blazer.png'),
-    'naked': os.path.join(base_dir, '_blank.png')
+    'naked': os.path.join(base_dir, '_blank.png'),
+    'singe_hoodie': os.path.join(base_dir, 'memes', 'singe_hoodie.png')
 }
 
 main_assets = {
@@ -107,21 +108,23 @@ additional_assets = {
     'head_tan': os.path.join(base_dir, 'Heads', 'head_tan.png'),
     'head_trippy': os.path.join(base_dir, 'Heads', 'head_trippy.png'),
     'head_white': os.path.join(base_dir, 'Heads', 'head_white.png'),
-    'head_zombie': os.path.join(base_dir, 'Heads', 'head_zombie.png')
+    'head_zombie': os.path.join(base_dir, 'Heads', 'head_zombie.png'),
+    'hoodie_blue': os.path.join(base_dir, 'Hoodie_Fur', 'Blue.png')
     # Add more assets as needed
 }
 
 # RGB values for each color name
 color_map = {
-    "Aquamarine": (96, 204, 167, 0.4),
-    "Army Green": (100, 101, 54, 0.4),
-    "Blue": (158, 204, 217, 0.4),
-    "Gray": (183, 184, 185, 0.4),
-    "New Punk Blue": (62, 91, 109, 0.4),
-    "Orange": (203, 137, 63, 0.4),
-    "Purple": (97, 84, 99, 0.4),
-    "Yellow": (201, 200, 153, 0.4)
+    "Aquamarine": (86, 183, 150, 0.4),
+    "Army Green": (90, 90, 48, 0.4),
+    "Blue": (142, 183, 195, 0.4),
+    "Gray": (164, 165, 166, 0.4),
+    "New Punk Blue": (55, 81, 98, 0.4),
+    "Orange": (182, 123, 56, 0.4),
+    "Purple": (87, 75, 89, 0.4),
+    "Yellow": (180, 180, 137, 0.4)
 }
+
 def get_image_file(trait_type, value):
     if value in special_assets:
         path = special_assets[value]
@@ -295,7 +298,8 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     if has_black_fur:
         specific_head = 'head_black'
     elif has_blue_fur:
-        specific_head = 'head_blue'
+        specific_head = 'head_blue',
+        hoodie_head = 'hoodie_blue'
     elif has_brown_fur:
         specific_head = 'head_brown'
     elif has_cheetah_fur:
@@ -356,6 +360,8 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             print("Applying Head")
             image_path = additional_assets[specific_head if specific_head in additional_assets else 'transparent']
             head_added = True
+        elif trait_type == "Fur" and second_asset_type == 'singe_hoodie':
+            image_path = additional_assets[hoodie_head if hoodie_head in additional_assets else 'transparent']
         elif trait_type == "Background" and club_asset_type == 'elite':
             # If elite asset is selected, use a black background
             print("Applying black background for elite asset")
