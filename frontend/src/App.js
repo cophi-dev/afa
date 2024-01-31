@@ -340,6 +340,7 @@ function App() {
                     <h3 className="dropdown-header">Eyes</h3>
                     <select value={eyesAsset} onChange={handleEyesAssetChange} className="dropdown" disabled={!tokenId || clubAsset === 'elite'}>
                         <option value="">Select</option>
+                        <option value="vision_pro">Vision Pro</option>
                         <option value="dookey_eyes">Dookey Dash</option>
                         <option value="btc_eyes">BTC Coin</option>
                         <option value="star_glasses">Star Glasses</option>

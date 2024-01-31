@@ -70,7 +70,8 @@ hat_assets = {
 eyes_assets = {
     'btc_eyes': os.path.join(base_dir, 'memes', 'btc_eyes.png'),
     'dookey_eyes': os.path.join(base_dir, 'memes', 'dookey_eyes.png'),
-    'star_glasses': os.path.join(base_dir, 'memes', 'star_glasses.png')
+    'star_glasses': os.path.join(base_dir, 'memes', 'star_glasses.png'),
+    'vision_pro': os.path.join(base_dir, 'memes', 'vision_pro.png')
 }
 
 club_assets = {
