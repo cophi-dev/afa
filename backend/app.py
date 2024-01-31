@@ -25,7 +25,8 @@ special_assets = {
     'sweater': os.path.join(base_dir, 'memes', 'sweater.png'),
     'blazer': os.path.join(base_dir, 'memes', 'blazer.png'),
     'naked': os.path.join(base_dir, '_blank.png'),
-    'singe_hoodie': os.path.join(base_dir, 'memes', 'singe_hoodie.png')
+    'singe_hoodie': os.path.join(base_dir, 'memes', 'singe_hoodie.png'),
+    'singe_hoodie_glow': os.path.join(base_dir, 'memes', 'singe_hoodie_glow.png')
 }
 
 main_assets = {
@@ -109,7 +110,8 @@ additional_assets = {
     'head_trippy': os.path.join(base_dir, 'Heads', 'head_trippy.png'),
     'head_white': os.path.join(base_dir, 'Heads', 'head_white.png'),
     'head_zombie': os.path.join(base_dir, 'Heads', 'head_zombie.png'),
-    'hoodie_blue': os.path.join(base_dir, 'Hoodie_Fur', 'Blue.png')
+    'hoodie_blue': os.path.join(base_dir, 'Hoodie_Fur', 'Blue.png'),
+    'background_glow': os.path.join(base_dir, 'memes', 'background_glow.png')
     # Add more assets as needed
 }
 
@@ -362,6 +364,8 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             head_added = True
         elif trait_type == "Fur" and second_asset_type == 'singe_hoodie':
             image_path = additional_assets[hoodie_head if hoodie_head in additional_assets else 'transparent']
+        elif trait_type == "Background" and second_asset_type == 'singe_hoodie_glow':
+            image_path = additional_assets['background_glow']
         elif trait_type == "Background" and club_asset_type == 'elite':
             # If elite asset is selected, use a black background
             print("Applying black background for elite asset")
