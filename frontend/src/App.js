@@ -326,7 +326,7 @@ function App() {
 
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Hat</h3>
-                    <select value={hatAsset} onChange={handleHatAssetChange} className="dropdown" disabled={!tokenId || clubAsset}>
+                    <select value={hatAsset} onChange={handleHatAssetChange} className="dropdown" disabled={!tokenId || clubAsset || secondAsset ==  'singe_hoodie_glow' ||  secondAsset ==  'singe_hoodie'}>
                         <option value="">Select</option>
                         <option value="cats_hat">Cool Cats</option>
                         <option value="plunger">Dookey Dash</option>
@@ -355,7 +355,7 @@ function App() {
                         <option value="unclogged">Unclogged</option>
                         <option value="hex_dark">Hex Dark</option>
                         <option value="hex_light">Hex Light</option>
-                        <option value="small_ape" disabled={second_asset_type ==  'singe_hoodie_glow'}>Tiny AFA</option>
+                        <option value="small_ape" disabled={secondAsset ==  'singe_hoodie_glow'}>Tiny AFA</option>
                         <option value="confetti">Confetti</option>
                         <option value="snow">Snow</option>
                         <option value="selfie" disabled={clubAsset === 'dubai'}>Selfie Head</option>
