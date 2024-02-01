@@ -166,9 +166,8 @@ function App() {
     const handleSecondAssetChange = event => {
         const newSecondAsset = event.target.value;
         setSecondAsset(newSecondAsset);
-        fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
-
-        if (newSecondAsset === ('singe_hoodie' || 'singe_hoodie_glow')) {
+        
+        if (newSecondAsset === ('singe_hoodie')) {
             setHatAsset('');   
             
             // Call fetchAsset with the current clubAsset state
@@ -176,6 +175,15 @@ function App() {
                 fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset, mouthAsset, '', eyesAsset, clubAsset);
             }, 0);
         }
+        else if (newSecondAsset === ('singe_hoodie_glow')) {
+            setHatAsset('');   
+            
+            // Call fetchAsset with the current clubAsset state
+            setTimeout(() => {
+                fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset, mouthAsset, '', eyesAsset, clubAsset);
+            }, 0);
+        }
+        else fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
     };
     
     const handleMouthAssetChange = event => {
