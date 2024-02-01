@@ -26,7 +26,9 @@ special_assets = {
     'blazer': os.path.join(base_dir, 'memes', 'blazer.png'),
     'naked': os.path.join(base_dir, '_blank.png'),
     'singe_hoodie': os.path.join(base_dir, 'memes', 'singe_hoodie.png'),
-    'singe_hoodie_glow': os.path.join(base_dir, 'memes', 'singe_hoodie_glow.png')
+    'singe_hoodie_glow': os.path.join(base_dir, 'memes', 'singe_hoodie_glow.png'),
+    'singe_hoodie_robot': os.path.join(base_dir, 'memes', 'singe_hoodie_robot.png'),
+    'singe_hoodie_glow_robot': os.path.join(base_dir, 'memes', 'singe_hoodie_glow_robot.png')
 }
 
 main_assets = {
@@ -127,6 +129,8 @@ additional_assets = {
     'hoodie_trippy': os.path.join(base_dir, 'Hoodie_Fur', 'Trippy.png'),
     'hoodie_white': os.path.join(base_dir, 'Hoodie_Fur', 'White.png'),
     'hoodie_zombie': os.path.join(base_dir, 'Hoodie_Fur', 'Zombie.png'),
+    'hoodie_robot': os.path.join(base_dir, 'Hoodie_Fur', 'Robot.png'),
+    'hoodie_death_bot': os.path.join(base_dir, 'Hoodie_Fur', 'Death Bot.png'),
     'background_glow': os.path.join(base_dir, 'memes', 'background_glow.png')
     # Add more assets as needed
 }
@@ -262,7 +266,8 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     has_trippy_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Trippy" for attr in attributes)
     has_white_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "White" for attr in attributes)
     has_zombie_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Zombie" for attr in attributes)
-    
+    has_blue_beams = any(attr["trait_type"] == "Eyes" and attr["value"] == "Blue Beams" for attr in attributes)
+        
     has_multicolor_smile = any(attr["trait_type"] == "Mouth" and attr["value"] == "Grin Multicolored" for attr in attributes)
     has_diamond_smile = any(attr["trait_type"] == "Mouth" and attr["value"] == "Grin Diamond Grill" for attr in attributes)
     has_gold_smile = any(attr["trait_type"] == "Mouth" and attr["value"] == "Grin Gold Grill" for attr in attributes)
@@ -400,6 +405,14 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             image_path = additional_assets[hoodie_head if hoodie_head in additional_assets else 'transparent']
         elif trait_type == "Fur" and second_asset_type == 'singe_hoodie_glow':
             image_path = additional_assets[hoodie_head if hoodie_head in additional_assets else 'transparent']
+        elif trait_type == "Hat" and second_asset_type == 'singe_hoodie':
+            image_path = additional_assets['transparent']
+        elif trait_type == "Hat" and second_asset_type == 'singe_hoodie_glow':
+            image_path = additional_assets['transparent']
+        elif trait_type == "Earring" and second_asset_type == 'singe_hoodie':
+            image_path = additional_assets['transparent']
+        elif trait_type == "Earring" and second_asset_type == 'singe_hoodie_glow':
+            image_path = additional_assets['transparent']
         elif trait_type == "Background" and second_asset_type == 'singe_hoodie_glow':
             image_path = additional_assets['background_glow']
         elif trait_type == "Background" and club_asset_type == 'elite':
@@ -504,6 +517,44 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     
 
 
+    if has_crazy_eyes and (has_specific_hat or has_selected_specific_hat):
+        crazy_left_eye_path = os.path.join(base_dir, "Special Cases/Eyes/Crazy Left Eye.png")
+        try:
+            with Image.open(crazy_left_eye_path).convert("RGBA") as crazy_left_eye:
+                final_image.alpha_composite(crazy_left_eye, (0, 0))
+        except FileNotFoundError:
+            print(f"File not found for Crazy Left Eye: {crazy_left_eye_path}")
+   
+    
+    
+    if (has_robot_fur or has_death_bot_fur) and second_asset_type ==  'singe_hoodie':
+        hoodie_path = special_assets['singe_hoodie_robot']
+        try:
+            with Image.open(hoodie_path).convert("RGBA") as hoodie:
+                final_image.alpha_composite(hoodie, (0, 0))
+        except FileNotFoundError:
+            print(f"File not found for Crazy Left Eye: {hoodie_path}")
+    if (has_robot_fur or has_death_bot_fur) and second_asset_type ==  'singe_hoodie_glow':
+        hoodie_glow_path = special_assets['singe_hoodie_glow_robot']
+        try:
+            with Image.open(hoodie_glow_path).convert("RGBA") as hoodie:
+                final_image.alpha_composite(hoodie, (0, 0))
+        except FileNotFoundError:
+            print(f"File not found for Crazy Left Eye: {hoodie_path}")
+
+    if has_blue_beams:
+        blue_beams_path = os.path.join(base_dir, "Special Cases/Eyes/Blue Beams.png")
+        try:
+            with Image.open(blue_beams_path).convert("RGBA") as blue_beams:
+                final_image.alpha_composite(blue_beams, (0, 0))
+        except FileNotFoundError:
+            print(f"File not found for Blue Beams: {blue_beams_path}")
+
+    # Composite all the layers onto the final image
+    for layer_type in ['Mouth']:
+        if layer_type in layers:
+            final_image.alpha_composite(layers[layer_type], (0, 0))
+
     # Add main asset if specified
     if asset_type in main_assets:
         print(f"Adding main asset: {asset_type}")
@@ -514,18 +565,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         print(f"Adding third asset: {third_asset_type}")
         add_asset(final_image, third_asset_type, additional_assets)
 
-    # Composite all the layers onto the final image
-    for layer_type in ['Mouth']:
-        if layer_type in layers:
-            final_image.alpha_composite(layers[layer_type], (0, 0))
-
-    if has_crazy_eyes and (has_specific_hat or has_selected_specific_hat):
-        crazy_left_eye_path = os.path.join(base_dir, "Special Cases/Eyes/Crazy Left Eye.png")
-        try:
-            with Image.open(crazy_left_eye_path).convert("RGBA") as crazy_left_eye:
-                final_image.alpha_composite(crazy_left_eye, (0, 0))
-        except FileNotFoundError:
-            print(f"File not found for Crazy Left Eye: {crazy_left_eye_path}")
+  
 
      # Check if 'small_ape' is selected
     if third_asset_type == 'small_ape':
