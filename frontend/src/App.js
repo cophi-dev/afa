@@ -390,6 +390,7 @@ function App() {
                         <option value="banana">Banana Hand</option>
                         <option value="otherside">Otherside Bottle</option>
                         <option value="gm_espresso">GM Espresso</option>
+                        <option value="moon_coffee">Moon Coffee Company</option>
                         <option value="cheers" disabled={clubAsset === 'dubai'}>Cheers</option>
                         <option value="peace">Peace</option>
                         <option value="apecoin_hands1">Apecoin Hands 1</option>

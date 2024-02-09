@@ -33,6 +33,7 @@ special_assets = {
 
 main_assets = {
     'gm_espresso': os.path.join(base_dir, 'memes', 'gm_espresso.png'),
+    'moon_coffee': os.path.join(base_dir, 'memes', 'moon_coffee.png'),
     'banana': os.path.join(base_dir, 'memes', 'banana_hand.png'),
     'otherside': os.path.join(base_dir, 'memes', 'otherside.png'),
     'cheers': os.path.join(base_dir, 'memes', 'cheers.png'),
@@ -481,26 +482,10 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         if layer_type in layers:
             final_image.alpha_composite(layers[layer_type], (0, 0))
 
-    # Add club asset if it wasn't added and is selected
-    if club_asset_type in club_assets:
-        print(f"Adding selected club asset: {club_asset_type}")
-        add_asset(final_image, club_asset_type, club_assets)
-    # Add Dubai asset if it is selected
-    if is_dubai_selected:
-        print(f"Adding Dubai asset: {club_assets['dubai']}")
-        add_asset(final_image, 'dubai', club_assets)
-    # Composite all the layers onto the final image
-        for layer_type in ['Mouth']:
-            if layer_type in layers:
-                final_image.alpha_composite(layers[layer_type], (0, 0))
+ 
 
 
-    # Apply elite asset logic
-    if is_elite_selected:
-        # Resize to 70% and set black background
-        resized_ape = final_image.resize((int(1000 * 0.7), int(1000 * 0.7)), Image.ANTIALIAS)
-        final_image = Image.new("RGBA", (1000, 1000), (0, 0, 0, 255))
-        final_image.paste(resized_ape, (int(1000 * 0.15), int(1000 * 0.15)), resized_ape)
+   
 
 
     # Add clothes asset if it wasn't added and is selected
@@ -554,6 +539,26 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     for layer_type in ['Mouth']:
         if layer_type in layers:
             final_image.alpha_composite(layers[layer_type], (0, 0))
+
+    # Apply elite asset logic
+    if is_elite_selected:
+        # Resize to 70% and set black background
+        resized_ape = final_image.resize((int(1000 * 0.7), int(1000 * 0.7)), Image.ANTIALIAS)
+        final_image = Image.new("RGBA", (1000, 1000), (0, 0, 0, 255))
+        final_image.paste(resized_ape, (int(1000 * 0.15), int(1000 * 0.15)), resized_ape)
+
+    # Add club asset if it wasn't added and is selected
+    if club_asset_type in club_assets:
+        print(f"Adding selected club asset: {club_asset_type}")
+        add_asset(final_image, club_asset_type, club_assets)
+    # Add Dubai asset if it is selected
+    if is_dubai_selected:
+        print(f"Adding Dubai asset: {club_assets['dubai']}")
+        add_asset(final_image, 'dubai', club_assets)
+    # Composite all the layers onto the final image
+        for layer_type in ['Mouth']:
+            if layer_type in layers:
+                final_image.alpha_composite(layers[layer_type], (0, 0))
 
     # Add main asset if specified
     if asset_type in main_assets:
