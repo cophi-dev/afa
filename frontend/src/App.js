@@ -311,6 +311,8 @@ function App() {
                     <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}>
                         <option value="">Select</option>
                         <option value="AFA">AFA</option>
+                        <option value="49ers">Super Bowl 49ers</option>
+                        <option value="chiefs">Super Bowl Chiefs</option>
                         <option value="cats_shirt">Cool Cats Shirt</option>
                         <option value="singe_hoodie">Singe Hoodie</option>
                         <option value="singe_hoodie_glow">Singe Hoodie Glow</option>
