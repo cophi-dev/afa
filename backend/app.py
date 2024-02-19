@@ -13,7 +13,7 @@ base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
 
 special_assets = {
     'cats_shirt': os.path.join(base_dir, 'memes', 'cats_shirt.png'),
-    '49er': os.path.join(base_dir, 'memes', '49ers.png'),
+    '49ers': os.path.join(base_dir, 'memes', '49ers.png'),
     'chiefs': os.path.join(base_dir, 'memes', 'chiefs.png'),
     'applied_primate_coat': os.path.join(base_dir, 'memes', 'applied_primate_coat.png'),
     'btc_hoodie': os.path.join(base_dir, 'memes', 'btc_hoodie.png'),
@@ -36,6 +36,7 @@ special_assets = {
 main_assets = {
     'gm_espresso': os.path.join(base_dir, 'memes', 'gm_espresso.png'),
     'moon_coffee': os.path.join(base_dir, 'memes', 'moon_coffee.png'),
+    'clubhouse': os.path.join(base_dir, 'memes', 'clubhouse.png'),
     'banana': os.path.join(base_dir, 'memes', 'banana_hand.png'),
     'otherside': os.path.join(base_dir, 'memes', 'otherside.png'),
     'cheers': os.path.join(base_dir, 'memes', 'cheers.png'),

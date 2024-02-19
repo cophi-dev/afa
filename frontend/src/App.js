@@ -311,23 +311,23 @@ function App() {
                     <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}>
                         <option value="">Select</option>
                         <option value="AFA">AFA</option>
-                        <option value="49ers">Super Bowl 49ers</option>
-                        <option value="chiefs">Super Bowl Chiefs</option>
-                        <option value="cats_shirt">Cool Cats Shirt</option>
-                        <option value="singe_hoodie">Singe Hoodie</option>
-                        <option value="singe_hoodie_glow">Singe Hoodie Glow</option>
-                        <option value="applied_primate_coat">Applied Primate Lab Coat</option>
+                        <option value="naked">No Clothes</option>
                         <option value="bape_coach">Bape Coach Jacket</option>
                         <option value="bape_hoodie_red">Bape Hoodie Red</option>
                         <option value="bape_hoodie_green">Bape Hoodie Green</option>
                         <option value="bape_shirt">Baby Milo Shirt</option>
+                        <option value="cats_shirt">Cool Cats Shirt</option>
+                        <option value="singe_hoodie">Singe Hoodie</option>
+                        <option value="singe_hoodie_glow">Singe Hoodie Glow</option>
+                        <option value="applied_primate_coat">Applied Primate Lab Coat</option>
                         <option value="adidas_hoodie">Adidas Hoodie</option>
                         <option value="adidas_yellow">Adidas Track</option>
                         <option value="btc_hoodie">BTC Hoodie</option>
                         <option value="jacket">Jacket</option>
                         {/* <option value="sweater">Christmas sweater</option> */}
                         <option value="blazer">Blazer</option>
-                        <option value="naked">No Clothes</option>
+                        <option value="49ers">Super Bowl 49ers</option>
+                        <option value="chiefs">Super Bowl Chiefs</option>
                     </select>
                 </div>
             </div>
@@ -389,12 +389,13 @@ function App() {
                     <h3 className="dropdown-header">Hand</h3>
                     <select value={selectedAsset} onChange={handleAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset === 'elite'}>
                         <option value="">Select</option>
+                        <option value="gm_espresso">GM Espresso</option>
+                        <option value="peace">Peace</option>
+                        <option value="clubhouse">Clubhouse Sketch</option>
                         <option value="banana">Banana Hand</option>
                         <option value="otherside">Otherside Bottle</option>
-                        <option value="gm_espresso">GM Espresso</option>
                         <option value="moon_coffee">Moon Coffee Company</option>
                         <option value="cheers" disabled={clubAsset === 'dubai'}>Cheers</option>
-                        <option value="peace">Peace</option>
                         <option value="apecoin_hands1">Apecoin Hands 1</option>
                         <option value="apecoin_hands2">Apecoin Hands </option>
                         <option value="candle">Candle</option>
