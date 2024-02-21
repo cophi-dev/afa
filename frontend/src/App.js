@@ -311,6 +311,7 @@ function App() {
                     <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}>
                         <option value="">Select</option>
                         <option value="AFA">AFA</option>
+                        <option value="french_stripes">French Stripes</option>
                         <option value="naked">No Clothes</option>
                         <option value="bape_coach">Bape Coach Jacket</option>
                         <option value="bape_hoodie_red">Bape Hoodie Red</option>
@@ -347,6 +348,7 @@ function App() {
                     <h3 className="dropdown-header">Hat</h3>
                     <select value={hatAsset} onChange={handleHatAssetChange} className="dropdown" disabled={!tokenId || clubAsset || secondAsset ==  'singe_hoodie_glow' ||  secondAsset ==  'singe_hoodie'}>
                         <option value="">Select</option>
+                        <option value="beret">Béret</option>
                         <option value="cats_hat">Cool Cats</option>
                         <option value="plunger">Dookey Dash</option>
                         <option value="pudgy_hat">Pudgy Penguins Hat</option>
@@ -389,6 +391,7 @@ function App() {
                     <h3 className="dropdown-header">Hand</h3>
                     <select value={selectedAsset} onChange={handleAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset === 'elite'}>
                         <option value="">Select</option>
+                        <option value="baguette">Baguette</option>
                         <option value="gm_espresso">GM Espresso</option>
                         <option value="peace">Peace</option>
                         <option value="clubhouse">Clubhouse Sketch</option>

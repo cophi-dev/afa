@@ -12,6 +12,7 @@ CORS(app, resources={r"/api/*": {"origins": ["https://afa-editor.vercel.app", "h
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
 
 special_assets = {
+    'french_stripes': os.path.join(base_dir, 'memes', 'french_stripes.png'),
     'cats_shirt': os.path.join(base_dir, 'memes', 'cats_shirt.png'),
     '49ers': os.path.join(base_dir, 'memes', '49ers.png'),
     'chiefs': os.path.join(base_dir, 'memes', 'chiefs.png'),
@@ -35,6 +36,7 @@ special_assets = {
 
 main_assets = {
     'gm_espresso': os.path.join(base_dir, 'memes', 'gm_espresso.png'),
+    'baguette': os.path.join(base_dir, 'memes', 'baguette.png'),
     'moon_coffee': os.path.join(base_dir, 'memes', 'moon_coffee.png'),
     'clubhouse': os.path.join(base_dir, 'memes', 'clubhouse.png'),
     'banana': os.path.join(base_dir, 'memes', 'banana_hand.png'),
@@ -66,6 +68,7 @@ mouth_assets = {
 
 hat_assets = {
     'cats_hat': os.path.join(base_dir, 'memes', 'cats_hat.png'),
+    'beret': os.path.join(base_dir, 'memes', 'beret.png'),
     'pudgy_hat': os.path.join(base_dir, 'memes', 'pudgy_hat.png'),
     'pudgy_hat2': os.path.join(base_dir, 'memes', 'pudgy_hat2.png'),
     'plunger': os.path.join(base_dir, 'memes', 'plunger.png'),
