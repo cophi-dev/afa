@@ -95,7 +95,8 @@ club_assets = {
 
 additional_assets = {
     'unclogged': os.path.join(base_dir, 'memes', 'unclogged.png'),
-    'magic_eden': os.path.join(base_dir, 'memes', 'magic_eden_bg.png'),
+    'magic_eden_front': os.path.join(base_dir, 'memes', 'magic_eden_front.png'),
+    'magic_eden_bg': os.path.join(base_dir, 'memes', 'magic_eden_bg.png'),
     'hex_dark': os.path.join(base_dir, 'memes', 'hex_dark.png'),
     'hex_light': os.path.join(base_dir, 'memes', 'hex_light.png'),
     'small_ape': 'resize_to_small', 
@@ -407,7 +408,6 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         elif trait_type == "Background" and third_asset_type == 'selfie':
             print("Applying transparent background")
             image_path = additional_assets['selfie']
-            head_added = True
         elif trait_type == "Fur" and third_asset_type == 'selfie':
             print("Applying Head")
             image_path = additional_assets[specific_head if specific_head in additional_assets else 'transparent']
@@ -426,8 +426,8 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             image_path = additional_assets['transparent']
         elif trait_type == "Background" and second_asset_type == 'singe_hoodie_glow':
             image_path = additional_assets['background_glow']
-        elif trait_type == "Background" and third_asset_type == 'magic_eden':
-            image_path = additional_assets['magic_eden']
+        elif third_asset_type == 'magic_eden':
+            image_path = additional_assets['magic_eden_front']
         elif trait_type == "Background" and club_asset_type == 'elite':
             # If elite asset is selected, use a black background
             print("Applying black background for elite asset")
