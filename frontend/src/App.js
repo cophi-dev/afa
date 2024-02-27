@@ -310,14 +310,14 @@ function App() {
                     <h3 className="dropdown-header">Outfit</h3>
                     <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}>
                         <option value="">Select</option>
-                        <option value="AFA">AFA</option>
+                        <option value="magic_eden">Magic Eden</option>
                         <option value="cheetah_hoodie">Cheetah Hoodie</option>
-                        <option value="french_stripes">French Stripes</option>
                         <option value="naked">No Clothes</option>
                         <option value="bape_coach">Bape Coach Jacket</option>
                         <option value="bape_hoodie_red">Bape Hoodie Red</option>
                         <option value="bape_hoodie_green">Bape Hoodie Green</option>
                         <option value="bape_shirt">Baby Milo Shirt</option>
+                        <option value="french_stripes">French Stripes</option>
                         <option value="cats_shirt">Cool Cats Shirt</option>
                         <option value="singe_hoodie">Singe Hoodie</option>
                         <option value="singe_hoodie_glow">Singe Hoodie Glow</option>
@@ -374,6 +374,7 @@ function App() {
                     <h3 className="dropdown-header">Extra</h3>
                     <select value={thirdAsset} onChange={handleThirdAssetChange} className="dropdown" disabled={!tokenId || clubAsset === 'elite'}>
                         <option value="">Select</option>
+                        <option value="magic_eden">Magic Eden</option>
                         <option value="unclogged">Unclogged</option>
                         <option value="hex_dark">Hex Dark</option>
                         <option value="hex_light">Hex Light</option>
@@ -392,20 +393,21 @@ function App() {
                     <h3 className="dropdown-header">Hand</h3>
                     <select value={selectedAsset} onChange={handleAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset === 'elite'}>
                         <option value="">Select</option>
-                        <option value="baguette">Baguette</option>
+                        <option value="magic_eden">Magic Eden</option>
                         <option value="gm_espresso">GM Espresso</option>
                         <option value="peace">Peace</option>
-                        <option value="clubhouse">Clubhouse Sketch</option>
+                        <option value="cheers" disabled={clubAsset === 'dubai'}>Cheers</option>
                         <option value="banana">Banana Hand</option>
                         <option value="otherside">Otherside Bottle</option>
-                        <option value="moon_coffee">Moon Coffee Company</option>
-                        <option value="cheers" disabled={clubAsset === 'dubai'}>Cheers</option>
                         <option value="apecoin_hands1">Apecoin Hands 1</option>
                         <option value="apecoin_hands2">Apecoin Hands </option>
-                        <option value="candle">Candle</option>
                         <option value="shoe">BAPE shoe</option>
+                        <option value="moon_coffee">Moon Coffee Company</option>
+                        <option value="candle">Candle</option>
                         <option value="balloon_fireworks">Balloon & Fireworks</option>
                         <option value="fireworks">Fireworks</option>
+                        <option value="baguette">Baguette</option>
+                        <option value="clubhouse">Clubhouse Sketch</option>
                         <option value="matchstick">Matchstick</option>
                         <option value="balloon_moon">2024 Balloon</option>
                     </select>

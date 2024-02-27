@@ -13,6 +13,7 @@ base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
 
 special_assets = {
     'cheetah_hoodie': os.path.join(base_dir, 'memes', 'cheetah_hoodie.png'),
+    'magic_eden': os.path.join(base_dir, 'memes', 'magic_eden_clothes.png'),
     'french_stripes': os.path.join(base_dir, 'memes', 'french_stripes.png'),
     'cats_shirt': os.path.join(base_dir, 'memes', 'cats_shirt.png'),
     '49ers': os.path.join(base_dir, 'memes', '49ers.png'),
@@ -36,10 +37,8 @@ special_assets = {
 }
 
 main_assets = {
+    'magic_eden': os.path.join(base_dir, 'memes', 'magic_eden_hand.png'),
     'gm_espresso': os.path.join(base_dir, 'memes', 'gm_espresso.png'),
-    'baguette': os.path.join(base_dir, 'memes', 'baguette.png'),
-    'moon_coffee': os.path.join(base_dir, 'memes', 'moon_coffee.png'),
-    'clubhouse': os.path.join(base_dir, 'memes', 'clubhouse.png'),
     'banana': os.path.join(base_dir, 'memes', 'banana_hand.png'),
     'otherside': os.path.join(base_dir, 'memes', 'otherside.png'),
     'cheers': os.path.join(base_dir, 'memes', 'cheers.png'),
@@ -48,7 +47,10 @@ main_assets = {
     'apecoin_hands2': os.path.join(base_dir, 'memes', 'apecoin_hands2.png'),
     'shoe': os.path.join(base_dir, 'memes', 'bape_shoe.png'),
     'peace': os.path.join(base_dir, 'memes', 'peace.png'),
+    'baguette': os.path.join(base_dir, 'memes', 'baguette.png'),
     'balloon_moon': os.path.join(base_dir, 'memes', 'balloon_moon.png'),
+    'clubhouse': os.path.join(base_dir, 'memes', 'clubhouse.png'),
+    'moon_coffee': os.path.join(base_dir, 'memes', 'moon_coffee.png'),
     'fireworks': os.path.join(base_dir, 'memes', 'fireworks.png'),
     'balloon_fireworks': os.path.join(base_dir, 'memes', 'balloon_fireworks.png'),
     'matchstick': os.path.join(base_dir, 'memes', 'matchstick.png')
@@ -423,6 +425,8 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             image_path = additional_assets['transparent']
         elif trait_type == "Background" and second_asset_type == 'singe_hoodie_glow':
             image_path = additional_assets['background_glow']
+        elif trait_type == "Background" and third_asset_type == 'magic_eden':
+            image_path = additional_assets['magic_eden']
         elif trait_type == "Background" and club_asset_type == 'elite':
             # If elite asset is selected, use a black background
             print("Applying black background for elite asset")
