@@ -425,8 +425,6 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             image_path = additional_assets['transparent']
         elif trait_type == "Background" and second_asset_type == 'singe_hoodie_glow':
             image_path = additional_assets['background_glow']
-        elif trait_type == "Background" and third_asset_type == 'magic_eden':
-            image_path = additional_assets['magic_eden']
         elif trait_type == "Background" and club_asset_type == 'elite':
             # If elite asset is selected, use a black background
             print("Applying black background for elite asset")
