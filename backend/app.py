@@ -37,6 +37,9 @@ special_assets = {
 }
 
 main_assets = {
+    'sardines': os.path.join(base_dir, 'memes', 'sardines.png'),
+    'pipe': os.path.join(base_dir, 'memes', 'pipe.png'),
+    'thumbsup': os.path.join(base_dir, 'memes', 'thumbsup.png'),
     'magic_eden': os.path.join(base_dir, 'memes', 'magic_eden_hand.png'),
     'gm_espresso': os.path.join(base_dir, 'memes', 'gm_espresso.png'),
     'banana': os.path.join(base_dir, 'memes', 'banana_hand.png'),
@@ -334,7 +337,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         specific_head = 'head_black'
         hoodie_head = 'hoodie_black'
     elif has_blue_fur:
-        specific_head = 'head_blue',
+        specific_head = 'head_blue'
         hoodie_head = 'hoodie_blue'
     elif has_brown_fur:
         specific_head = 'head_brown'
