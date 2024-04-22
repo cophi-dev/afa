@@ -393,6 +393,7 @@ function App() {
                     <select value={selectedAsset} onChange={handleAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset === 'elite'}>
                         <option value="">Select</option>
                         <option value="sardines">Lisbon Sardines</option>
+                        <option value="ramen">Ramen Bowl</option>
                         <option value="pipe">Pipe</option>
                         <option value="thumbsup">Thumbs Up</option>
                         <option value="magic_eden">Magic Eden</option>
