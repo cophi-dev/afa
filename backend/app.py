@@ -12,7 +12,8 @@ CORS(app, resources={r"/api/*": {"origins": ["https://afa-editor.vercel.app", "h
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
 
 special_assets = {
-    'cheetah_hoodie': os.path.join(base_dir, 'memes', 'cheetah_hoodie.png'),
+    'cheetah_hoodie': os.path.join(base_dir, 'memes', 'apefest-jacket.png'),
+    'apefest_jacket': os.path.join(base_dir, 'memes', 'cheetah_hoodie.png'),
     'magic_eden': os.path.join(base_dir, 'memes', 'magic_eden_clothes.png'),
     'french_stripes': os.path.join(base_dir, 'memes', 'french_stripes.png'),
     'cats_shirt': os.path.join(base_dir, 'memes', 'cats_shirt.png'),
@@ -38,9 +39,12 @@ special_assets = {
 
 main_assets = {
     'sardines': os.path.join(base_dir, 'memes', 'sardines.png'),
-    'ramen': os.path.join(base_dir, 'memes', 'ramen.png'),
     'pipe': os.path.join(base_dir, 'memes', 'pipe.png'),
+    'basketball': os.path.join(base_dir, 'memes', 'basketball.png'),
+    'pray': os.path.join(base_dir, 'memes', 'pray.png'),
+    'shiny-gm': os.path.join(base_dir, 'memes', 'shiny-gm.png'),
     'thumbsup': os.path.join(base_dir, 'memes', 'thumbsup.png'),
+    'ramen': os.path.join(base_dir, 'memes', 'ramen.png'),
     'magic_eden': os.path.join(base_dir, 'memes', 'magic_eden_hand.png'),
     'gm_espresso': os.path.join(base_dir, 'memes', 'gm_espresso.png'),
     'banana': os.path.join(base_dir, 'memes', 'banana_hand.png'),

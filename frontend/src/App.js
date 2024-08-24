@@ -310,13 +310,13 @@ function App() {
                     <h3 className="dropdown-header">Outfit</h3>
                     <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}>
                         <option value="">Select</option>
-                        <option value="magic_eden">Magic Eden</option>
+                        <option value="apefest_jacket">Apefest Jacket</option>
+                        <option value="bape_coach">Bape Coach Jacket</option>
+                        <option value="bape_hoodie_green">Bape Hoodie Green</option>
+                        <option value="bape_hoodie_red">Bape Hoodie Red</option>
+                        <option value="bape_shirt">Baby Milo Shirt</option>
                         <option value="cheetah_hoodie">Cheetah Hoodie</option>
                         <option value="naked">No Clothes</option>
-                        <option value="bape_coach">Bape Coach Jacket</option>
-                        <option value="bape_hoodie_red">Bape Hoodie Red</option>
-                        <option value="bape_hoodie_green">Bape Hoodie Green</option>
-                        <option value="bape_shirt">Baby Milo Shirt</option>
                         <option value="french_stripes">French Stripes</option>
                         <option value="cats_shirt">Cool Cats Shirt</option>
                         <option value="singe_hoodie">Singe Hoodie</option>
@@ -325,6 +325,7 @@ function App() {
                         <option value="adidas_hoodie">Adidas Hoodie</option>
                         <option value="adidas_yellow">Adidas Track</option>
                         <option value="btc_hoodie">BTC Hoodie</option>
+                        <option value="magic_eden">Magic Eden</option>
                         <option value="jacket">Jacket</option>
                         {/* <option value="sweater">Christmas sweater</option> */}
                         <option value="blazer">Blazer</option>
@@ -394,6 +395,9 @@ function App() {
                         <option value="">Select</option>
                         <option value="sardines">Lisbon Sardines</option>
                         <option value="ramen">Ramen Bowl</option>
+                        <option value="pray">Pray</option>
+                        <option value="basketball">Basketball</option>
+                        <option value="shiny-gm">GM</option>
                         <option value="pipe">Pipe</option>
                         <option value="thumbsup">Thumbs Up</option>
                         <option value="magic_eden">Magic Eden</option>
