@@ -13,6 +13,8 @@ base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
 
 special_assets = {
     'bape_blue_shirt': os.path.join(base_dir, 'memes', 'bape_blue_shirt.png'),
+    'apechain_hoodie_black': os.path.join(base_dir, 'memes', 'apechain_hoodie_black.png'),
+    'apechain_hoodie_orange': os.path.join(base_dir, 'memes', 'apechain_hoodie_orange.png'),
     'cheetah_hoodie': os.path.join(base_dir, 'memes', 'cheetah_hoodie.png'),
     'apefest_jacket': os.path.join(base_dir, 'memes', 'apefest-jacket.png'),
     'magic_eden': os.path.join(base_dir, 'memes', 'magic_eden_clothes.png'),
@@ -81,6 +83,7 @@ mouth_assets = {
 }
 
 hat_assets = {
+    'apechain_cap': os.path.join(base_dir, 'memes', 'apechain_cap_black.png'),
     'cats_hat': os.path.join(base_dir, 'memes', 'cats_hat.png'),
     'beret': os.path.join(base_dir, 'memes', 'beret.png'),
     'pudgy_hat': os.path.join(base_dir, 'memes', 'pudgy_hat.png'),

@@ -311,10 +311,12 @@ function App() {
                     <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}>
                         <option value="">Select</option>
                         <option value="bape_blue_shirt">BAPE® x BAYC Hawaiian Shirt Blue</option>
+                        <option value="apechain_hoodie_black">Apechain Hoodie Black</option>
+                        <option value="apechain_hoodie_orange">Apechain Hoodie Orange</option>
                         <option value="apefest_jacket">Apefest Jacket</option>
-                        <option value="bape_coach">Bape Coach Jacket</option>
-                        <option value="bape_hoodie_green">Bape Hoodie Green</option>
-                        <option value="bape_hoodie_red">Bape Hoodie Red</option>
+                        <option value="bape_coach">BAPE® x BAYC Coach Jacket</option>
+                        <option value="bape_hoodie_green">BAPE® x BAYC Hoodie Green</option>
+                        <option value="bape_hoodie_red">BAPE® x BAYC Hoodie Red</option>
                         <option value="bape_shirt">Baby Milo Shirt</option>
                         <option value="cheetah_hoodie">Cheetah Hoodie</option>
                         <option value="naked">No Clothes</option>
@@ -352,6 +354,7 @@ function App() {
                     <h3 className="dropdown-header">Hat</h3>
                     <select value={hatAsset} onChange={handleHatAssetChange} className="dropdown" disabled={!tokenId || clubAsset || secondAsset ==  'singe_hoodie_glow' ||  secondAsset ==  'singe_hoodie'}>
                         <option value="">Select</option>
+                        <option value="apechain_cap">Apechain Hat</option>
                         <option value="beret">Béret</option>
                         <option value="cats_hat">Cool Cats</option>
                         <option value="plunger">Dookey Dash</option>
@@ -410,7 +413,7 @@ function App() {
                         <option value="otherside">Otherside Bottle</option>
                         <option value="apecoin_hands1">Apecoin Hands 1</option>
                         <option value="apecoin_hands2">Apecoin Hands </option>
-                        <option value="shoe">BAPE shoe</option>
+                        <option value="shoe">BAPE® x BAYC Shoe</option>
                         <option value="moon_coffee">Moon Coffee Company</option>
                         <option value="candle">Candle</option>
                         <option value="balloon_fireworks">Balloon & Fireworks</option>
