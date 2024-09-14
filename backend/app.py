@@ -12,6 +12,7 @@ CORS(app, resources={r"/api/*": {"origins": ["https://afa-editor.vercel.app", "h
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
 
 special_assets = {
+    'BAPE Hawaiian Shirt Blue': os.path.join(base_dir, 'memes', 'Bape_Hawaiian Shirt Blue.png'),
     'cheetah_hoodie': os.path.join(base_dir, 'memes', 'cheetah_hoodie.png'),
     'apefest_jacket': os.path.join(base_dir, 'memes', 'apefest-jacket.png'),
     'magic_eden': os.path.join(base_dir, 'memes', 'magic_eden_clothes.png'),
@@ -488,7 +489,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             head_added = True
         elif trait_type == "Mouth" and not mouth_added:
             if mouth_asset_type == 'apechain_grin':
-                image_path = mouth_assets[specific_smile if specific_smile in mouth_assets else 'apechain_grin']
+                image_path = mouth_assets[apechain_grin if apechain_grin in mouth_assets else 'apechain_grin']
             elif mouth_asset_type == 'big_smile':
                 image_path = mouth_assets[specific_smile if specific_smile in mouth_assets else 'big_smile']
             elif mouth_asset_type == 'doodles_rainbow':
