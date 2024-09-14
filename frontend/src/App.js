@@ -340,6 +340,7 @@ function App() {
                     <h3 className="dropdown-header">Mouth</h3>
                     <select value={mouthAsset} onChange={handleMouthAssetChange} className="dropdown" disabled={!tokenId  || clubAsset === 'elite'}>
                         <option value="">Select</option>
+                        <option value="apechain_grin">Apechain Grin</option>
                         <option value="doodles_rainbow">Doodles Rainbow</option>
                         <option value="big_smile">Big Smile</option>
                         {/* <option value="tree">Christmas Tree</option> */}
