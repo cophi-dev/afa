@@ -310,7 +310,7 @@ function App() {
                     <h3 className="dropdown-header">Outfit</h3>
                     <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}>
                         <option value="">Select</option>
-                        <option value="BAPE Hawaiian Shirt Blu">BAPE® x BAYC Hawaiian Shirt Blue</option>
+                        <option value="bape_blue_shirt">BAPE® x BAYC Hawaiian Shirt Blue</option>
                         <option value="apefest_jacket">Apefest Jacket</option>
                         <option value="bape_coach">Bape Coach Jacket</option>
                         <option value="bape_hoodie_green">Bape Hoodie Green</option>
