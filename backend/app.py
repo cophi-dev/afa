@@ -74,8 +74,8 @@ mouth_assets = {
     'doodles_rainbow': os.path.join(base_dir, 'memes', 'doodles_rainbow.png'),
     'tree': os.path.join(base_dir, 'memes', 'tree.png'),
     'tree_unshaven': os.path.join(base_dir, 'memes', 'tree_unshaven.png'),
-    'apechain_grin_unshaven': os.path.join(base_dir, 'memes', 'smile', 'apechain_grin_unshaven.png'),
-    'apechain_grin': os.path.join(base_dir, 'memes', 'smile', 'apechain_grin.png')
+    'apechain_grin': os.path.join(base_dir, 'memes', 'smile', 'apechain_grin.png'),
+    'apechain_grin_unshaven': os.path.join(base_dir, 'memes', 'smile', 'apechain_grin_unshaven.png')
     # Add more asset types here as needed
 }
 
@@ -328,7 +328,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         ape_composed = ape_composed.resize((int(1000 * 0.7), int(1000 * 0.7)), Image.ANTIALIAS)
         final_image.paste(ape_composed, (int(1000 * 0.15), int(1000 * 0.15)), ape_composed)
 
-    # Determine the specific 'big_smile' asset based on conditions
+    # Determine the specific '                                                                                                                              ' asset based on conditions
     specific_smile = None
     if has_multicolor_smile:
         specific_smile = 'multicolor_smile'
@@ -488,7 +488,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             head_added = True
         elif trait_type == "Mouth" and not mouth_added:
             if mouth_asset_type == 'apechain_grin':
-                image_path = mouth_assets[apechain_grin if apechain_grin in mouth_assets else 'apechain_grin']
+                image_path = mouth_assets[specific_smile if specific_smile in mouth_assets else 'apechain_grin']
             elif mouth_asset_type == 'big_smile':
                 image_path = mouth_assets[specific_smile if specific_smile in mouth_assets else 'big_smile']
             elif mouth_asset_type == 'doodles_rainbow':
