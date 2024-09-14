@@ -12,8 +12,8 @@ CORS(app, resources={r"/api/*": {"origins": ["https://afa-editor.vercel.app", "h
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
 
 special_assets = {
-    'cheetah_hoodie': os.path.join(base_dir, 'memes', 'apefest-jacket.png'),
-    'apefest_jacket': os.path.join(base_dir, 'memes', 'cheetah_hoodie.png'),
+    'cheetah_hoodie': os.path.join(base_dir, 'memes', 'cheetah_hoodie.png'),
+    'apefest_jacket': os.path.join(base_dir, 'memes', 'apefest-jacket.png'),
     'magic_eden': os.path.join(base_dir, 'memes', 'magic_eden_clothes.png'),
     'french_stripes': os.path.join(base_dir, 'memes', 'french_stripes.png'),
     'cats_shirt': os.path.join(base_dir, 'memes', 'cats_shirt.png'),
@@ -73,7 +73,9 @@ mouth_assets = {
     'unshaven_smile': os.path.join(base_dir, 'memes', 'smile', 'unshaven.png'),
     'doodles_rainbow': os.path.join(base_dir, 'memes', 'doodles_rainbow.png'),
     'tree': os.path.join(base_dir, 'memes', 'tree.png'),
-    'tree_unshaven': os.path.join(base_dir, 'memes', 'tree_unshaven.png')
+    'tree_unshaven': os.path.join(base_dir, 'memes', 'tree_unshaven.png'),
+    'apechain_grin_unshaven': os.path.join(base_dir, 'memes', 'apechain_grin_unshaven.png'),
+    'apechain_grin': os.path.join(base_dir, 'memes', 'apechain_grin.png')
     # Add more asset types here as needed
 }
 
