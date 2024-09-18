@@ -310,14 +310,14 @@ function App() {
                     <h3 className="dropdown-header">Outfit</h3>
                     <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}>
                         <option value="">Select</option>
-                        <option value="bape_blue_shirt">BAPE® x BAYC Hawaiian Shirt Blue</option>
+                        {/* <option value="bape_blue_shirt">BAPE® x BAYC Hawaiian Shirt Blue</option> */}
                         <option value="apechain_hoodie_black">Apechain Hoodie Black</option>
                         <option value="apechain_hoodie_orange">Apechain Hoodie Orange</option>
                         <option value="apefest_jacket">Apefest Jacket</option>
-                        <option value="bape_coach">BAPE® x BAYC Coach Jacket</option>
-                        <option value="bape_hoodie_green">BAPE® x BAYC Hoodie Green</option>
-                        <option value="bape_hoodie_red">BAPE® x BAYC Hoodie Red</option>
-                        <option value="bape_shirt">Baby Milo Shirt</option>
+                        {/* <option value="bape_coach">BAPE® x BAYC Coach Jacket</option> */}
+                        {/* <option value="bape_hoodie_green">BAPE® x BAYC Hoodie Green</option> */}
+                        {/* <option value="bape_hoodie_red">BAPE® x BAYC Hoodie Red</option> */}
+                        {/* <option value="bape_shirt">Baby Milo Shirt</option> */}
                         <option value="cheetah_hoodie">Cheetah Hoodie</option>
                         <option value="naked">No Clothes</option>
                         <option value="french_stripes">French Stripes</option>
@@ -325,10 +325,10 @@ function App() {
                         <option value="singe_hoodie">Singe Hoodie</option>
                         <option value="singe_hoodie_glow">Singe Hoodie Glow</option>
                         <option value="applied_primate_coat">Applied Primate Lab Coat</option>
-                        <option value="adidas_hoodie">Adidas Hoodie</option>
-                        <option value="adidas_yellow">Adidas Track</option>
+                        {/* <option value="adidas_hoodie">Adidas Hoodie</option> */}
+                        {/* <option value="adidas_yellow">Adidas Track</option> */}
                         <option value="btc_hoodie">BTC Hoodie</option>
-                        <option value="magic_eden">Magic Eden</option>
+                        {/* <option value="magic_eden">Magic Eden</option> */}
                         <option value="jacket">Jacket</option>
                         {/* <option value="sweater">Christmas sweater</option> */}
                         <option value="blazer">Blazer</option>
@@ -413,7 +413,7 @@ function App() {
                         <option value="otherside">Otherside Bottle</option>
                         <option value="apecoin_hands1">Apecoin Hands 1</option>
                         <option value="apecoin_hands2">Apecoin Hands </option>
-                        <option value="shoe">BAPE® x BAYC Shoe</option>
+                        {/* <option value="shoe">BAPE® x BAYC Shoe</option> */}
                         <option value="moon_coffee">Moon Coffee Company</option>
                         <option value="candle">Candle</option>
                         <option value="balloon_fireworks">Balloon & Fireworks</option>
