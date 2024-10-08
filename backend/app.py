@@ -44,6 +44,7 @@ special_assets = {
 
 main_assets = {
     'dookie_dash': os.path.join(base_dir, 'memes', 'dookie_dash.png'),
+    'smartphone_gm': os.path.join(base_dir, 'memes', 'smartphone_gm.png'),
     'sardines': os.path.join(base_dir, 'memes', 'sardines.png'),
     'pipe': os.path.join(base_dir, 'memes', 'pipe.png'),
     'basketball': os.path.join(base_dir, 'memes', 'basketball.png'),
