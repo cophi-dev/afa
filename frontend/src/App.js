@@ -311,8 +311,10 @@ function App() {
                     <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}>
                         <option value="">Select</option>
                         {/* <option value="bape_blue_shirt">BAPE® x BAYC Hawaiian Shirt Blue</option> */}
+                        <option value="bimmer_jacket">Bimmer Jacket</option>
                         <option value="apechain_hoodie_black">Apechain Hoodie Black</option>
                         <option value="apechain_hoodie_orange">Apechain Hoodie Orange</option>
+                        <option value="apechain_hoodie_blue">Apechain Hoodie Blue</option>
                         <option value="apefest_jacket">Apefest Jacket</option>
                         {/* <option value="bape_coach">BAPE® x BAYC Coach Jacket</option> */}
                         {/* <option value="bape_hoodie_green">BAPE® x BAYC Hoodie Green</option> */}
@@ -344,6 +346,9 @@ function App() {
                     <select value={mouthAsset} onChange={handleMouthAssetChange} className="dropdown" disabled={!tokenId  || clubAsset === 'elite'}>
                         <option value="">Select</option>
                         <option value="apechain_grin">Apechain Grin</option>
+                        <option value="lollipop">Lollipop</option>
+                        <option value="banana_punch_gm">Banana Punch GM</option>
+                        <option value="banana_smile">Banana Smile</option>
                         <option value="doodles_rainbow">Doodles Rainbow</option>
                         <option value="big_smile">Big Smile</option>
                         {/* <option value="tree">Christmas Tree</option> */}
@@ -355,6 +360,8 @@ function App() {
                     <select value={hatAsset} onChange={handleHatAssetChange} className="dropdown" disabled={!tokenId || clubAsset || secondAsset ==  'singe_hoodie_glow' ||  secondAsset ==  'singe_hoodie'}>
                         <option value="">Select</option>
                         <option value="apechain_cap">Apechain Hat</option>
+                        <option value="apechain_hat_blue">Apechain Hat Blue</option>
+                        <option value="apechain_hat_orange">Apechain Hat Orange</option>
                         <option value="beret">Béret</option>
                         <option value="cats_hat">Cool Cats</option>
                         <option value="plunger">Dookey Dash</option>
@@ -370,6 +377,8 @@ function App() {
                     <h3 className="dropdown-header">Eyes</h3>
                     <select value={eyesAsset} onChange={handleEyesAssetChange} className="dropdown" disabled={!tokenId || clubAsset === 'elite'}>
                         <option value="">Select</option>
+                        <option value="apecoin_glasses">Apecoin Glasses</option>
+                        <option value="apechain_glasses">Apechain Glasses</option>
                         <option value="vision_pro">Vision Pro</option>
                         <option value="dookey_eyes">Dookey Dash</option>
                         <option value="btc_eyes">BTC Coin</option>
@@ -398,6 +407,7 @@ function App() {
                     <h3 className="dropdown-header">Hand</h3>
                     <select value={selectedAsset} onChange={handleAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset === 'elite'}>
                         <option value="">Select</option>
+                        <option value="dookie_dash">Dookie Dash</option>
                         <option value="sardines">Lisbon Sardines</option>
                         <option value="ramen">Ramen Bowl</option>
                         <option value="pray">Pray</option>
