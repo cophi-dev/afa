@@ -12,9 +12,11 @@ CORS(app, resources={r"/api/*": {"origins": ["https://afa-editor.vercel.app", "h
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
 
 special_assets = {
+    'bimmer_jacket': os.path.join(base_dir, 'memes', 'bimmer_jacket.png'),
     'bape_blue_shirt': os.path.join(base_dir, 'memes', 'bape_blue_shirt.png'),
     'apechain_hoodie_black': os.path.join(base_dir, 'memes', 'apechain_hoodie_black.png'),
     'apechain_hoodie_orange': os.path.join(base_dir, 'memes', 'apechain_hoodie_orange.png'),
+    'apechain_hoodie_blue': os.path.join(base_dir, 'memes', 'apechain_hoodie_blue.png'),
     'cheetah_hoodie': os.path.join(base_dir, 'memes', 'cheetah_hoodie.png'),
     'apefest_jacket': os.path.join(base_dir, 'memes', 'apefest-jacket.png'),
     'magic_eden': os.path.join(base_dir, 'memes', 'magic_eden_clothes.png'),
@@ -41,6 +43,7 @@ special_assets = {
 }
 
 main_assets = {
+    'dookie_dash': os.path.join(base_dir, 'memes', 'dookie_dash.png'),
     'sardines': os.path.join(base_dir, 'memes', 'sardines.png'),
     'pipe': os.path.join(base_dir, 'memes', 'pipe.png'),
     'basketball': os.path.join(base_dir, 'memes', 'basketball.png'),
@@ -69,6 +72,9 @@ main_assets = {
 }
 
 mouth_assets = {
+    'lollipop': os.path.join(base_dir, 'memes', 'lollipop.png'),
+    'banana_punch_gm': os.path.join(base_dir, 'memes', 'banana_punch_gm.png'),
+    'banana_smile': os.path.join(base_dir, 'memes', 'banana_smile.png'),
     'big_smile': os.path.join(base_dir, 'memes', 'smile', 'big_smile.png'),
     'multicolor_smile': os.path.join(base_dir, 'memes', 'smile', 'multicolor.png'),
     'diamond_smile': os.path.join(base_dir, 'memes', 'smile', 'diamond.png'),
@@ -84,6 +90,8 @@ mouth_assets = {
 
 hat_assets = {
     'apechain_cap': os.path.join(base_dir, 'memes', 'apechain_cap_black.png'),
+    'apechain_hat_blue': os.path.join(base_dir, 'memes', 'apechain_hat_blue.png'),
+    'apechain_hat_orange': os.path.join(base_dir, 'memes', 'apechain_hat_orange.png'),
     'cats_hat': os.path.join(base_dir, 'memes', 'cats_hat.png'),
     'beret': os.path.join(base_dir, 'memes', 'beret.png'),
     'pudgy_hat': os.path.join(base_dir, 'memes', 'pudgy_hat.png'),
@@ -96,6 +104,8 @@ hat_assets = {
 }
 
 eyes_assets = {
+    'apecoin_glasses': os.path.join(base_dir, 'memes', 'apecoin_glasses.png'),
+    'apechain_glasses': os.path.join(base_dir, 'memes', 'apechain_glasses.png'),
     'btc_eyes': os.path.join(base_dir, 'memes', 'btc_eyes.png'),
     'dookey_eyes': os.path.join(base_dir, 'memes', 'dookey_eyes.png'),
     'star_glasses': os.path.join(base_dir, 'memes', 'star_glasses.png'),
