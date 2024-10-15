@@ -43,6 +43,7 @@ special_assets = {
 }
 
 main_assets = {
+    'gordon': os.path.join(base_dir, 'memes', 'gordon.png'),
     'dookie_dash': os.path.join(base_dir, 'memes', 'dookie_dash.png'),
     'smartphone_gm': os.path.join(base_dir, 'memes', 'smartphone_gm.png'),
     'sardines': os.path.join(base_dir, 'memes', 'sardines.png'),
@@ -467,6 +468,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             print("Replacing the Hat for dubai asset")
             image_path = additional_assets['transparent']  # Use transparent as placeholder
         elif trait_type == "Mouth" and club_asset_type == 'dubai':
+            print(f"Replacing clothes with special asset: {mouth_asset_type}")
             # If dubai asset is selected, use a black background
             print("Overlay mouth layer")
             image_path = os.path.join(base_dir, 'Mouth', f"{value}.png")
@@ -508,6 +510,12 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
                 image_path = mouth_assets[specific_smile if specific_smile in mouth_assets else 'big_smile']
             elif mouth_asset_type == 'doodles_rainbow':
                 image_path = mouth_assets['doodles_rainbow']
+            elif mouth_asset_type == 'lollipop':
+                image_path = mouth_assets['lollipop']
+            elif mouth_asset_type == 'banana_punch_gm':
+                image_path = mouth_assets['banana_punch_gm']
+            elif mouth_asset_type == 'banana_smile':
+                image_path = mouth_assets['banana_smile']
             else:
                 image_path = get_image_file(trait_type, value)
         else:
