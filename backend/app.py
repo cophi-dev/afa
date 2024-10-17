@@ -12,6 +12,8 @@ CORS(app, resources={r"/api/*": {"origins": ["https://afa-editor.vercel.app", "h
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
 
 special_assets = {
+    'apefest_merch': os.path.join(base_dir, 'memes', 'apefest_merch.png'),
+    'tt_hoodie': os.path.join(base_dir, 'memes', 'tt_hoodie.png'),
     'bimmer_jacket': os.path.join(base_dir, 'memes', 'bimmer_jacket.png'),
     'bape_blue_shirt': os.path.join(base_dir, 'memes', 'bape_blue_shirt.png'),
     'apechain_hoodie_black': os.path.join(base_dir, 'memes', 'apechain_hoodie_black.png'),
@@ -120,6 +122,8 @@ club_assets = {
 }
 
 additional_assets = {
+    'top-trader': os.path.join(base_dir, 'memes', 'tt_logo_blue.png'),
+    'top-trader_red': os.path.join(base_dir, 'memes', 'tt_logo_red.png'),
     'unclogged': os.path.join(base_dir, 'memes', 'unclogged.png'),
     'magic_eden_front': os.path.join(base_dir, 'memes', 'magic_eden_front.png'),
     'magic_eden_bg': os.path.join(base_dir, 'memes', 'magic_eden_bg.png'),
@@ -456,6 +460,10 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             image_path = additional_assets['transparent']
         elif trait_type == "Background" and second_asset_type == 'singe_hoodie_glow':
             image_path = additional_assets['background_glow']
+        elif trait_type == "Background" and third_asset_type == 'top-trader':
+            image_path = additional_assets['tt_frame_blue']
+        elif trait_type == "Background" and third_asset_type == 'top-trader_red':
+            image_path = additional_assets['tt_frame_red']
         elif third_asset_type == 'magic_eden':
             image_path = additional_assets['magic_eden_front']
         elif trait_type == "Background" and club_asset_type == 'elite':
