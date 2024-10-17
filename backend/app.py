@@ -122,8 +122,10 @@ club_assets = {
 }
 
 additional_assets = {
-    'top-trader': os.path.join(base_dir, 'memes', 'tt_logo_blue.png'),
-    'top-trader_red': os.path.join(base_dir, 'memes', 'tt_logo_red.png'),
+    'tt_background': os.path.join(base_dir, 'memes', 'tt_logo_blue.png'),
+    'tt_background': os.path.join(base_dir, 'memes', 'tt_logo_red.png'),
+    'top_trader': os.path.join(base_dir, 'memes', 'tt_frame.png'),
+    'top_trader_red': os.path.join(base_dir, 'memes', 'tt_frame_red.png'),
     'unclogged': os.path.join(base_dir, 'memes', 'unclogged.png'),
     'magic_eden_front': os.path.join(base_dir, 'memes', 'magic_eden_front.png'),
     'magic_eden_bg': os.path.join(base_dir, 'memes', 'magic_eden_bg.png'),
@@ -460,10 +462,10 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             image_path = additional_assets['transparent']
         elif trait_type == "Background" and second_asset_type == 'singe_hoodie_glow':
             image_path = additional_assets['background_glow']
-        elif trait_type == "Background" and second_asset_type == 'top-trader':
-            image_path = additional_assets['tt_frame_blue']
-        elif trait_type == "Background" and second_asset_type == 'top-trader_red':
-            image_path = additional_assets['tt_frame_red']
+        elif trait_type == "Background" and third_asset_type == 'top_trader':
+            image_path = additional_assets['tt_background']
+        elif trait_type == "Background" and third_asset_type == 'top_trader_red':
+            image_path = additional_assets['tt_background_red']
         elif third_asset_type == 'magic_eden':
             image_path = additional_assets['magic_eden_front']
         elif trait_type == "Background" and club_asset_type == 'elite':

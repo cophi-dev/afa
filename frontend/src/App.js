@@ -391,8 +391,8 @@ function App() {
                     <h3 className="dropdown-header">Extra</h3>
                     <select value={thirdAsset} onChange={handleThirdAssetChange} className="dropdown" disabled={!tokenId || clubAsset === 'elite'}>
                         <option value="">Select</option>
-                        <option value="tt-trader">Top Trader</option>
-                        <option value="tt-trader-red">Top Trader Red</option>
+                        <option value="top_trader">Top Trader</option>
+                        <option value="top_trader_red">Top Trader Red</option>
                         <option value="unclogged">Unclogged</option>
                         <option value="hex_dark">Hex Dark</option>
                         <option value="hex_light">Hex Light</option>
