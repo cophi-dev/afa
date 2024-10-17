@@ -311,6 +311,8 @@ function App() {
                     <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}>
                         <option value="">Select</option>
                         {/* <option value="bape_blue_shirt">BAPE® x BAYC Hawaiian Shirt Blue</option> */}
+                        <option value="apefest_merch">Apefest Merch</option>
+                        <option value="tt_hoodie">Top Trader Hoodie</option>
                         <option value="bimmer_jacket">Bimmer Jacket</option>
                         <option value="apechain_hoodie_black">Apechain Hoodie Black</option>
                         <option value="apechain_hoodie_orange">Apechain Hoodie Orange</option>
@@ -389,6 +391,8 @@ function App() {
                     <h3 className="dropdown-header">Extra</h3>
                     <select value={thirdAsset} onChange={handleThirdAssetChange} className="dropdown" disabled={!tokenId || clubAsset === 'elite'}>
                         <option value="">Select</option>
+                        <option value="tt-trader">Top Trader</option>
+                        <option value="tt-trader-red">Top Trader Red</option>
                         <option value="unclogged">Unclogged</option>
                         <option value="hex_dark">Hex Dark</option>
                         <option value="hex_light">Hex Light</option>
