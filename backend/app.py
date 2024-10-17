@@ -123,8 +123,8 @@ club_assets = {
 
 additional_assets = {
     'tt_background': os.path.join(base_dir, 'memes', 'tt_logo_blue.png'),
-    'tt_background': os.path.join(base_dir, 'memes', 'tt_logo_red.png'),
-    'top_trader': os.path.join(base_dir, 'memes', 'tt_frame.png'),
+    'tt_background_red': os.path.join(base_dir, 'memes', 'tt_logo_red.png'),
+    'top_trader': os.path.join(base_dir, 'memes', 'tt_frame_blue.png'),
     'top_trader_red': os.path.join(base_dir, 'memes', 'tt_frame_red.png'),
     'unclogged': os.path.join(base_dir, 'memes', 'unclogged.png'),
     'magic_eden_front': os.path.join(base_dir, 'memes', 'magic_eden_front.png'),
