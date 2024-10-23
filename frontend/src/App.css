@@ -82,7 +82,7 @@ body {
   border-radius: 10px;  /* More pronounced rounded corners */
   border: 2px solid #61dafb;  /* Stronger border to stand out */
   font-size: 1.1em;  /* Slightly larger font */
-  width: 100%;  /* Full width */
+  width: 10%;  /* Full width */
   background-color: #2a2a2a;  /* Darker background for contrast */
   color: white;  /* White text for clarity */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);  /* Stronger shadow for depth */
