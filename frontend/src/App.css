@@ -7,6 +7,25 @@
   min-height: 90vh;
 }
 
+.footer {
+  text-align: center;
+  padding: 20px;
+  background-color: #333;
+  color: white;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+}
+
+.footer a {
+  color: #61dafb;
+  margin-left: 10px;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
+
 body {
   margin: 0;
   color: var(--text-color, black); /* default to black if --text-color is not set */
