@@ -1,13 +1,3 @@
-body {
-  margin: 0;
-  color: var(--text-color, white); /* default to white */
-  background-color: black;
-  font-family: 'Arial', sans-serif; /* Example font */
-  font-size: 16px;
-  line-height: 1.5;
-}
-
-/* App Container */
 .App {
   text-align: center;
   display: flex;
@@ -15,16 +5,54 @@ body {
   align-items: center;
   justify-content: flex-start;
   min-height: 90vh;
-  padding-bottom: 60px; /* Extra space for footer */
 }
 
-/* Banner Styling */
+.footer {
+  text-align: center;
+  padding: 20px;
+  background-color: #333;
+  color: white;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+}
+
+.footer a {
+  color: #61dafb;
+  margin-left: 10px;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
+
+body {
+  margin: 0;
+  color: var(--text-color, black); /* default to black if --text-color is not set */
+  background-color: black;
+  font-family: 'Arial', sans-serif; /* Example font */
+}
+
+.body-background-fade {
+  transition: background-color 0.5s ease-in-out;
+}
+
+.fade-effect {
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.hidden {
+  opacity: 0;
+}
+
+
 .banner {
   width: 100%;
-  min-height: 10vh;
+  min-height:10vh;
   background-color: transparent;
   color: white;
-  padding: 10px 0;
+  padding: 0px 0;
   text-align: center;
 }
 
@@ -33,7 +61,6 @@ body {
   margin: 0px 0;
 }
 
-/* Header */
 .App-header {
   display: flex;
   flex-direction: column;
@@ -48,7 +75,6 @@ body {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: adds a subtle shadow */
 }
 
-/* Dropdown Container */
 .dropdown-container {
   display: flex;
   flex-wrap: wrap;
@@ -69,6 +95,7 @@ body {
   color: var(--text-color, white);
   margin-bottom: 5px;
 }
+
 
 .dropdown {
   padding: 7px 7px;
