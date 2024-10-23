@@ -19,11 +19,7 @@ function Footer() {
     return (
         <footer className="footer">
             <p>© 2024 Ape Facing Apes. All rights reserved.</p>
-            <a href="http://www.apefacingapes.com/privacy" target="_blank" rel="noopener noreferrer">
-                Privacy Policy
-            </a>
-            <a href="http://www.apefacingapes.com/terms" target="_blank" rel="noopener noreferrer">
-                Terms of Service
+            <p>We operate under an official license from Yuga, allowing us to showcase and use all assets featured on this site.</p>
             </a>
         </footer>
     );
