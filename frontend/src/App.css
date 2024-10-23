@@ -10,13 +10,13 @@
 .footer {
   text-align: center;
   padding: 20px;
-  padding-top: 50px;
+  margin-top: 150px;
   /* background-color: #333; */
   color: white;
   position: relative; /* Changed from fixed to relative */
   bottom: 0;
   width: 100%;
-  margin-top: auto; /* Pushes footer to the bottom when content is smaller than the page */
+  /* margin-top: auto; Pushes footer to the bottom when content is smaller than the page */
 }
 
 .footer a {
