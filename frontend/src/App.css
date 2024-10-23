@@ -77,44 +77,35 @@ body {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: adds a subtle shadow */
 }
 
-/* Updated Dropdown Styles */
 .dropdown {
-  padding: 10px 12px;  /* Increase padding for better spacing */
-  border-radius: 8px;  /* Rounded corners for a modern look */
-  border: 1px solid #61dafb;  /* Border color matching the theme */
-  font-size: 1em;
-  width: 100%;  /* Full width of the section */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);  /* Soft shadow for depth */
-  background-color: #222;  /* Dark background for contrast */
-  color: #fff;  /* White text for better readability */
-  transition: all 0.3s ease;  /* Smooth transition for hover effects */
+  padding: 12px 16px;  /* Extra padding for better spacing */
+  border-radius: 10px;  /* More pronounced rounded corners */
+  border: 2px solid #61dafb;  /* Stronger border to stand out */
+  font-size: 1.1em;  /* Slightly larger font */
+  width: 100%;  /* Full width */
+  background-color: #2a2a2a;  /* Darker background for contrast */
+  color: white;  /* White text for clarity */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);  /* Stronger shadow for depth */
+  transition: background-color 0.3s ease, border-color 0.3s ease;  /* Smooth hover transitions */
 }
 
 .dropdown:hover {
-  border-color: #61dafb;  /* Highlight border on hover */
-  background-color: #333;  /* Darken background on hover */
+  background-color: #333;  /* Slightly darker on hover */
+  border-color: #61dafb;  /* Border highlights on hover */
 }
 
 .dropdown:focus {
   outline: none;
-  border-color: #61dafb;  /* Highlight border when focused */
-  box-shadow: 0 0 8px rgba(97, 218, 251, 0.5);  /* Glow effect on focus */
-}
-
-/* Dropdown Header */
-.dropdown-header {
-  font-size: 1.3em;  /* Increase font size */
-  font-weight: bold;  /* Make it bold for emphasis */
-  color: #61dafb;  /* Match the theme color */
-  margin-bottom: 8px;  /* Add spacing below header */
+  border-color: #61dafb;  /* Border glows on focus */
+  box-shadow: 0 0 8px rgba(97, 218, 251, 0.5);  /* Glow effect */
 }
 
 /* Customizing dropdown arrow icon */
 .dropdown-section select {
-  appearance: none;  /* Remove default browser styling */
+  appearance: none;
   background: url('arrow-icon.svg') no-repeat right 10px center;
   background-size: 12px;
-  padding-right: 30px;  /* Make space for the icon */
+  padding-right: 40px;  /* Adjust space for the icon */
 }
 
 #asset-display {
