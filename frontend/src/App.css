@@ -1,3 +1,14 @@
+/* General Layout and Body */
+body {
+  margin: 0;
+  color: var(--text-color, white); /* default to white */
+  background-color: black;
+  font-family: 'Arial', sans-serif; /* Example font */
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* App Container */
 .App {
   text-align: center;
   display: flex;
@@ -5,54 +16,16 @@
   align-items: center;
   justify-content: flex-start;
   min-height: 90vh;
+  padding-bottom: 60px; /* Extra space for footer */
 }
 
-.footer {
-  text-align: center;
-  padding: 20px;
-  background-color: #333;
-  color: white;
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-}
-
-.footer a {
-  color: #61dafb;
-  margin-left: 10px;
-}
-
-.footer a:hover {
-  text-decoration: underline;
-}
-
-body {
-  margin: 0;
-  color: var(--text-color, black); /* default to black if --text-color is not set */
-  background-color: black;
-  font-family: 'Arial', sans-serif; /* Example font */
-}
-
-.body-background-fade {
-  transition: background-color 0.5s ease-in-out;
-}
-
-.fade-effect {
-  opacity: 0;
-  transition: opacity 0.5s ease-in-out;
-}
-
-.hidden {
-  opacity: 0;
-}
-
-
+/* Banner Styling */
 .banner {
   width: 100%;
-  min-height:10vh;
+  min-height: 10vh;
   background-color: transparent;
   color: white;
-  padding: 0px 0;
+  padding: 10px 0;
   text-align: center;
 }
 
@@ -61,6 +34,7 @@ body {
   margin: 0px 0;
 }
 
+/* Header */
 .App-header {
   display: flex;
   flex-direction: column;
@@ -75,6 +49,7 @@ body {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: adds a subtle shadow */
 }
 
+/* Dropdown Container */
 .dropdown-container {
   display: flex;
   flex-wrap: wrap;
@@ -96,7 +71,6 @@ body {
   margin-bottom: 5px;
 }
 
-
 .dropdown {
   padding: 7px 7px;
   border-radius: 4px;
@@ -107,6 +81,7 @@ body {
   background-color: white;
 }
 
+/* Asset Display */
 #asset-display {
   width: 40%; /* Adjust width as needed */
   height: 40%;
@@ -121,7 +96,6 @@ body {
   border: 0px solid var(--text-color, black);
   margin-bottom: 20px;
   transition: opacity 2s ease-in-out;
-
 }
 
 #asset-display img {
@@ -130,23 +104,40 @@ body {
   object-fit: contain;
 }
 
+/* Footer Styling */
+.footer {
+  text-align: center;
+  padding: 20px;
+  background-color: #333;
+  color: white;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  z-index: 999; /* Ensure it stays on top */
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.footer a {
+  color: #61dafb;
+  margin-left: 10px;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
+
+/* Animation and Fade Effects */
+.body-background-fade {
+  transition: background-color 0.5s ease-in-out;
+}
+
 .fade-effect {
-  opacity: 1;
+  opacity: 0;
   transition: opacity 0.5s ease-in-out;
 }
 
-.fade-effect-fade {
-  opacity: 0;
-}
-
-.fade-out {
-  opacity: 0;
-  transition: opacity 2s ease-out;
-}
-
-.fade-in {
+.fade-effect.fade-in {
   opacity: 1;
-  transition: opacity 2s ease-in;
 }
 
 /* Responsive Design */
@@ -155,28 +146,36 @@ body {
     flex-direction: column;
   }
 
-  .dropdown{
+  .dropdown {
     font-size: 1em;
   }
+
   .dropdown-container {
     font-size: 0.8em;
     flex-direction: column;
-    width: 40%;
+    width: 80%;
     max-width: 250px;
     gap: 0px;
     display: flex;
     align-items: center;
   }
-  
+
   .dropdown-section {
-    color: var(--text-color, black); /* default to black if --text-color is not set */
+    color: var(--text-color, white); /* Ensure text is visible */
     width: 100%; /* Full width on smaller screens */
   }
-  
+
   #asset-display {
     order: 0; /* Move the image above the dropdowns */
     width: 80%;
     margin-bottom: 10px;
   }
-  
+}
+
+/* Adjust Footer for Small Screens */
+@media (max-width: 768px) {
+  .footer {
+    padding: 15px;
+    font-size: 0.9em;
+  }
 }
