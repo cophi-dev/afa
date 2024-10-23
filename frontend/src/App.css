@@ -9,7 +9,7 @@
 
 .footer {
   text-align: center;
-  padding: 5px;
+  padding: 20px;
   /* background-color: #333; */
   color: white;
   position: relative; /* Changed from fixed to relative */
@@ -50,7 +50,7 @@ body {
 
 .banner {
   width: 100%;
-  min-height:10vh;
+  min-height:20vh;
   background-color: transparent;
   color: white;
   padding: 0px 0;
@@ -58,7 +58,7 @@ body {
 }
 
 .banner-logo {
-  max-width: 150px;
+  max-width: 250px;
   margin: 0px 0;
 }
 
