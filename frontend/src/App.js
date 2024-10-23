@@ -20,7 +20,6 @@ function Footer() {
         <footer className="footer">
             <p>© 2024 Ape Facing Apes. All rights reserved.</p>
             <p>We operate under an official license from Yuga, allowing us to showcase and use all assets featured on this site.</p>
-            </a>
         </footer>
     );
 }
