@@ -10,13 +10,13 @@
 .footer {
   text-align: center;
   padding: 20px;
-  margin-top: 150px;
+  margin-top: 50px;
   /* background-color: #333; */
   color: white;
   position: relative; /* Changed from fixed to relative */
   bottom: 0;
   width: 100%;
-  /* margin-top: auto; Pushes footer to the bottom when content is smaller than the page */
+  margin-top: auto; /* Pushes footer to the bottom when content is smaller than the page */
 }
 
 .footer a {
@@ -79,37 +79,44 @@ body {
 
 /* Updated Dropdown Styles */
 .dropdown {
-  padding: 12px 16px;
-  border-radius: 10px;
-  border: 2px solid #61dafb;
-  font-size: 1.1em;
-  width: 100%;
-  background-color: #2a2a2a;
-  color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  transition: background-color 0.3s ease, border-color 0.3s ease;
-  appearance: none; /* Removes default arrow */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='white' d='M10 12l-4-4h8l-4 4z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 12px;
+  padding: 10px 12px;  /* Increase padding for better spacing */
+  border-radius: 8px;  /* Rounded corners for a modern look */
+  border: 1px solid #61dafb;  /* Border color matching the theme */
+  font-size: 1em;
+  width: 100%;  /* Full width of the section */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);  /* Soft shadow for depth */
+  background-color: #222;  /* Dark background for contrast */
+  color: #fff;  /* White text for better readability */
+  transition: all 0.3s ease;  /* Smooth transition for hover effects */
 }
 
 .dropdown:hover {
-  background-color: #333;
-  border-color: #61dafb;
+  border-color: #61dafb;  /* Highlight border on hover */
+  background-color: #333;  /* Darken background on hover */
 }
 
 .dropdown:focus {
   outline: none;
-  border-color: #61dafb;
-  box-shadow: 0 0 8px rgba(97, 218, 251, 0.5);
+  border-color: #61dafb;  /* Highlight border when focused */
+  box-shadow: 0 0 8px rgba(97, 218, 251, 0.5);  /* Glow effect on focus */
 }
 
-/* Style for dropdown icon positioning */
-.dropdown-section select {
-  padding-right: 40px; /* Space for the arrow icon */
+/* Dropdown Header */
+.dropdown-header {
+  font-size: 1.3em;  /* Increase font size */
+  font-weight: bold;  /* Make it bold for emphasis */
+  color: #61dafb;  /* Match the theme color */
+  margin-bottom: 8px;  /* Add spacing below header */
 }
+
+/* Customizing dropdown arrow icon */
+.dropdown-section select {
+  appearance: none;  /* Remove default browser styling */
+  background: url('arrow-icon.svg') no-repeat right 10px center;
+  background-size: 12px;
+  padding-right: 30px;  /* Make space for the icon */
+}
+
 #asset-display {
   width: 40%; /* Adjust width as needed */
   height: 40%;
