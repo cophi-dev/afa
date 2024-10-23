@@ -12,7 +12,7 @@
   padding: 20px;
   margin-top: 50px;
   /* background-color: #333; */
-  color: var(--text-color, black); /* default to black if --text-color is not set */
+  color: var(--text-color, white);
   position: relative; /* Changed from fixed to relative */
   bottom: 0;
   width: 100%;
