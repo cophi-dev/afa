@@ -14,6 +14,22 @@ function Banner() {
     );
 }
 
+// New Footer Component
+function Footer() {
+    return (
+        <footer className="footer">
+            <p>© 2024 Ape Facing Apes. All rights reserved.</p>
+            <a href="http://www.apefacingapes.com/privacy" target="_blank" rel="noopener noreferrer">
+                Privacy Policy
+            </a>
+            <a href="http://www.apefacingapes.com/terms" target="_blank" rel="noopener noreferrer">
+                Terms of Service
+            </a>
+        </footer>
+    );
+}
+
+
 function getContrastYIQ(rgb) {
     const yiq = ((rgb[0]*299)+(rgb[1]*587)+(rgb[2]*114))/1000;
     return (yiq >= 128) ? 'black' : 'white';
@@ -450,6 +466,7 @@ function App() {
                 </div>
 
             </div>
+            <Footer />
         </div>
     );
 }
