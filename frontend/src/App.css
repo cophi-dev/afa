@@ -156,6 +156,17 @@ body {
     flex-direction: column;
   }
 
+  .banner {
+    min-height:10vh;
+  }
+  
+  .footer {
+    font-size: 0.8em;
+    flex-direction: column;
+    width: 40%;
+    max-width: 80%;
+  }
+
   .dropdown{
     font-size: 1em;
   }
