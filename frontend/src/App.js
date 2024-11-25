@@ -372,6 +372,7 @@ function App() {
                     <h3 className="dropdown-header">Hat</h3>
                     <select value={hatAsset} onChange={handleHatAssetChange} className="dropdown" disabled={!tokenId || clubAsset || secondAsset ==  'singe_hoodie_glow' ||  secondAsset ==  'singe_hoodie'}>
                         <option value="">Select</option>
+                        <option value="designer_toshiro_hat">Designer Toshiro</option>
                         <option value="apechain_cap">Apechain Hat</option>
                         <option value="apechain_hat_blue">Apechain Hat Blue</option>
                         <option value="apechain_hat_orange">Apechain Hat Orange</option>
@@ -422,6 +423,7 @@ function App() {
                     <h3 className="dropdown-header">Hand</h3>
                     <select value={selectedAsset} onChange={handleAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset === 'elite'}>
                         <option value="">Select</option>
+                        <option value="blever_pass">Blever Pass</option>
                         <option value="gordon">Gordon ❤️</option>
                         <option value="dookie_dash">Dookie Dash</option>
                         <option value="smartphone_gm">Smartphone GM</option>

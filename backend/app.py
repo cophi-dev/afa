@@ -45,6 +45,7 @@ special_assets = {
 }
 
 main_assets = {
+    'blever_pass': os.path.join(base_dir, 'memes', 'blever_pass.png'),
     'gordon': os.path.join(base_dir, 'memes', 'gordon.png'),
     'dookie_dash': os.path.join(base_dir, 'memes', 'dookie_dash.png'),
     'smartphone_gm': os.path.join(base_dir, 'memes', 'smartphone_gm.png'),
@@ -93,6 +94,7 @@ mouth_assets = {
 }
 
 hat_assets = {
+    'designer_toshiro_hat': os.path.join(base_dir, 'memes', 'designer_toshiro_hat.png'),
     'apechain_cap': os.path.join(base_dir, 'memes', 'apechain_cap_black.png'),
     'apechain_hat_blue': os.path.join(base_dir, 'memes', 'apechain_hat_blue.png'),
     'apechain_hat_orange': os.path.join(base_dir, 'memes', 'apechain_hat_orange.png'),
