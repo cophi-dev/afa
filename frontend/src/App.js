@@ -321,6 +321,7 @@ function App() {
                     <h3 className="dropdown-header">Outfit</h3>
                     <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}>
                         <option value="">Select</option>
+                        <option value="sweater">Christmas sweater</option>
                         {/* <option value="bape_blue_shirt">BAPE® x BAYC Hawaiian Shirt Blue</option> */}
                         <option value="apefest_merch">Apefest Merch</option>
                         <option value="tt_hoodie">Top Trader Hoodie</option>
@@ -345,10 +346,9 @@ function App() {
                         <option value="btc_hoodie">BTC Hoodie</option>
                         {/* <option value="magic_eden">Magic Eden</option> */}
                         <option value="jacket">Jacket</option>
-                        {/* <option value="sweater">Christmas sweater</option> */}
                         <option value="blazer">Blazer</option>
-                        <option value="49ers">Super Bowl 49ers</option>
-                        <option value="chiefs">Super Bowl Chiefs</option>
+                        {/* <option value="49ers">Super Bowl 49ers</option>
+                        <option value="chiefs">Super Bowl Chiefs</option> */}
                     </select>
                 </div>
             </div>
@@ -358,13 +358,13 @@ function App() {
                     <h3 className="dropdown-header">Mouth</h3>
                     <select value={mouthAsset} onChange={handleMouthAssetChange} className="dropdown" disabled={!tokenId  || clubAsset === 'elite'}>
                         <option value="">Select</option>
+                        <option value="tree">Christmas Tree</option>
                         <option value="apechain_grin">Apechain Grin</option>
                         <option value="lollipop">Lollipop</option>
                         <option value="banana_punch_gm">Banana Punch GM</option>
                         <option value="banana_smile">Banana Smile</option>
                         <option value="doodles_rainbow">Doodles Rainbow</option>
                         <option value="big_smile">Big Smile</option>
-                        {/* <option value="tree">Christmas Tree</option> */}
                     </select>
                 </div>
 
@@ -372,6 +372,9 @@ function App() {
                     <h3 className="dropdown-header">Hat</h3>
                     <select value={hatAsset} onChange={handleHatAssetChange} className="dropdown" disabled={!tokenId || clubAsset || secondAsset ==  'singe_hoodie_glow' ||  secondAsset ==  'singe_hoodie'}>
                         <option value="">Select</option>
+                        <option value="christmas_hat">Christmas Hat</option>
+                        <option value="christmas_hat2">Christmas Hat 2</option>
+                        <option value="christmas_hat3">Christmas Hat 3</option>
                         <option value="designer_toshiro_hat">Designer Toshiro</option>
                         <option value="apechain_cap">Apechain Hat</option>
                         <option value="apechain_hat_blue">Apechain Hat Blue</option>
@@ -382,9 +385,6 @@ function App() {
                         <option value="pudgy_hat">Pudgy Penguins Hat</option>
                         <option value="pudgy_hat2">Pudgy Penguins Hat 2</option>
                         <option value="glitter_cowboy_hat">Glitter Cowboy Hat</option>
-                        {/* <option value="christmas_hat">Christmas Hat</option>
-                        <option value="christmas_hat2">Christmas Hat 2</option>
-                        <option value="christmas_hat3">Christmas Hat 3</option> */}
                     </select>
                 </div>
                 <div className="dropdown-section">
