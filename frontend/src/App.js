@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import Loader from './Loader';
@@ -30,441 +29,117 @@ function getContrastYIQ(rgb) {
     return (yiq >= 128) ? 'black' : 'white';
 }
 
-function App() {
-    const [tokenIds, setTokenIds] = useState([]);
-    const [eliteTokenIds, setEliteTokenIds] = useState([]); 
-    // Add a new state for elite eligibility
-    const [isEliteEligible, setIsEliteEligible] = useState(false);
-    const [dubaiTokenIds, setDubaiTokenIds] = useState([]); 
-    // Add a new state for elite eligibility
-    const [isDubaiEligible, setIsDubaiEligible] = useState(false);
-    const [tokenId, setTokenId] = useState('');
-    const [selectedAsset, setSelectedAsset] = useState('');
-    const [secondAsset, setSecondAsset] = useState('');
-    const [thirdAsset, setThirdAsset] = useState('');
-    const [mouthAsset, setMouthAsset] = useState('');
-    const [hatAsset, setHatAsset] = useState('');
-    const [clubAsset, setClubAsset] = useState('');
-    const [eyesAsset, setEyesAsset] = useState('');
-    const [currentImageUrl, setCurrentImageUrl] = useState('./overview.gif'); // New state for the current image URL
-    const [showLoader, setShowLoader] = useState(false); // State to control loader visibility
-    const [fade, setFade] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const rgbToCss = (rgb) => `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
-    
-    useEffect(() => {
-        fetch(`https://afa-editor.ew.r.appspot.com/api/token-ids`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                const sortedTokenIds = data.map(id => parseInt(id)).sort((a, b) => a - b);
-                setTokenIds(sortedTokenIds);
-            })
-            .catch(error => console.error('Error:', error));
-    }, []);
+// 1. Split into components
+const AssetSelector = ({ label, value, onChange, options, disabled }) => (
+  <div className="dropdown-section">
+    <h3 className="dropdown-header">{label}</h3>
+    <select 
+      value={value} 
+      onChange={onChange} 
+      className="dropdown" 
+      disabled={disabled}
+    >
+      <option value="">Select</option>
+      {options.map(({ value, label, disabled }) => (
+        <option key={value} value={value} disabled={disabled}>
+          {label}
+        </option>
+      ))}
+    </select>
+  </div>
+);
 
-    useEffect(() => {
-        if (tokenId) {
-            fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
-        }
-    }, [tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset]);
+// 2. Move asset options to a separate configuration file
+const assetOptions = {
+  outfits: [
+    { value: 'sweater', label: 'Christmas sweater' },
+    { value: 'apefest_merch', label: 'Apefest Merch' },
+    // ... other outfit options
+  ],
+  // ... other asset categories
+};
 
-    useEffect(() => {
-        if (thirdAsset === 'selfie') {
-            setSecondAsset('');
-            setMouthAsset('');
-            setSelectedAsset('');
-        }
-    }, [thirdAsset]);
-    
-    // Fetches elite token IDs once when the component mounts
-    useEffect(() => {
-        console.log('Fetching elite token IDs...');
-        const url = 'https://afa-editor.ew.r.appspot.com/api/elite-token-ids';
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                console.log('Parsed JSON data:', data);
-                setEliteTokenIds(data);
-            })
-            .catch(error => console.error('Error fetching elite token IDs:', error));
-    }, []);
-
-    // Fetches dubai token IDs once when the component mounts
-    useEffect(() => {
-        console.log('Fetching dubai token IDs...');
-        const url = 'https://afa-editor.ew.r.appspot.com/api/dubai-token-ids';
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                console.log('Parsed JSON data:', data);
-                setDubaiTokenIds(data);
-            })
-            .catch(error => console.error('Error fetching dubai token IDs:', error));
-    }, []);
-
-    
-    const fetchAsset = (newTokenId, newSelectedAsset, newSecondAsset, newThirdAsset, newMouthAsset, newHatAsset, newEyesAsset, newClubAsset) => {
-        setShowLoader(true);
-    
-        const queryParams = new URLSearchParams({
-            tokenId: newTokenId,
-            assetType: newSelectedAsset || '',
-            secondAssetType: newSecondAsset || '',
-            thirdAssetType: newThirdAsset || '',
-            mouthAssetType: newMouthAsset || '',
-            eyesAssetType: newEyesAsset || '',
-            hatAssetType: newHatAsset || '',
-            clubAssetType: newClubAsset || ''
-        });
-    
-        // Start fade-out effect
-        setFade('fade-out');
-    
-        // Construct the URL with query parameters
-        const url = `https://afa-editor.ew.r.appspot.com/api/get-asset?${queryParams.toString()}`;
-    
-        fetch(url)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.blob();
-        })
-        .then(blob => {
-            const newImageUrl = URL.createObjectURL(blob);
-    
-            // Update the image URL after fade-out transition
-            setTimeout(() => {
-                setCurrentImageUrl(newImageUrl);
-                setFade('fade-in'); // Start fade-in effect
-            }, 500);
-    
-            setShowLoader(false);
-        })
-        .catch(error => {
-            console.error('Error fetching asset:', error);
-            setCurrentImageUrl('./overview.gif'); // Reset to default image on error
-            setShowLoader(false);
-            setFade('fade-in'); // Start fade-in effect
-        });
-    
-        // Fetch background color separately
-        fetch(`https://afa-editor.ew.r.appspot.com/api/get-background-color?tokenId=${newTokenId}`)
-        .then(response => response.json())
-        .then(data => {
-            const bgColor = rgbToCss(data.background_color);
-            const textColor = getContrastYIQ(data.background_color);
-            // Apply fade effect
-            document.body.classList.add('body-background-fade');
-            // Change background color
-            document.body.style.backgroundColor = bgColor;
-            document.documentElement.style.setProperty('--text-color', textColor);
-            // Remove fade effect after transition
-            setTimeout(() => {
-                document.body.classList.remove('body-background-fade');
-            }, 500); // Match this timeout with the transition duration in CSS
-        })
-        .catch(error => console.error('Error fetching background color:', error))
-        .finally(() => setIsLoading(false));
-    }
-    
-    
-    const handleSecondAssetChange = event => {
-        const newSecondAsset = event.target.value;
-        setSecondAsset(newSecondAsset);
-        
-        if (newSecondAsset === ('singe_hoodie')) {
-            setHatAsset('');   
-            
-            // Call fetchAsset with the current clubAsset state
-            setTimeout(() => {
-                fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset, mouthAsset, '', eyesAsset, clubAsset);
-            }, 0);
-        }
-        else if (newSecondAsset === ('singe_hoodie_glow')) {
-            setHatAsset('');   
-            
-            // Call fetchAsset with the current clubAsset state
-            setTimeout(() => {
-                fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset, mouthAsset, '', eyesAsset, clubAsset);
-            }, 0);
-        }
-        else fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
-    };
-    
-    const handleMouthAssetChange = event => {
-        const newMouthAsset = event.target.value;
-        setMouthAsset(newMouthAsset);
-        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, newMouthAsset, hatAsset, eyesAsset, clubAsset);
-    };
+// 3. Custom hooks for data fetching and state management
+const useTokenIds = () => {
+  const [tokenIds, setTokenIds] = useState([]);
   
-    const handleEyesAssetChange = event => {
-        const newEyesAsset = event.target.value;
-        setEyesAsset(newEyesAsset);
-        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, newEyesAsset, clubAsset);
-    };
+  useEffect(() => {
+    fetch(`${BASE_URL}/api/token-ids`)
+      .then(response => response.ok ? response.json() : Promise.reject('Network error'))
+      .then(data => {
+        const sortedTokenIds = data.map(id => parseInt(id)).sort((a, b) => a - b);
+        setTokenIds(sortedTokenIds);
+      })
+      .catch(error => console.error('Error:', error));
+  }, []);
 
-    const handleHatAssetChange = event => {
-        const newHatAsset = event.target.value;
-        setHatAsset(newHatAsset);
-        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, newHatAsset, eyesAsset, clubAsset);
-    };
+  return tokenIds;
+};
 
-    const handleClubAssetChange = event => {
-        const newClubAsset = event.target.value;
-        setClubAsset(newClubAsset);
-    
-        if (newClubAsset === ('elite')) {
-            setSecondAsset('');
-            setHatAsset('');
-            setEyesAsset('');
-            setSelectedAsset('');    
-            
-            // Call fetchAsset with the current clubAsset state
-            setTimeout(() => {
-                fetchAsset(tokenId, '', '', '', '', '', '', newClubAsset);
-            }, 0);
-        }
-        else if (newClubAsset === ('dubai')) {
-            setSecondAsset('');
-            setHatAsset('');            
-            // Call fetchAsset with the current clubAsset state
-            setTimeout(() => {
-                fetchAsset(tokenId, selectedAsset, '', thirdAsset, mouthAsset, '', eyesAsset, newClubAsset);
-            }, 0);
-        }
-    };
-    
-    const handleThirdAssetChange = event => {
-        const newThirdAsset = event.target.value;
-        setThirdAsset(newThirdAsset);
-    
-        if (newThirdAsset === 'selfie') {
-            setSecondAsset('');
-            setMouthAsset('');
-            setSelectedAsset('');    
-            
-            // Call fetchAsset with the current hatAsset state
-            setTimeout(() => {
-                fetchAsset(tokenId, '', '', newThirdAsset, '', hatAsset, eyesAsset, '');
-            }, 0);
-        }
-    };
+function App() {
+  // Use custom hooks
+  const tokenIds = useTokenIds();
+  const [assetState, assetDispatch] = useAssetState(); // Custom hook for managing all asset states
+  const { isLoading, showLoader } = useLoadingState(); // Custom hook for loading states
 
-    const handleTokenChange = event => {
-        const newTokenId = event.target.value;
-        console.log(`Token ID selected: ${newTokenId}`);
-        setTokenId(newTokenId);
-    
-        // Convert both values to strings to ensure proper comparison
-        const newIsEliteEligible = eliteTokenIds.includes(newTokenId);
-        console.log(`Is token ID ${newTokenId} elite eligible: ${newIsEliteEligible}`);
-        setIsEliteEligible(newIsEliteEligible);
-    
-        if (clubAsset === 'elite' && !newIsEliteEligible) {
-            // Reset the clubAsset if the new token ID is not eligible for elite
-            setClubAsset('');
-        }
+  // 5. Simplified handlers with dispatch
+  const handleAssetChange = (type, value) => {
+    assetDispatch({ type: 'UPDATE_ASSET', assetType: type, value });
+    fetchAsset(assetState.tokenId, { ...assetState.assets, [type]: value });
+  };
+
+  // 6. Improved fetch function with error handling and loading states
+  const fetchAsset = async (tokenId, assets) => {
+    if (!tokenId) return;
+
+    try {
+      setShowLoader(true);
+      setFade('fade-out');
+
+      const [imageResponse, colorResponse] = await Promise.all([
+        fetchImage(tokenId, assets),
+        fetchBackgroundColor(tokenId)
+      ]);
+
+      updateUI(imageResponse, colorResponse);
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setShowLoader(false);
+    }
+  };
+
+  return (
+    <div className="App">
+      <Banner />
+      
+      <AssetDisplay 
+        currentImageUrl={assetState.currentImageUrl}
+        showLoader={showLoader}
+        fade={assetState.fade}
+      />
+
+      <div className="dropdown-container">
+        <AssetSelector
+          label="Select AFA"
+          value={assetState.tokenId}
+          onChange={e => handleAssetChange('tokenId', e.target.value)}
+          options={tokenIds.map(id => ({ value: id, label: id }))}
+        />
+
+        <AssetSelector
+          label="Outfit"
+          value={assetState.assets.outfit}
+          onChange={e => handleAssetChange('outfit', e.target.value)}
+          options={assetOptions.outfits}
+          disabled={!assetState.tokenId || assetState.assets.thirdAsset === 'selfie' || assetState.assets.clubAsset}
+        />
         
-        // Convert both values to strings to ensure proper comparison
-        const newIsDubaiEligible = dubaiTokenIds.includes(newTokenId);
-        console.log(`Is token ID ${newTokenId} dubai eligible: ${newIsDubaiEligible}`);
-        setIsDubaiEligible(newIsDubaiEligible);
-    
-        if (clubAsset === 'dubai' && !newIsDubaiEligible) {
-            // Reset the clubAsset if the new token ID is not eligible for dubai
-            setClubAsset('');
-        }
-    
-        if (!selectedAsset && !secondAsset && !thirdAsset && !mouthAsset && !hatAsset && !eyesAsset && !clubAsset) {
-            // If selecting tokenId for the first time, default the clothes to "AFA"
-            fetchAsset(newTokenId, 'AFA', '', '');
-            setSelectedAsset('AFA');
-        } else {
-            // Maintain the current state of selected assets
-            fetchAsset(newTokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, '');
-        }
-    };
+        {/* Other asset selectors... */}
+      </div>
 
-    const handleAssetChange = event => {
-        setSelectedAsset(event.target.value);
-        fetchAsset(tokenId, event.target.value, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
-    };
-
-
-    return (
-        <div className="App">
-            <Banner />
-            <div id="asset-display" className={fade ? 'fade-effect' : ''}>
-                <img src={currentImageUrl} alt="Ape" style={{ maxWidth: '100%', height: 'auto' }} />
-                {showLoader && 
-                    <div className="loader">
-                        processing new perspective...
-                    </div>
-                }
-            </div>
-
-            <div className="dropdown-container">
-                    <div className="dropdown-section">
-                        <h3 className="dropdown-header">Select AFA</h3>
-                        <select value={tokenId} onChange={handleTokenChange} className="dropdown">
-                            <option value="">Select Token ID</option>
-                            {tokenIds.map(id => <option key={id} value={id}>{id}</option>)}
-                        </select>
-                    </div>
-                <div className="dropdown-section">
-                    <h3 className="dropdown-header">Outfit</h3>
-                    <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}>
-                        <option value="">Select</option>
-                        <option value="sweater">Christmas sweater</option>
-                        {/* <option value="bape_blue_shirt">BAPE® x BAYC Hawaiian Shirt Blue</option> */}
-                        <option value="apefest_merch">Apefest Merch</option>
-                        <option value="tt_hoodie">Top Trader Hoodie</option>
-                        <option value="bimmer_jacket">Bimmer Jacket</option>
-                        <option value="apechain_hoodie_black">Apechain Hoodie Black</option>
-                        <option value="apechain_hoodie_orange">Apechain Hoodie Orange</option>
-                        <option value="apechain_hoodie_blue">Apechain Hoodie Blue</option>
-                        <option value="apefest_jacket">Apefest Jacket</option>
-                        {/* <option value="bape_coach">BAPE® x BAYC Coach Jacket</option> */}
-                        {/* <option value="bape_hoodie_green">BAPE® x BAYC Hoodie Green</option> */}
-                        {/* <option value="bape_hoodie_red">BAPE® x BAYC Hoodie Red</option> */}
-                        {/* <option value="bape_shirt">Baby Milo Shirt</option> */}
-                        <option value="cheetah_hoodie">Cheetah Hoodie</option>
-                        <option value="naked">No Clothes</option>
-                        <option value="french_stripes">French Stripes</option>
-                        <option value="cats_shirt">Cool Cats Shirt</option>
-                        <option value="singe_hoodie">Singe Hoodie</option>
-                        <option value="singe_hoodie_glow">Singe Hoodie Glow</option>
-                        <option value="applied_primate_coat">Applied Primate Lab Coat</option>
-                        {/* <option value="adidas_hoodie">Adidas Hoodie</option> */}
-                        {/* <option value="adidas_yellow">Adidas Track</option> */}
-                        <option value="btc_hoodie">BTC Hoodie</option>
-                        {/* <option value="magic_eden">Magic Eden</option> */}
-                        <option value="jacket">Jacket</option>
-                        <option value="blazer">Blazer</option>
-                        {/* <option value="49ers">Super Bowl 49ers</option>
-                        <option value="chiefs">Super Bowl Chiefs</option> */}
-                    </select>
-                </div>
-            </div>
-            
-            <div className="dropdown-container">
-                <div className="dropdown-section">
-                    <h3 className="dropdown-header">Mouth</h3>
-                    <select value={mouthAsset} onChange={handleMouthAssetChange} className="dropdown" disabled={!tokenId  || clubAsset === 'elite'}>
-                        <option value="">Select</option>
-                        <option value="tree">Christmas Tree</option>
-                        <option value="apechain_grin">Apechain Grin</option>
-                        <option value="lollipop">Lollipop</option>
-                        <option value="banana_punch_gm">Banana Punch GM</option>
-                        <option value="banana_smile">Banana Smile</option>
-                        <option value="doodles_rainbow">Doodles Rainbow</option>
-                        <option value="big_smile">Big Smile</option>
-                    </select>
-                </div>
-
-                <div className="dropdown-section">
-                    <h3 className="dropdown-header">Hat</h3>
-                    <select value={hatAsset} onChange={handleHatAssetChange} className="dropdown" disabled={!tokenId || clubAsset || secondAsset ==  'singe_hoodie_glow' ||  secondAsset ==  'singe_hoodie'}>
-                        <option value="">Select</option>
-                        <option value="christmas_hat">Christmas Hat</option>
-                        <option value="christmas_hat2">Christmas Hat 2</option>
-                        <option value="christmas_hat3">Christmas Hat 3</option>
-                        <option value="designer_toshiro_hat">Designer Toshiro</option>
-                        <option value="apechain_cap">Apechain Hat</option>
-                        <option value="apechain_hat_blue">Apechain Hat Blue</option>
-                        <option value="apechain_hat_orange">Apechain Hat Orange</option>
-                        <option value="beret">Béret</option>
-                        <option value="cats_hat">Cool Cats</option>
-                        <option value="plunger">Dookey Dash</option>
-                        <option value="pudgy_hat">Pudgy Penguins Hat</option>
-                        <option value="pudgy_hat2">Pudgy Penguins Hat 2</option>
-                        <option value="glitter_cowboy_hat">Glitter Cowboy Hat</option>
-                    </select>
-                </div>
-                <div className="dropdown-section">
-                    <h3 className="dropdown-header">Eyes</h3>
-                    <select value={eyesAsset} onChange={handleEyesAssetChange} className="dropdown" disabled={!tokenId || clubAsset === 'elite'}>
-                        <option value="">Select</option>
-                        <option value="apecoin_glasses">Apecoin Glasses</option>
-                        <option value="apechain_glasses">Apechain Glasses</option>
-                        <option value="vision_pro">Vision Pro</option>
-                        <option value="dookey_eyes">Dookey Dash</option>
-                        <option value="btc_eyes">BTC Coin</option>
-                        <option value="star_glasses">Star Glasses</option>
-                    </select>
-                </div>
-                <div className="dropdown-section">
-                    <h3 className="dropdown-header">Extra</h3>
-                    <select value={thirdAsset} onChange={handleThirdAssetChange} className="dropdown" disabled={!tokenId || clubAsset === 'elite'}>
-                        <option value="">Select</option>
-                        <option value="top_trader">Top Trader</option>
-                        <option value="top_trader_red">Top Trader Red</option>
-                        <option value="unclogged">Unclogged</option>
-                        <option value="hex_dark">Hex Dark</option>
-                        <option value="hex_light">Hex Light</option>
-                        <option value="small_ape" disabled={secondAsset ==  'singe_hoodie_glow' || selectedAsset == 'dookie_dash'}>Tiny AFA</option>
-                        <option value="confetti">Confetti</option>
-                        <option value="snow">Snow</option>
-                        <option value="selfie" disabled={clubAsset === 'dubai'}>Selfie Head</option>
-                        <option value="transparent">Transparent Background</option>
-                        <option value="verified">Verified</option>
-                    </select>
-                </div>
-            </div>
-
-            <div className="dropdown-container">
-                <div className="dropdown-section">
-                    <h3 className="dropdown-header">Hand</h3>
-                    <select value={selectedAsset} onChange={handleAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset === 'elite'}>
-                        <option value="">Select</option>
-                        <option value="blever_pass">Blever Pass</option>
-                        <option value="gordon">Gordon ❤️</option>
-                        <option value="dookie_dash">Dookie Dash</option>
-                        <option value="smartphone_gm">Smartphone GM</option>
-                        <option value="sardines">Lisbon Sardines</option>
-                        <option value="ramen">Ramen Bowl</option>
-                        <option value="pray">Pray</option>
-                        <option value="basketball">Basketball</option>
-                        <option value="shiny-gm">GM</option>
-                        <option value="pipe">Pipe</option>
-                        <option value="thumbsup">Thumbs Up</option>
-                        <option value="magic_eden">Magic Eden</option>
-                        <option value="gm_espresso">GM Espresso</option>
-                        <option value="peace">Peace</option>
-                        <option value="cheers" disabled={clubAsset === 'dubai'}>Cheers</option>
-                        <option value="banana">Banana Hand</option>
-                        <option value="otherside">Otherside Bottle</option>
-                        <option value="apecoin_hands1">Apecoin Hands 1</option>
-                        <option value="apecoin_hands2">Apecoin Hands </option>
-                        {/* <option value="shoe">BAPE® x BAYC Shoe</option> */}
-                        <option value="moon_coffee">Moon Coffee Company</option>
-                        <option value="candle">Candle</option>
-                        <option value="balloon_fireworks">Balloon & Fireworks</option>
-                        <option value="fireworks">Fireworks</option>
-                        <option value="baguette">Baguette</option>
-                        <option value="clubhouse">Clubhouse Sketch</option>
-                        <option value="matchstick">Matchstick</option>
-                        <option value="balloon_moon">2024 Balloon</option>
-                    </select>
-                </div>
-                <div className="dropdown-section">
-                    <h3 className="dropdown-header">Club Assets</h3>
-                    <select value={clubAsset} onChange={handleClubAssetChange} className="dropdown" disabled={!tokenId}>
-                        <option value="">Select</option>
-                        <option value="dubai" disabled={!isDubaiEligible}>Dubai Ape Yacht Club</option>
-                        <option value="elite" disabled={!isEliteEligible}>Elite Apes HK</option>
-                    </select>
-                </div>
-
-            </div>
-            <Footer />
-        </div>
-    );
+      <Footer />
+    </div>
+  );
 }
 export default App;

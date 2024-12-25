@@ -1,3 +1,11 @@
+:root {
+  --primary-color: #000;
+  --secondary-color: #fff;
+  --transition-duration: 0.5s;
+  --border-radius: 4px;
+  --spacing-unit: 8px;
+}
+
 .App {
   text-align: center;
   display: flex;
@@ -40,8 +48,8 @@ body {
 }
 
 .fade-effect {
-  opacity: 0;
-  transition: opacity 0.5s ease-in-out;
+  opacity: 1;
+  transition: opacity var(--transition-duration) ease-in-out;
 }
 
 .hidden {
@@ -78,11 +86,11 @@ body {
 }
 
 .dropdown-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  width: 40%;
-  gap: 10px; /* Spacing between dropdown sections */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-unit);
+  width: clamp(300px, 40%, 800px);
+  margin: 0 auto;
 }
 
 .dropdown-section {
@@ -133,7 +141,7 @@ body {
 
 .fade-effect {
   opacity: 1;
-  transition: opacity 0.5s ease-in-out;
+  transition: opacity var(--transition-duration) ease-in-out;
 }
 
 .fade-effect-fade {
@@ -190,4 +198,21 @@ body {
     margin-bottom: 10px;
   }
   
+}
+
+/* 4. Better responsive design */
+@media (max-width: 768px) {
+  :root {
+    --spacing-unit: 4px;
+  }
+
+  .dropdown-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 5. Add focus styles for accessibility */
+.dropdown:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }
