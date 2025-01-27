@@ -1,4 +1,8 @@
 const ETHERSCAN_API_KEY = process.env.REACT_APP_ETHERSCAN_API_KEY;
+if (!ETHERSCAN_API_KEY) {
+  console.error('Etherscan API key not found in environment variables');
+}
+
 const CONTRACT_ADDRESS = '0xfAa0e99EF34Eae8b288CFEeAEa4BF4f5B5f2eaE7';
 
 export const getAllTransactions = async () => {
