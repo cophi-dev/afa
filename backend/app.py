@@ -6,7 +6,11 @@ import os
 from io import BytesIO
 
 app = Flask(__name__, static_folder='public', static_url_path='/')
-CORS(app, resources={r"/api/*": {"origins": ["https://afa-editor.vercel.app", "http://localhost:3000"]}})
+CORS(app, resources={r"/api/*": {"origins": [
+    "https://afa-3zwtn2xev-cophidevs-projects.vercel.app",
+    "https://afa-editor.vercel.app", 
+    "http://localhost:3000"
+]}})
 
 # Use absolute paths for file access
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
