@@ -91,18 +91,28 @@ function App() {
     const rgbToCss = (rgb) => `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
     
     useEffect(() => {
-        fetch(`https://afa-editor.ew.r.appspot.com/api/token-ids`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
+        setIsLoading(true);
+        const fetchTokenIds = async () => {
+            try {
+                const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://afa-editor.ew.r.appspot.com'}/api/token-ids`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
                 const sortedTokenIds = data.map(id => parseInt(id)).sort((a, b) => a - b);
                 setTokenIds(sortedTokenIds);
-            })
-            .catch(error => console.error('Error:', error));
+            } catch (error) {
+                console.error('Error fetching token IDs:', error);
+                // Handle error appropriately
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchTokenIds();
     }, []);
     useEffect(() => {
         if (tokenId) {
@@ -119,15 +129,24 @@ function App() {
     
     // Fetches elite token IDs once when the component mounts
     useEffect(() => {
-        console.log('Fetching elite token IDs...');
-        const url = 'https://afa-editor.ew.r.appspot.com/api/elite-token-ids';
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                console.log('Parsed JSON data:', data);
+        const fetchEliteTokens = async () => {
+            try {
+                const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://afa-editor.ew.r.appspot.com'}/api/elite-token-ids`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
                 setEliteTokenIds(data);
-            })
-            .catch(error => console.error('Error fetching elite token IDs:', error));
+            } catch (error) {
+                console.error('Error fetching elite token IDs:', error);
+                // Handle error appropriately
+            }
+        };
+
+        fetchEliteTokens();
     }, []);
     // Fetches dubai token IDs once when the component mounts
     useEffect(() => {
@@ -159,8 +178,8 @@ function App() {
         // Start fade-out effect
         setFade('fade-out');
     
-        // Construct the URL with query parameters
-        const url = `https://afa-editor.ew.r.appspot.com/api/get-asset?${queryParams.toString()}`;
+        const baseUrl = process.env.REACT_APP_API_URL || 'https://afa-editor.ew.r.appspot.com';
+        const url = `${baseUrl}/api/get-asset?${queryParams.toString()}`;
     
         fetch(url)
         .then(response => {
