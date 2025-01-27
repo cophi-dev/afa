@@ -111,19 +111,32 @@ function App() {
     // Move the minted tokens fetch to a separate function
     const fetchMintedTokens = async () => {
         try {
+            console.log('Fetching minted tokens...');
             const response = await fetch(`https://api.etherscan.io/api?module=account&action=tokennfttx&contractaddress=${CONTRACT_ADDRESS}&page=1&offset=10000&startblock=0&endblock=999999999&sort=asc&apikey=${ETHERSCAN_API_KEY}`);
             const data = await response.json();
             
             if (data.status === '1' && data.result) {
-                const minted = new Set();
+                // Track the latest transaction for each token ID
+                const tokenTransactions = new Map();
                 data.result.forEach(tx => {
-                    if (tx.from === '0x0000000000000000000000000000000000000000') {
-                        minted.add(tx.tokenID);
+                    const tokenId = tx.tokenID;
+                    if (!tokenTransactions.has(tokenId) || 
+                        parseInt(tx.blockNumber) > parseInt(tokenTransactions.get(tokenId).blockNumber)) {
+                        tokenTransactions.set(tokenId, tx);
                     }
                 });
-                console.log('Minted tokens loaded:', minted.size);
-                setMintedTokens(minted);
 
+                // A token is minted if its latest transaction has a non-zero 'to' address
+                const minted = new Set();
+                tokenTransactions.forEach((tx, tokenId) => {
+                    if (tx.to !== '0x0000000000000000000000000000000000000000') {
+                        minted.add(tokenId);
+                    }
+                });
+
+                console.log('Found minted tokens:', minted.size);
+                setMintedTokens(minted);
+                
                 // After getting minted tokens, fetch club tokens
                 fetchClubTokens();
             }
@@ -365,12 +378,14 @@ function App() {
         setTokenInput(value);
         
         if (value) {
+            console.log('Current minted tokens:', mintedTokens);
             const suggestions = Array.from(mintedTokens)
                 .filter(id => id.toString().startsWith(value))
                 .sort((a, b) => parseInt(a) - parseInt(b))
                 .slice(0, 5);
             
-            console.log('Filtered suggestions:', suggestions); // Add this for debugging
+            console.log('Input value:', value);
+            console.log('Found suggestions:', suggestions);
             setSuggestions(suggestions);
             setShowSuggestions(suggestions.length > 0);
         } else {
