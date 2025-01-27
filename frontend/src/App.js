@@ -52,13 +52,13 @@ function App() {
     const suggestionsRef = useRef(null);
     const [isCheckingMint, setIsCheckingMint] = useState(false);
     const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
-    
-    useEffect(() => {
+  
+  useEffect(() => {
         if (tokenId) {
             fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
         }
     }, [tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset]);
-    useEffect(() => {
+  useEffect(() => {
         if (thirdAsset === 'selfie') {
             setSecondAsset('');
             setMouthAsset('');
@@ -403,6 +403,66 @@ function App() {
         setCurrentImageUrl('./overview.gif');
     };
 
+    const handleRandomize = () => {
+        if (!tokenId) return;
+
+        // Helper function to get random item from array
+        const getRandomItem = (array) => array[Math.floor(Math.random() * array.length)];
+
+        // Get all available options for each category
+        const outfitOptions = Array.from(document.querySelector('select[value="' + secondAsset + '"]').options)
+            .filter(option => option.value && !option.disabled)
+            .map(option => option.value);
+        
+        const mouthOptions = Array.from(document.querySelector('select[value="' + mouthAsset + '"]').options)
+            .filter(option => option.value && !option.disabled)
+            .map(option => option.value);
+        
+        const hatOptions = Array.from(document.querySelector('select[value="' + hatAsset + '"]').options)
+            .filter(option => option.value && !option.disabled)
+            .map(option => option.value);
+        
+        const eyesOptions = Array.from(document.querySelector('select[value="' + eyesAsset + '"]').options)
+            .filter(option => option.value && !option.disabled)
+            .map(option => option.value);
+        
+        const handOptions = Array.from(document.querySelector('select[value="' + selectedAsset + '"]').options)
+            .filter(option => option.value && !option.disabled)
+            .map(option => option.value);
+        
+        const extraOptions = Array.from(document.querySelector('select[value="' + thirdAsset + '"]').options)
+            .filter(option => option.value && !option.disabled)
+            .map(option => option.value);
+
+        // Set random values
+        const newSecondAsset = getRandomItem(outfitOptions);
+        const newMouthAsset = getRandomItem(mouthOptions);
+        const newHatAsset = getRandomItem(hatOptions);
+        const newEyesAsset = getRandomItem(eyesOptions);
+        const newSelectedAsset = getRandomItem(handOptions);
+        const newThirdAsset = getRandomItem(extraOptions);
+
+        // Update states
+        setSecondAsset(newSecondAsset);
+        setMouthAsset(newMouthAsset);
+        setHatAsset(newHatAsset);
+        setEyesAsset(newEyesAsset);
+        setSelectedAsset(newSelectedAsset);
+        setThirdAsset(newThirdAsset);
+
+        // Fetch the asset with new random traits
+        fetchAsset(
+            tokenId,
+            newSelectedAsset,
+            newSecondAsset,
+            newThirdAsset,
+            newMouthAsset,
+            newHatAsset,
+            newEyesAsset,
+            clubAsset
+        );
+    };
+
   return (
     <div className="App">
       <Banner />
@@ -597,13 +657,23 @@ function App() {
                     </select>
           </div>
       </div>
-      <button 
-        onClick={handleReset}
-        className="reset-button"
-        title="Reset all selections"
-      >
-        Reset All
-      </button>
+      <div className="button-container">
+        <button 
+            onClick={handleReset}
+            className="action-button reset-button"
+            title="Reset all selections"
+        >
+            Reset All
+        </button>
+        <button 
+            onClick={handleRandomize}
+            className="action-button random-button"
+            title="Randomize traits"
+            disabled={!tokenId}
+        >
+            Randomize
+        </button>
+    </div>
       <Footer />
     </div>
   );

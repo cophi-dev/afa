@@ -340,3 +340,51 @@ body {
   from { transform: translateX(100%); }
   to { transform: translateX(0); }
 }
+
+.button-container {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.action-button {
+    padding: 10px 20px;
+    border-radius: 4px;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: white;
+    color: black;
+    border: 2px solid #ccc;
+}
+
+.action-button:hover:not(:disabled) {
+    border-color: #007bff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.action-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.reset-button {
+    background-color: #dc3545;
+    color: white;
+    border-color: #dc3545;
+}
+
+.random-button {
+    background-color: #28a745;
+    color: white;
+    border-color: #28a745;
+}
+
+@media (max-width: 768px) {
+    .button-container {
+        flex-direction: column;
+        width: 85%;
+        max-width: 400px;
+    }
+}
