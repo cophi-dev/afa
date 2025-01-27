@@ -97,7 +97,8 @@ body {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  width: calc(45% - 5px); /* Adjusting width for 2 columns */
+  width: 100%;
+  margin: 10px 0;
 }
 
 .dropdown-header {
@@ -107,11 +108,12 @@ body {
 }
 
 .dropdown {
-  padding: 7px 7px;
+  padding: 10px;
   border-radius: 4px;
   border: 1px solid #ccc;
   font-size: 1em;
-  width: 100%; /* Full width of the section */
+  width: 100%;
+  min-width: 200px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   background-color: white;
 }
@@ -219,7 +221,7 @@ body {
 
 .token-input-container {
   position: relative;
-  width: 200px;
+  width: 100%;
   margin: 0 auto;
 }
 
@@ -231,6 +233,7 @@ body {
   border-radius: 4px;
   outline: none;
   transition: border-color 0.3s;
+  background-color: white;
 }
 
 .token-input:focus {
