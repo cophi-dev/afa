@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import Loader from './Loader';
 import { ethers } from 'ethers';
@@ -88,6 +88,11 @@ function App() {
     const [fade, setFade] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const rgbToCss = (rgb) => `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+    const [tokenInput, setTokenInput] = useState('');
+    const [suggestions, setSuggestions] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [mintedTokens, setMintedTokens] = useState(new Set());
+    const suggestionsRef = useRef(null);
     
     useEffect(() => {
         setIsLoading(true);
@@ -373,6 +378,77 @@ function App() {
         }
     };
 
+    useEffect(() => {
+        const batchSize = 50;
+        const checkMintedTokens = async () => {
+            const minted = new Set();
+            const provider = new ethers.providers.JsonRpcProvider(
+                process.env.REACT_APP_ETHEREUM_RPC_URL || 'https://eth.llamarpc.com'
+            );
+            
+            const contract = new ethers.Contract(
+                CONTRACT_ADDRESS,
+                ['function ownerOf(uint256 tokenId) view returns (address)'],
+                provider
+            );
+
+            for (let i = 0; i < 10000; i += batchSize) {
+                const promises = Array.from({ length: batchSize }, (_, j) => {
+                    const tokenId = i + j;
+                    if (tokenId >= 10000) return null;
+                    return contract.ownerOf(tokenId)
+                        .then(() => tokenId)
+                        .catch(() => null);
+                });
+
+                const results = await Promise.all(promises);
+                results.forEach(tokenId => {
+                    if (tokenId !== null) {
+                        minted.add(tokenId.toString());
+                    }
+                });
+            }
+            setMintedTokens(minted);
+        };
+
+        checkMintedTokens();
+    }, []);
+
+    const handleTokenInput = (e) => {
+        const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
+        setTokenInput(value);
+        
+        if (value) {
+            const suggestions = Array.from(mintedTokens)
+                .filter(id => id.startsWith(value))
+                .sort((a, b) => parseInt(a) - parseInt(b))
+                .slice(0, 5);
+            setSuggestions(suggestions);
+            setShowSuggestions(suggestions.length > 0);
+        } else {
+            setSuggestions([]);
+            setShowSuggestions(false);
+        }
+    };
+
+    const handleSuggestionClick = (value) => {
+        setTokenInput(value);
+        setTokenId(value);
+        setShowSuggestions(false);
+        handleTokenChange({ target: { value } });
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (suggestionsRef.current && !suggestionsRef.current.contains(event.target)) {
+                setShowSuggestions(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
   return (
     <div className="App">
       <Banner />
@@ -388,12 +464,28 @@ function App() {
             <div className="dropdown-container">
                     <div className="dropdown-section">
                         <h3 className="dropdown-header">Select AFA</h3>
-                        <select value={tokenId} onChange={handleTokenChange} className="dropdown">
-                            <option value="">Select Token ID</option>
-                            {Array.from({ length: 10000 }, (_, i) => (
-                                <option key={i} value={i}>{i}</option>
-                            ))}
-                        </select>
+                        <div className="token-input-container">
+                            <input
+                                type="text"
+                                value={tokenInput}
+                                onChange={handleTokenInput}
+                                placeholder="Enter Token ID (0-9999)"
+                                className="token-input"
+                            />
+                            {showSuggestions && (
+                                <div className="suggestions-container" ref={suggestionsRef}>
+                                    {suggestions.map((suggestion) => (
+                                        <div
+                                            key={suggestion}
+                                            className="suggestion-item"
+                                            onClick={() => handleSuggestionClick(suggestion)}
+                                        >
+                                            {suggestion}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Outfit</h3>
