@@ -1,11 +1,16 @@
-const ETHERSCAN_API_KEY = process.env.REACT_APP_ETHERSCAN_API_KEY;
+const ETHERSCAN_API_KEY = 'R4UZU3593KKACWDP4CWZYRUT6V4P6F5RMB'; // Hardcode for now
 const CONTRACT_ADDRESS = '0xfAa0e99EF34Eae8b288CFEeAEa4BF4f5B5f2eaE7';
 
 export const getAllTransactions = async () => {
   try {
     const url = `https://api.etherscan.io/api?module=account&action=tokennfttx&contractaddress=${CONTRACT_ADDRESS}&page=1&offset=10000&startblock=0&endblock=999999999&sort=asc&apikey=${ETHERSCAN_API_KEY}`;
+    
+    console.log('Fetching from URL:', url); // Add this for debugging
+    
     const response = await fetch(url);
     const data = await response.json();
+    
+    console.log('Etherscan response:', data); // Add this for debugging
     
     if (data.status === '0') {
       throw new Error(data.message || 'Etherscan API error');
