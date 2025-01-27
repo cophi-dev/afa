@@ -96,30 +96,6 @@ function App() {
     const suggestionsRef = useRef(null);
     
     useEffect(() => {
-        setIsLoading(true);
-        const fetchTokenIds = async () => {
-            try {
-                const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://afa-editor.ew.r.appspot.com'}/api/token-ids`, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                    },
-                });
-                if (!response.ok) throw new Error('Network response was not ok');
-                const data = await response.json();
-                const sortedTokenIds = data.map(id => parseInt(id)).sort((a, b) => a - b);
-                // setTokenIds(sortedTokenIds);
-            } catch (error) {
-                console.error('Error fetching token IDs:', error);
-                // Handle error appropriately
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchTokenIds();
-    }, []);
-    useEffect(() => {
         if (tokenId) {
             fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
         }
