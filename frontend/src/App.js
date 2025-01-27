@@ -51,6 +51,7 @@ function App() {
     const [mintedTokens, setMintedTokens] = useState(new Set());
     const suggestionsRef = useRef(null);
     const [isCheckingMint, setIsCheckingMint] = useState(false);
+    const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
     
     useEffect(() => {
         if (tokenId) {
@@ -370,6 +371,38 @@ function App() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    const handleKeyDown = (e) => {
+        if (!showSuggestions) return;
+        
+        switch(e.key) {
+            case 'ArrowDown':
+                setSelectedSuggestionIndex(prev => 
+                    prev < suggestions.length - 1 ? prev + 1 : prev);
+                break;
+            case 'ArrowUp':
+                setSelectedSuggestionIndex(prev => prev > 0 ? prev - 1 : prev);
+                break;
+            case 'Enter':
+                if (selectedSuggestionIndex >= 0) {
+                    handleSuggestionClick(suggestions[selectedSuggestionIndex]);
+                }
+                break;
+        }
+    };
+
+    const handleReset = () => {
+        setTokenId('');
+        setTokenInput('');
+        setSelectedAsset('');
+        setSecondAsset('');
+        setThirdAsset('');
+        setMouthAsset('');
+        setHatAsset('');
+        setClubAsset('');
+        setEyesAsset('');
+        setCurrentImageUrl('./overview.gif');
+    };
+
   return (
     <div className="App">
       <Banner />
@@ -396,10 +429,10 @@ function App() {
                             />
                             {showSuggestions && (
                                 <div className="suggestions-container" ref={suggestionsRef}>
-                                    {suggestions.map((suggestion) => (
+                                    {suggestions.map((suggestion, index) => (
                                         <div
                                             key={suggestion}
-                                            className="suggestion-item"
+                                            className={`suggestion-item ${index === selectedSuggestionIndex ? 'selected' : ''}`}
                                             onClick={() => handleSuggestionClick(suggestion)}
                                         >
                                             {suggestion}
@@ -545,13 +578,32 @@ function App() {
                 </div>
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Club Assets</h3>
-                    <select value={clubAsset} onChange={handleClubAssetChange} className="dropdown" disabled={!tokenId}>
+                    <select 
+                        value={clubAsset} 
+                        onChange={handleClubAssetChange} 
+                        className="dropdown" 
+                        disabled={!tokenId}
+                        title={!tokenId ? "Enter a token ID first" : ""}
+                    >
                         <option value="">Select</option>
-                        <option value="dubai" disabled={!isDubaiEligible}>Dubai Ape Yacht Club</option>
+                        <option 
+                            value="dubai" 
+                            disabled={!isDubaiEligible}
+                            title={!isDubaiEligible ? "This token is not eligible for Dubai club" : ""}
+                        >
+                            Dubai Ape Yacht Club
+                        </option>
                         <option value="elite" disabled={!isEliteEligible}>Elite Apes HK</option>
                     </select>
           </div>
       </div>
+      <button 
+        onClick={handleReset}
+        className="reset-button"
+        title="Reset all selections"
+      >
+        Reset All
+      </button>
       <Footer />
     </div>
   );
