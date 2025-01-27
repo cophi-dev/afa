@@ -96,7 +96,6 @@ const assetOptions = {
 const useMintStatus = (tokenId) => {
   const [isMinted, setIsMinted] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
-  const [owner, setOwner] = useState(null);
 
   useEffect(() => {
     const checkMintStatus = async () => {
@@ -115,17 +114,14 @@ const useMintStatus = (tokenId) => {
         );
 
         try {
-          const ownerAddress = await contract.ownerOf(tokenId);
+          await contract.ownerOf(tokenId);
           setIsMinted(true);
-          setOwner(ownerAddress);
         } catch (error) {
           setIsMinted(false);
-          setOwner(null);
         }
       } catch (error) {
         console.error('Error checking mint status:', error);
         setIsMinted(false);
-        setOwner(null);
       } finally {
         setIsChecking(false);
       }
@@ -134,7 +130,7 @@ const useMintStatus = (tokenId) => {
     checkMintStatus();
   }, [tokenId]);
 
-  return { isMinted, isChecking, owner };
+  return { isMinted, isChecking };
 };
 
 // Add the AssetDisplay component
@@ -158,7 +154,7 @@ function App() {
     fade: '',
     assets: {}
   });
-  const { isMinted, isChecking, owner } = useMintStatus(tokenId);
+  const { isMinted, isChecking } = useMintStatus(tokenId);
   const [showLoader, setShowLoader] = useState(false);
   const [fade, setFade] = useState('');
 
@@ -338,7 +334,6 @@ function App() {
           <div>Checking mint status...</div>
         ) : isMinted ? (
           <>
-            <p>Owned by: {owner}</p>
             <AssetSelector
               label="Outfit"
               value={assetState.assets.outfit}
