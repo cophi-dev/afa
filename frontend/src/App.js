@@ -70,7 +70,6 @@ const useMintStatus = (tokenId) => {
 };
 
 function App() {
-    const [tokenIds, setTokenIds] = useState([]);
     const [eliteTokenIds, setEliteTokenIds] = useState([]); 
     const [isEliteEligible, setIsEliteEligible] = useState(false);
     const [dubaiTokenIds, setDubaiTokenIds] = useState([]); 
@@ -103,7 +102,7 @@ function App() {
                 if (!response.ok) throw new Error('Network response was not ok');
                 const data = await response.json();
                 const sortedTokenIds = data.map(id => parseInt(id)).sort((a, b) => a - b);
-                setTokenIds(sortedTokenIds);
+                // setTokenIds(sortedTokenIds);
             } catch (error) {
                 console.error('Error fetching token IDs:', error);
                 // Handle error appropriately
@@ -162,7 +161,7 @@ function App() {
     }, []);
     
     const fetchAsset = (newTokenId, newSelectedAsset, newSecondAsset, newThirdAsset, newMouthAsset, newHatAsset, newEyesAsset, newClubAsset) => {
-        setShowLoader(true);
+      setShowLoader(true);
     
         const queryParams = new URLSearchParams({
             tokenId: newTokenId,
@@ -176,8 +175,8 @@ function App() {
         });
     
         // Start fade-out effect
-        setFade('fade-out');
-    
+      setFade('fade-out');
+
         const baseUrl = process.env.REACT_APP_API_URL || 'https://afa-editor.ew.r.appspot.com';
         const url = `${baseUrl}/api/get-asset?${queryParams.toString()}`;
     
@@ -202,7 +201,7 @@ function App() {
         .catch(error => {
             console.error('Error fetching asset:', error);
             setCurrentImageUrl('./overview.gif'); // Reset to default image on error
-            setShowLoader(false);
+      setShowLoader(false);
             setFade('fade-in'); // Start fade-in effect
         });
     
@@ -307,37 +306,41 @@ function App() {
             }, 0);
         }
     };
-    const handleTokenChange = event => {
+    const handleTokenChange = async (event) => {
         const newTokenId = event.target.value;
         console.log(`Token ID selected: ${newTokenId}`);
         setTokenId(newTokenId);
-    
+
+        if (!newTokenId) return;
+
+        // Check if token is minted
+        const { isMinted } = await checkMintStatus(newTokenId);
+        if (!isMinted) {
+            console.log('Token not minted');
+            return;
+        }
+
         // Convert both values to strings to ensure proper comparison
         const newIsEliteEligible = eliteTokenIds.includes(newTokenId);
         console.log(`Is token ID ${newTokenId} elite eligible: ${newIsEliteEligible}`);
         setIsEliteEligible(newIsEliteEligible);
-    
+
         if (clubAsset === 'elite' && !newIsEliteEligible) {
-            // Reset the clubAsset if the new token ID is not eligible for elite
             setClubAsset('');
         }
 
-        // Convert both values to strings to ensure proper comparison
         const newIsDubaiEligible = dubaiTokenIds.includes(newTokenId);
         console.log(`Is token ID ${newTokenId} dubai eligible: ${newIsDubaiEligible}`);
         setIsDubaiEligible(newIsDubaiEligible);
-    
+
         if (clubAsset === 'dubai' && !newIsDubaiEligible) {
-            // Reset the clubAsset if the new token ID is not eligible for dubai
             setClubAsset('');
         }
-    
+
         if (!selectedAsset && !secondAsset && !thirdAsset && !mouthAsset && !hatAsset && !eyesAsset && !clubAsset) {
-            // If selecting tokenId for the first time, default the clothes to "AFA"
             fetchAsset(newTokenId, 'AFA', '', '');
             setSelectedAsset('AFA');
         } else {
-            // Maintain the current state of selected assets
             fetchAsset(newTokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, '');
         }
     };
@@ -345,9 +348,34 @@ function App() {
         setSelectedAsset(event.target.value);
         fetchAsset(tokenId, event.target.value, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
     };
-    return (
-        <div className="App">
-            <Banner />
+
+    const checkMintStatus = async (tokenId) => {
+        try {
+            const provider = new ethers.providers.JsonRpcProvider(
+                process.env.REACT_APP_ETHEREUM_RPC_URL || 'https://eth.llamarpc.com'
+            );
+            
+            const contract = new ethers.Contract(
+                CONTRACT_ADDRESS,
+                ['function ownerOf(uint256 tokenId) view returns (address)'],
+                provider
+            );
+
+            try {
+                await contract.ownerOf(tokenId);
+                return { isMinted: true };
+            } catch (error) {
+                return { isMinted: false };
+            }
+        } catch (error) {
+            console.error('Error checking mint status:', error);
+            return { isMinted: false };
+        }
+    };
+
+  return (
+    <div className="App">
+      <Banner />
             <div id="asset-display" className={fade ? 'fade-effect' : ''}>
                 <img src={currentImageUrl} alt="Ape" style={{ maxWidth: '100%', height: 'auto' }} />
                 {showLoader && 
@@ -362,7 +390,9 @@ function App() {
                         <h3 className="dropdown-header">Select AFA</h3>
                         <select value={tokenId} onChange={handleTokenChange} className="dropdown">
                             <option value="">Select Token ID</option>
-                            {tokenIds.map(id => <option key={id} value={id}>{id}</option>)}
+                            {Array.from({ length: 10000 }, (_, i) => (
+                                <option key={i} value={i}>{i}</option>
+                            ))}
                         </select>
                     </div>
                 <div className="dropdown-section">
@@ -400,8 +430,8 @@ function App() {
                     </select>
                 </div>
             </div>
-            
-            <div className="dropdown-container">
+
+      <div className="dropdown-container">
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Mouth</h3>
                     <select value={mouthAsset} onChange={handleMouthAssetChange} className="dropdown" disabled={!tokenId  || clubAsset === 'elite'}>
@@ -506,10 +536,10 @@ function App() {
                         <option value="dubai" disabled={!isDubaiEligible}>Dubai Ape Yacht Club</option>
                         <option value="elite" disabled={!isEliteEligible}>Elite Apes HK</option>
                     </select>
-                </div>
-            </div>
-            <Footer />
-        </div>
-    );
+          </div>
+      </div>
+      <Footer />
+    </div>
+  );
 }
 export default App;
