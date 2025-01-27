@@ -27,7 +27,6 @@ function Footer() {
     );
 }
 
-
 function getContrastYIQ(rgb) {
     const yiq = ((rgb[0]*299)+(rgb[1]*587)+(rgb[2]*114))/1000;
     return (yiq >= 128) ? 'black' : 'white';
@@ -108,6 +107,17 @@ const useMintStatus = (tokenId) => {
   return { isMinted, isChecking, owner };
 };
 
+// Add the AssetDisplay component
+const AssetDisplay = ({ currentImageUrl, showLoader, fade }) => (
+  <div id="asset-display" className={`fade-effect ${fade}`}>
+    {showLoader ? (
+      <div className="loader">Loading...</div>
+    ) : (
+      currentImageUrl && <img src={currentImageUrl} alt="Asset" />
+    )}
+  </div>
+);
+
 function App() {
   const [tokenId, setTokenId] = useState('');
   const [suggestions, setSuggestions] = useState([]);
@@ -119,6 +129,8 @@ function App() {
     assets: {}
   });
   const { isMinted, isChecking, owner } = useMintStatus(tokenId);
+  const [showLoader, setShowLoader] = useState(false);
+  const [fade, setFade] = useState('');
 
   // 5. Simplified handlers with dispatch
   const handleAssetChange = async (type, value) => {
@@ -213,14 +225,59 @@ function App() {
     };
   }, []);
 
+  // Add these utility functions
+  const fetchImage = async (tokenId, assets) => {
+    const queryParams = new URLSearchParams({
+      tokenId,
+      ...assets
+    });
+    
+    const response = await fetch(`${BASE_URL}/api/get-asset?${queryParams}`);
+    if (!response.ok) throw new Error('Failed to fetch image');
+    return response;
+  };
+
+  const fetchBackgroundColor = async (tokenId) => {
+    const response = await fetch(`${BASE_URL}/api/get-background-color?tokenId=${tokenId}`);
+    if (!response.ok) throw new Error('Failed to fetch background color');
+    return response.json();
+  };
+
+  const updateUI = async (imageResponse, colorResponse) => {
+    if (imageResponse.ok) {
+      const imageBlob = await imageResponse.blob();
+      const imageUrl = URL.createObjectURL(imageBlob);
+      setAssetState(prev => ({
+        ...prev,
+        currentImageUrl: imageUrl,
+        fade: 'fade-in'
+      }));
+    }
+
+    if (colorResponse.background_color) {
+      document.documentElement.style.setProperty('--text-color', 
+        getContrastYIQ(colorResponse.background_color) === 'black' ? 'black' : 'white'
+      );
+    }
+  };
+
+  const handleError = (error) => {
+    console.error('Error:', error);
+    setAssetState(prev => ({
+      ...prev,
+      currentImageUrl: null,
+      fade: ''
+    }));
+  };
+
   return (
     <div className="App">
       <Banner />
       
       <AssetDisplay 
         currentImageUrl={assetState.currentImageUrl}
-        showLoader={isChecking}
-        fade={assetState.fade}
+        showLoader={isChecking || showLoader}
+        fade={fade}
       />
 
       <div className="dropdown-container">
