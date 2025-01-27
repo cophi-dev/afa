@@ -1,89 +1,54 @@
 const ETHERSCAN_API_KEY = process.env.REACT_APP_ETHERSCAN_API_KEY;
 const CONTRACT_ADDRESS = '0xfAa0e99EF34Eae8b288CFEeAEa4BF4f5B5f2eaE7';
 
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
 export const getAllTransactions = async () => {
+  try {
     const url = `https://api.etherscan.io/api?module=account&action=tokennfttx&contractaddress=${CONTRACT_ADDRESS}&page=1&offset=10000&startblock=0&endblock=999999999&sort=asc&apikey=${ETHERSCAN_API_KEY}`;
+    const response = await fetch(url);
+    const data = await response.json();
     
-    try {
-        // Add a small delay to respect rate limits
-        await delay(200);
-        
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        if (data.status === '0' && data.message === 'No transactions found') {
-            return []; // Return empty array for no transactions
-        }
-        
-        if (data.status === '1' && data.result) {
-            return data.result;
-        }
-
-        if (data.message === 'NOTOK' || data.result === 'Max rate limit reached') {
-            // Wait and retry once if we hit rate limit
-            console.log('Hit rate limit, waiting to retry...');
-            await delay(1000);
-            const retryResponse = await fetch(url);
-            const retryData = await retryResponse.json();
-            
-            if (retryData.status === '1' && retryData.result) {
-                return retryData.result;
-            }
-        }
-        
-        throw new Error(data.message || 'Failed to fetch transactions');
-    } catch (error) {
-        console.error('Error fetching transactions:', error);
-        // Return empty array instead of throwing
-        return [];
+    if (data.status === '0') {
+      throw new Error(data.message || 'Etherscan API error');
     }
+    
+    return data.result || [];
+  } catch (error) {
+    console.error('Error fetching transactions:', error);
+    return [];
+  }
 };
 
 export const processNFTStatuses = (transactions) => {
-    if (!Array.isArray(transactions)) {
-        console.error('Invalid transactions data:', transactions);
-        return new Map();
+  if (!Array.isArray(transactions)) {
+    console.error('Transactions is not an array:', transactions);
+    return new Map();
+  }
+  
+  const nftStatuses = new Map();
+  
+  transactions.forEach(tx => {
+    if (tx && tx.tokenID) {
+      const tokenId = parseInt(tx.tokenID);
+      nftStatuses.set(tokenId, {
+        owner: tx.to,
+        timestamp: tx.timeStamp
+      });
     }
-
-    const nftStatuses = new Map();
-    
-    transactions.forEach(tx => {
-        try {
-            const tokenId = tx.tokenID;
-            const currentStatus = nftStatuses.get(tokenId);
-            
-            if (!currentStatus || parseInt(tx.blockNumber) > parseInt(currentStatus.blockNumber)) {
-                nftStatuses.set(tokenId, {
-                    owner: tx.to,
-                    timestamp: parseInt(tx.timeStamp),
-                    blockNumber: tx.blockNumber
-                });
-            }
-        } catch (error) {
-            console.error('Error processing transaction:', tx, error);
-        }
-    });
-    
-    return nftStatuses;
+  });
+  
+  return nftStatuses;
 };
 
-// Add a new function to check single token mint status
+// Keep this function for individual token checks
 export const checkTokenMintStatus = async (tokenId) => {
+  try {
     const url = `https://api.etherscan.io/api?module=token&action=tokennfttx&contractaddress=${CONTRACT_ADDRESS}&tokenid=${tokenId}&apikey=${ETHERSCAN_API_KEY}`;
+    const response = await fetch(url);
+    const data = await response.json();
     
-    try {
-        await delay(200);
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        if (data.status === '1' && data.result && data.result.length > 0) {
-            return true;
-        }
-        return false;
-    } catch (error) {
-        console.error('Error checking token status:', error);
-        return false;
-    }
+    return data.status === '1' && data.result && data.result.length > 0;
+  } catch (error) {
+    console.error('Error checking token status:', error);
+    return false;
+  }
 }; 
