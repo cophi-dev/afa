@@ -1,4 +1,4 @@
-const ETHERSCAN_API_KEY = 'R4UZU3593KKACWDP4CWZYRUT6V4P6F5RMB'; // Hardcode for now
+const ETHERSCAN_API_KEY = process.env.REACT_APP_ETHERSCAN_API_KEY;
 const CONTRACT_ADDRESS = '0xfAa0e99EF34Eae8b288CFEeAEa4BF4f5B5f2eaE7';
 
 export const getAllTransactions = async () => {
