@@ -244,8 +244,7 @@ def is_minted(token_id):
         return token_id in [ape['TOKENID'] for ape in minted_apes]
     except Exception as e:
         app.logger.error(f"Error in is_minted: {e}")
-        return False@app.route('/api/get-asset', methods=['GET'])
-    
+        return False
 
 # Modify this function to return a list of elite token IDs as strings
 def load_elite_ids():
@@ -665,7 +664,6 @@ def get_asset():
     mouth_asset_type = request.args.get('mouthAssetType', '')
     hat_asset_type = request.args.get('hatAssetType', '')
     eyes_asset_type = request.args.get('eyesAssetType', '')
-    token_id = request.args.get('tokenId')
     club_asset_type = request.args.get('clubAssetType', '')
 
     # Check if elite asset is requested and if token_id is not in elite list
@@ -678,21 +676,19 @@ def get_asset():
         return jsonify({'error': 'Token ID not eligible for dubai assets'}), 200
 
     try:
-        if is_minted(token_id):
-            db_path = os.path.join(os.path.dirname(__file__), 'db.json')
-            with open(db_path, 'r') as file:
-                data = json.load(file)
-            
-            image = compose_ape(token_id, data, asset_type, second_asset_type, third_asset_type, mouth_asset_type, hat_asset_type, eyes_asset_type, club_asset_type)
-            if not image:
-                raise ValueError("Ape not found")
-            img_io = BytesIO()
-            image.save(img_io, 'PNG')
-            img_io.seek(0)
-            return send_file(img_io, mimetype='image/png')
-        else:
-            default_image_url = url_for('static', filename='/face.png')
-            return jsonify({'image_url': default_image_url, 'message': 'This ape has not changed their perspective yet'})
+        db_path = os.path.join(os.path.dirname(__file__), 'db.json')
+        with open(db_path, 'r') as file:
+            data = json.load(file)
+        
+        image = compose_ape(token_id, data, asset_type, second_asset_type, third_asset_type, 
+                          mouth_asset_type, hat_asset_type, eyes_asset_type, club_asset_type)
+        if not image:
+            raise ValueError("Ape not found")
+        
+        img_io = BytesIO()
+        image.save(img_io, 'PNG')
+        img_io.seek(0)
+        return send_file(img_io, mimetype='image/png')
     
     except Exception as e:
         print(f"Error processing Token ID {token_id}: {e}")
@@ -716,17 +712,6 @@ def get_background_color():
     except Exception as e:
         print(f"Error processing Token ID {token_id}: {e}")
         return jsonify({'error': 'Internal Server Error'}), 500
-    
-@app.route('/api/token-ids', methods=['GET'])
-def get_token_ids():
-    try:
-        db_path = os.path.join(os.path.dirname(__file__), 'afa_db.json')
-        with open(db_path, 'r') as file:
-            minted_apes = json.load(file)
-        return jsonify([ape['TOKENID'] for ape in minted_apes])
-    except Exception as e:
-        app.logger.error(f"Error in get_token_ids: {e}")
-        return jsonify({'error': str(e)}), 500
     
 @app.route('/api/elite-token-ids', methods=['GET'])
 def get_elite_token_ids():
