@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import Loader from './Loader';
 import { ethers } from 'ethers';
-import { getAllTransactions, processNFTStatuses } from '../services/etherscanService';
+import { getAllTransactions, processNFTStatuses } from './services/etherscanService';
 
 const CONTRACT_ADDRESS = '0xfAa0e99EF34Eae8b288CFEeAEa4BF4f5B5f2eaE7';
 const ETHERSCAN_API_KEY = process.env.REACT_APP_ETHERSCAN_API_KEY;
