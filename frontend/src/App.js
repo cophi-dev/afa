@@ -353,9 +353,15 @@ function App() {
                 const data = await response.json();
                 
                 if (data.status === '1' && data.result) {
-                    const minted = new Set(
-                        data.result.map(tx => tx.tokenID)
-                    );
+                    // Create a Set of unique tokenIDs that have been minted
+                    const minted = new Set();
+                    data.result.forEach(tx => {
+                        // Only add the tokenID if it's a mint transaction (from address is zero)
+                        if (tx.from === '0x0000000000000000000000000000000000000000') {
+                            minted.add(tx.tokenID);
+                        }
+                    });
+                    console.log('Minted tokens:', Array.from(minted));
                     setMintedTokens(minted);
                 }
             } catch (error) {
@@ -371,12 +377,12 @@ function App() {
         setTokenInput(value);
         
         if (value) {
-            // Use mintedTokens from Etherscan instead of dubai/elite lists
             const suggestions = Array.from(mintedTokens)
                 .filter(id => id.toString().startsWith(value))
                 .sort((a, b) => parseInt(a) - parseInt(b))
                 .slice(0, 5);
             
+            console.log('Filtered suggestions:', suggestions); // Add this for debugging
             setSuggestions(suggestions);
             setShowSuggestions(suggestions.length > 0);
         } else {
@@ -385,10 +391,17 @@ function App() {
         }
     };
 
-    const handleSuggestionClick = (value) => {
+    const handleSuggestionClick = async (value) => {
         setTokenInput(value);
         setTokenId(value);
         setShowSuggestions(false);
+
+        // Check if token is minted
+        const { isMinted } = await checkMintStatus(value);
+        if (!isMinted) {
+            console.log('Token not minted');
+            return;
+        }
 
         // Check eligibility for clubs
         const newIsEliteEligible = eliteTokenIds.includes(value);
