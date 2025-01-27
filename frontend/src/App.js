@@ -108,40 +108,54 @@ function App() {
         }
     }, [thirdAsset]);
     
-    // Fetches elite token IDs once when the component mounts
-    useEffect(() => {
-        const fetchEliteTokens = async () => {
-            try {
-                const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://afa-editor.ew.r.appspot.com'}/api/elite-token-ids`, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                    },
+    // Move the minted tokens fetch to a separate function
+    const fetchMintedTokens = async () => {
+        try {
+            const response = await fetch(`https://api.etherscan.io/api?module=account&action=tokennfttx&contractaddress=${CONTRACT_ADDRESS}&page=1&offset=10000&startblock=0&endblock=999999999&sort=asc&apikey=${ETHERSCAN_API_KEY}`);
+            const data = await response.json();
+            
+            if (data.status === '1' && data.result) {
+                const minted = new Set();
+                data.result.forEach(tx => {
+                    if (tx.from === '0x0000000000000000000000000000000000000000') {
+                        minted.add(tx.tokenID);
+                    }
                 });
-                if (!response.ok) throw new Error('Network response was not ok');
-                const data = await response.json();
-                setEliteTokenIds(data);
-            } catch (error) {
-                console.error('Error fetching elite token IDs:', error);
-                // Handle error appropriately
-            }
-        };
+                console.log('Minted tokens loaded:', minted.size);
+                setMintedTokens(minted);
 
-        fetchEliteTokens();
-    }, []);
-    // Fetches dubai token IDs once when the component mounts
+                // After getting minted tokens, fetch club tokens
+                fetchClubTokens();
+            }
+        } catch (error) {
+            console.error('Error fetching minted tokens:', error);
+        }
+    };
+
+    // Combine dubai and elite token fetching
+    const fetchClubTokens = async () => {
+        try {
+            const [eliteResponse, dubaiResponse] = await Promise.all([
+                fetch(`${process.env.REACT_APP_API_URL}/api/elite-token-ids`),
+                fetch(`${process.env.REACT_APP_API_URL}/api/dubai-token-ids`)
+            ]);
+
+            const eliteData = await eliteResponse.json();
+            const dubaiData = await dubaiResponse.json();
+
+            setEliteTokenIds(eliteData);
+            setDubaiTokenIds(dubaiData);
+            console.log('Club tokens loaded - Elite:', eliteData.length, 'Dubai:', dubaiData.length);
+        } catch (error) {
+            console.error('Error fetching club tokens:', error);
+        }
+    };
+
+    // Update the useEffect to only call fetchMintedTokens
     useEffect(() => {
-        console.log('Fetching dubai token IDs...');
-        const url = 'https://afa-editor.ew.r.appspot.com/api/dubai-token-ids';
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                console.log('Parsed JSON data:', data);
-                setDubaiTokenIds(data);
-            })
-            .catch(error => console.error('Error fetching dubai token IDs:', error));
+        fetchMintedTokens();
     }, []);
-    
+
     const fetchAsset = (newTokenId, newSelectedAsset, newSecondAsset, newThirdAsset, newMouthAsset, newHatAsset, newEyesAsset, newClubAsset) => {
       setShowLoader(true);
     
@@ -345,32 +359,6 @@ function App() {
             return { isMinted: false };
         }
     };
-
-    useEffect(() => {
-        const checkMintedTokens = async () => {
-            try {
-                const response = await fetch(`https://api.etherscan.io/api?module=account&action=tokennfttx&contractaddress=${CONTRACT_ADDRESS}&page=1&offset=10000&startblock=0&endblock=999999999&sort=asc&apikey=${ETHERSCAN_API_KEY}`);
-                const data = await response.json();
-                
-                if (data.status === '1' && data.result) {
-                    // Create a Set of unique tokenIDs that have been minted
-                    const minted = new Set();
-                    data.result.forEach(tx => {
-                        // Only add the tokenID if it's a mint transaction (from address is zero)
-                        if (tx.from === '0x0000000000000000000000000000000000000000') {
-                            minted.add(tx.tokenID);
-                        }
-                    });
-                    console.log('Minted tokens:', Array.from(minted));
-                    setMintedTokens(minted);
-                }
-            } catch (error) {
-                console.error('Error fetching minted tokens:', error);
-            }
-        };
-
-        checkMintedTokens();
-    }, []);
 
     const handleTokenInput = (e) => {
         const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
