@@ -52,6 +52,12 @@ function App() {
     const suggestionsRef = useRef(null);
     const [isCheckingMint, setIsCheckingMint] = useState(false);
     const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
+    const outfitRef = useRef(null);
+    const mouthRef = useRef(null);
+    const hatRef = useRef(null);
+    const eyesRef = useRef(null);
+    const handRef = useRef(null);
+    const extraRef = useRef(null);
   
   useEffect(() => {
         if (tokenId) {
@@ -391,8 +397,10 @@ function App() {
     };
 
     const handleReset = () => {
-        setTokenId('');
-        setTokenInput('');
+        // Keep the token ID and input
+        // const tokenId and tokenInput stay the same
+        
+        // Reset all other states
         setSelectedAsset('');
         setSecondAsset('');
         setThirdAsset('');
@@ -400,7 +408,12 @@ function App() {
         setHatAsset('');
         setClubAsset('');
         setEyesAsset('');
-        setCurrentImageUrl('./overview.gif');
+        
+        // Fetch the initial image with just the token ID
+        if (tokenId) {
+            fetchAsset(tokenId, 'AFA', '', '');
+            setSelectedAsset('AFA');
+        }
     };
 
     const handleRandomize = () => {
@@ -409,38 +422,29 @@ function App() {
         // Helper function to get random item from array
         const getRandomItem = (array) => array[Math.floor(Math.random() * array.length)];
 
-        // Get all available options for each category
-        const outfitOptions = Array.from(document.querySelector('select[value="' + secondAsset + '"]').options)
-            .filter(option => option.value && !option.disabled)
-            .map(option => option.value);
-        
-        const mouthOptions = Array.from(document.querySelector('select[value="' + mouthAsset + '"]').options)
-            .filter(option => option.value && !option.disabled)
-            .map(option => option.value);
-        
-        const hatOptions = Array.from(document.querySelector('select[value="' + hatAsset + '"]').options)
-            .filter(option => option.value && !option.disabled)
-            .map(option => option.value);
-        
-        const eyesOptions = Array.from(document.querySelector('select[value="' + eyesAsset + '"]').options)
-            .filter(option => option.value && !option.disabled)
-            .map(option => option.value);
-        
-        const handOptions = Array.from(document.querySelector('select[value="' + selectedAsset + '"]').options)
-            .filter(option => option.value && !option.disabled)
-            .map(option => option.value);
-        
-        const extraOptions = Array.from(document.querySelector('select[value="' + thirdAsset + '"]').options)
-            .filter(option => option.value && !option.disabled)
-            .map(option => option.value);
+        // Helper function to get available options from a select element
+        const getAvailableOptions = (selectRef) => {
+            if (!selectRef.current) return [];
+            return Array.from(selectRef.current.options)
+                .filter(option => option.value && !option.disabled)
+                .map(option => option.value);
+        };
 
-        // Set random values
-        const newSecondAsset = getRandomItem(outfitOptions);
-        const newMouthAsset = getRandomItem(mouthOptions);
-        const newHatAsset = getRandomItem(hatOptions);
-        const newEyesAsset = getRandomItem(eyesOptions);
-        const newSelectedAsset = getRandomItem(handOptions);
-        const newThirdAsset = getRandomItem(extraOptions);
+        // Get all available options for each category
+        const outfitOptions = getAvailableOptions(outfitRef);
+        const mouthOptions = getAvailableOptions(mouthRef);
+        const hatOptions = getAvailableOptions(hatRef);
+        const eyesOptions = getAvailableOptions(eyesRef);
+        const handOptions = getAvailableOptions(handRef);
+        const extraOptions = getAvailableOptions(extraRef);
+
+        // Set random values (only if options are available)
+        const newSecondAsset = outfitOptions.length ? getRandomItem(outfitOptions) : '';
+        const newMouthAsset = mouthOptions.length ? getRandomItem(mouthOptions) : '';
+        const newHatAsset = hatOptions.length ? getRandomItem(hatOptions) : '';
+        const newEyesAsset = eyesOptions.length ? getRandomItem(eyesOptions) : '';
+        const newSelectedAsset = handOptions.length ? getRandomItem(handOptions) : '';
+        const newThirdAsset = extraOptions.length ? getRandomItem(extraOptions) : '';
 
         // Update states
         setSecondAsset(newSecondAsset);
@@ -504,7 +508,7 @@ function App() {
                     </div>
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Outfit</h3>
-                    <select value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}>
+                    <select ref={outfitRef} value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}>
                         <option value="">Select</option>
                         {/* <option value="sweater">Christmas sweater</option> */}
                         {/* <option value="bape_blue_shirt">BAPE® x BAYC Hawaiian Shirt Blue</option> */}
@@ -541,7 +545,7 @@ function App() {
       <div className="dropdown-container">
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Mouth</h3>
-                    <select value={mouthAsset} onChange={handleMouthAssetChange} className="dropdown" disabled={!tokenId  || clubAsset === 'elite'}>
+                    <select ref={mouthRef} value={mouthAsset} onChange={handleMouthAssetChange} className="dropdown" disabled={!tokenId  || clubAsset === 'elite'}>
                         <option value="">Select</option>
                         {/* <option value="tree">Christmas Tree</option> */}
                         <option value="apechain_grin">Apechain Grin</option>
@@ -554,7 +558,7 @@ function App() {
                 </div>
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Hat</h3>
-                    <select value={hatAsset} onChange={handleHatAssetChange} className="dropdown" disabled={!tokenId || clubAsset || secondAsset ==  'singe_hoodie_glow' ||  secondAsset ==  'singe_hoodie'}>
+                    <select ref={hatRef} value={hatAsset} onChange={handleHatAssetChange} className="dropdown" disabled={!tokenId || clubAsset || secondAsset ==  'singe_hoodie_glow' ||  secondAsset ==  'singe_hoodie'}>
                         <option value="">Select</option>
                         {/* <option value="christmas_hat">Christmas Hat</option> */}
                         {/* <option value="christmas_hat2">Christmas Hat 2</option> */}
@@ -573,7 +577,7 @@ function App() {
                 </div>
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Eyes</h3>
-                    <select value={eyesAsset} onChange={handleEyesAssetChange} className="dropdown" disabled={!tokenId || clubAsset === 'elite'}>
+                    <select ref={eyesRef} value={eyesAsset} onChange={handleEyesAssetChange} className="dropdown" disabled={!tokenId || clubAsset === 'elite'}>
                         <option value="">Select</option>
                         <option value="apecoin_glasses">Apecoin Glasses</option>
                         <option value="apechain_glasses">Apechain Glasses</option>
@@ -585,7 +589,7 @@ function App() {
                 </div>
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Extra</h3>
-                    <select value={thirdAsset} onChange={handleThirdAssetChange} className="dropdown" disabled={!tokenId || clubAsset === 'elite'}>
+                    <select ref={extraRef} value={thirdAsset} onChange={handleThirdAssetChange} className="dropdown" disabled={!tokenId || clubAsset === 'elite'}>
                         <option value="">Select</option>
                         <option value="top_trader">Top Trader</option>
                         <option value="top_trader_red">Top Trader Red</option>
@@ -604,7 +608,7 @@ function App() {
             <div className="dropdown-container">
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Hand</h3>
-                    <select value={selectedAsset} onChange={handleAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset === 'elite'}>
+                    <select ref={handRef} value={selectedAsset} onChange={handleAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset === 'elite'}>
                         <option value="">Select</option>
                         <option value="blever_pass">Blever Pass</option>
                         <option value="gordon">Gordon ❤️</option>
