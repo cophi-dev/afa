@@ -675,7 +675,7 @@ function App() {
             title="Randomize traits"
             disabled={!tokenId}
         >
-            Randomize
+            New Perspective 👀
         </button>
     </div>
       <Footer />
