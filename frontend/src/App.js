@@ -114,15 +114,25 @@ function App() {
         try {
             console.log('Fetching minted tokens...');
             const transactions = await getAllTransactions();
+            
+            if (!transactions || transactions.length === 0) {
+                console.log('No transactions found or error occurred');
+                return;
+            }
+            
             const nftStatuses = processNFTStatuses(transactions);
             
             // Convert to Set of minted token IDs
             const minted = new Set(Array.from(nftStatuses.keys()));
             console.log('Found minted tokens:', minted.size);
-            setMintedTokens(minted);
             
-            // After getting minted tokens, fetch club tokens
-            fetchClubTokens();
+            if (minted.size > 0) {
+                setMintedTokens(minted);
+                // After getting minted tokens, fetch club tokens
+                fetchClubTokens();
+            } else {
+                console.log('No minted tokens found');
+            }
         } catch (error) {
             console.error('Error fetching minted tokens:', error);
         }
