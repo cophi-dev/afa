@@ -52,14 +52,44 @@ const AssetSelector = ({ label, value, onChange, options, disabled }) => (
   </div>
 );
 
-// 2. Move asset options to a separate configuration file
+// Update the asset options
 const assetOptions = {
   outfits: [
     { value: 'sweater', label: 'Christmas sweater' },
     { value: 'apefest_merch', label: 'Apefest Merch' },
-    // ... other outfit options
+    { value: 'tt_hoodie', label: 'TT Hoodie' },
+    // ... add all your outfit options
   ],
-  // ... other asset categories
+  mainAssets: [
+    { value: 'blever_pass', label: 'Blever Pass' },
+    { value: 'gordon', label: 'Gordon' },
+    // ... add all your main asset options
+  ],
+  thirdAssets: [
+    { value: 'transparent', label: 'Transparent' },
+    { value: 'selfie', label: 'Selfie' },
+    // ... add all your third asset options
+  ],
+  mouthAssets: [
+    { value: 'lollipop', label: 'Lollipop' },
+    { value: 'banana_punch_gm', label: 'Banana Punch GM' },
+    // ... add all your mouth asset options
+  ],
+  hatAssets: [
+    { value: 'designer_toshiro_hat', label: 'Designer Toshiro Hat' },
+    { value: 'apechain_cap', label: 'Apechain Cap' },
+    // ... add all your hat asset options
+  ],
+  eyesAssets: [
+    { value: 'apecoin_glasses', label: 'Apecoin Glasses' },
+    { value: 'apechain_glasses', label: 'Apechain Glasses' },
+    // ... add all your eyes asset options
+  ],
+  clubAssets: [
+    { value: 'dubai', label: 'Dubai' },
+    { value: 'elite', label: 'Elite' },
+    // ... add all your club asset options
+  ]
 };
 
 // Add this custom hook for checking mint status
@@ -307,7 +337,7 @@ function App() {
         {isChecking ? (
           <div>Checking mint status...</div>
         ) : isMinted ? (
-          <div>
+          <>
             <p>Owned by: {owner}</p>
             <AssetSelector
               label="Outfit"
@@ -316,7 +346,49 @@ function App() {
               options={assetOptions.outfits}
               disabled={!tokenId || assetState.assets.thirdAsset === 'selfie' || assetState.assets.clubAsset}
             />
-          </div>
+            <AssetSelector
+              label="Main Asset"
+              value={assetState.assets.mainAsset}
+              onChange={e => handleAssetChange('mainAsset', e.target.value)}
+              options={assetOptions.mainAssets}
+              disabled={!tokenId}
+            />
+            <AssetSelector
+              label="Third Asset"
+              value={assetState.assets.thirdAsset}
+              onChange={e => handleAssetChange('thirdAsset', e.target.value)}
+              options={assetOptions.thirdAssets}
+              disabled={!tokenId}
+            />
+            <AssetSelector
+              label="Mouth Asset"
+              value={assetState.assets.mouthAsset}
+              onChange={e => handleAssetChange('mouthAsset', e.target.value)}
+              options={assetOptions.mouthAssets}
+              disabled={!tokenId}
+            />
+            <AssetSelector
+              label="Hat Asset"
+              value={assetState.assets.hatAsset}
+              onChange={e => handleAssetChange('hatAsset', e.target.value)}
+              options={assetOptions.hatAssets}
+              disabled={!tokenId}
+            />
+            <AssetSelector
+              label="Eyes Asset"
+              value={assetState.assets.eyesAsset}
+              onChange={e => handleAssetChange('eyesAsset', e.target.value)}
+              options={assetOptions.eyesAssets}
+              disabled={!tokenId}
+            />
+            <AssetSelector
+              label="Club Asset"
+              value={assetState.assets.clubAsset}
+              onChange={e => handleAssetChange('clubAsset', e.target.value)}
+              options={assetOptions.clubAssets}
+              disabled={!tokenId}
+            />
+          </>
         ) : tokenId ? (
           <div>This token has not been minted yet</div>
         ) : null}
