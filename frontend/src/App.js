@@ -4,6 +4,7 @@ import Loader from './Loader';
 import { ethers } from 'ethers';
 
 const CONTRACT_ADDRESS = '0xfAa0e99EF34Eae8b288CFEeAEa4BF4f5B5f2eaE7';
+const ETHERSCAN_API_KEY = process.env.REACT_APP_ETHERSCAN_API_KEY;
 
 function Banner() {
     return (
@@ -356,22 +357,13 @@ function App() {
 
     const checkMintStatus = async (tokenId) => {
         try {
-            const provider = new ethers.providers.JsonRpcProvider(
-                process.env.REACT_APP_ETHEREUM_RPC_URL || 'https://eth.llamarpc.com'
-            );
+            const response = await fetch(`https://api.etherscan.io/api?module=token&action=tokennfttx&contractaddress=${CONTRACT_ADDRESS}&tokenid=${tokenId}&apikey=${ETHERSCAN_API_KEY}`);
+            const data = await response.json();
             
-            const contract = new ethers.Contract(
-                CONTRACT_ADDRESS,
-                ['function ownerOf(uint256 tokenId) view returns (address)'],
-                provider
-            );
-
-            try {
-                await contract.ownerOf(tokenId);
+            if (data.status === '1' && data.result.length > 0) {
                 return { isMinted: true };
-            } catch (error) {
-                return { isMinted: false };
             }
+            return { isMinted: false };
         } catch (error) {
             console.error('Error checking mint status:', error);
             return { isMinted: false };
@@ -379,36 +371,20 @@ function App() {
     };
 
     useEffect(() => {
-        const batchSize = 50;
         const checkMintedTokens = async () => {
-            const minted = new Set();
-            const provider = new ethers.providers.JsonRpcProvider(
-                process.env.REACT_APP_ETHEREUM_RPC_URL || 'https://eth.llamarpc.com'
-            );
-            
-            const contract = new ethers.Contract(
-                CONTRACT_ADDRESS,
-                ['function ownerOf(uint256 tokenId) view returns (address)'],
-                provider
-            );
-
-            for (let i = 0; i < 10000; i += batchSize) {
-                const promises = Array.from({ length: batchSize }, (_, j) => {
-                    const tokenId = i + j;
-                    if (tokenId >= 10000) return null;
-                    return contract.ownerOf(tokenId)
-                        .then(() => tokenId)
-                        .catch(() => null);
-                });
-
-                const results = await Promise.all(promises);
-                results.forEach(tokenId => {
-                    if (tokenId !== null) {
-                        minted.add(tokenId.toString());
-                    }
-                });
+            try {
+                const response = await fetch(`https://api.etherscan.io/api?module=account&action=tokennfttx&contractaddress=${CONTRACT_ADDRESS}&page=1&offset=10000&startblock=0&endblock=999999999&sort=asc&apikey=${ETHERSCAN_API_KEY}`);
+                const data = await response.json();
+                
+                if (data.status === '1' && data.result) {
+                    const minted = new Set(
+                        data.result.map(tx => tx.tokenID)
+                    );
+                    setMintedTokens(minted);
+                }
+            } catch (error) {
+                console.error('Error fetching minted tokens:', error);
             }
-            setMintedTokens(minted);
         };
 
         checkMintedTokens();
