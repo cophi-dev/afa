@@ -16,4 +16,23 @@ export const getAllTransactions = async () => {
     console.error('Error fetching transactions:', error);
     throw error;
   }
+};
+
+export const processNFTStatuses = (transactions) => {
+  const nftStatuses = new Map();
+  
+  transactions.forEach(tx => {
+    const tokenId = tx.tokenID;
+    const currentStatus = nftStatuses.get(tokenId);
+    
+    if (!currentStatus || parseInt(tx.blockNumber) > parseInt(currentStatus.blockNumber)) {
+      nftStatuses.set(tokenId, {
+        owner: tx.to,
+        timestamp: parseInt(tx.timeStamp),
+        blockNumber: tx.blockNumber
+      });
+    }
+  });
+  
+  return nftStatuses;
 }; 

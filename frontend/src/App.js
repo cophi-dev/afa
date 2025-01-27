@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import Loader from './Loader';
 import { ethers } from 'ethers';
+import { getAllTransactions, processNFTStatuses } from '../services/etherscanService';
 
 const CONTRACT_ADDRESS = '0xfAa0e99EF34Eae8b288CFEeAEa4BF4f5B5f2eaE7';
 const ETHERSCAN_API_KEY = process.env.REACT_APP_ETHERSCAN_API_KEY;
@@ -112,34 +113,16 @@ function App() {
     const fetchMintedTokens = async () => {
         try {
             console.log('Fetching minted tokens...');
-            const response = await fetch(`https://api.etherscan.io/api?module=account&action=tokennfttx&contractaddress=${CONTRACT_ADDRESS}&page=1&offset=10000&startblock=0&endblock=999999999&sort=asc&apikey=${ETHERSCAN_API_KEY}`);
-            const data = await response.json();
+            const transactions = await getAllTransactions();
+            const nftStatuses = processNFTStatuses(transactions);
             
-            if (data.status === '1' && data.result) {
-                // Track the latest transaction for each token ID
-                const tokenTransactions = new Map();
-                data.result.forEach(tx => {
-                    const tokenId = tx.tokenID;
-                    if (!tokenTransactions.has(tokenId) || 
-                        parseInt(tx.blockNumber) > parseInt(tokenTransactions.get(tokenId).blockNumber)) {
-                        tokenTransactions.set(tokenId, tx);
-                    }
-                });
-
-                // A token is minted if its latest transaction has a non-zero 'to' address
-                const minted = new Set();
-                tokenTransactions.forEach((tx, tokenId) => {
-                    if (tx.to !== '0x0000000000000000000000000000000000000000') {
-                        minted.add(tokenId);
-                    }
-                });
-
-                console.log('Found minted tokens:', minted.size);
-                setMintedTokens(minted);
-                
-                // After getting minted tokens, fetch club tokens
-                fetchClubTokens();
-            }
+            // Convert to Set of minted token IDs
+            const minted = new Set(Array.from(nftStatuses.keys()));
+            console.log('Found minted tokens:', minted.size);
+            setMintedTokens(minted);
+            
+            // After getting minted tokens, fetch club tokens
+            fetchClubTokens();
         } catch (error) {
             console.error('Error fetching minted tokens:', error);
         }
