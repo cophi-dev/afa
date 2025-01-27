@@ -4,3 +4,8 @@
 /node_modules/*
 /frontend/node_modules/*
 /backend/google-cloud-sdk/*
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import Loader from './Loader';
+import { ethers } from 'ethers';
+
 const BASE_URL = "https://afa-editor.ew.r.appspot.com";
+const AFA_CONTRACT_ADDRESS = '0x9251dEC8DF720C2ADF3B6f46d968107cbBADf4d4';
+const CONTRACT_ADDRESS = '0xfAa0e99EF34Eae8b288CFEeAEa4BF4f5B5f2eaE7';
 
 function Banner() {
     return (
@@ -76,16 +80,77 @@ const useTokenIds = () => {
   return tokenIds;
 };
 
+// Add this custom hook for checking mint status
+const useMintStatus = (tokenId) => {
+  const [isMinted, setIsMinted] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
+  const [owner, setOwner] = useState(null);
+
+  useEffect(() => {
+    const checkMintStatus = async () => {
+      if (!tokenId) return;
+      
+      setIsChecking(true);
+      try {
+        const provider = new ethers.providers.JsonRpcProvider(
+          process.env.REACT_APP_ETHEREUM_RPC_URL || 'https://eth.llamarpc.com'
+        );
+        
+        const contract = new ethers.Contract(
+          CONTRACT_ADDRESS,
+          ['function ownerOf(uint256 tokenId) view returns (address)'],
+          provider
+        );
+
+        try {
+          const ownerAddress = await contract.ownerOf(tokenId);
+          setIsMinted(true);
+          setOwner(ownerAddress);
+        } catch (error) {
+          setIsMinted(false);
+          setOwner(null);
+        }
+      } catch (error) {
+        console.error('Error checking mint status:', error);
+        setIsMinted(false);
+        setOwner(null);
+      } finally {
+        setIsChecking(false);
+      }
+    };
+
+    checkMintStatus();
+  }, [tokenId]);
+
+  return { isMinted, isChecking, owner };
+};
+
 function App() {
   // Use custom hooks
   const tokenIds = useTokenIds();
-  const [assetState, assetDispatch] = useAssetState(); // Custom hook for managing all asset states
-  const { isLoading, showLoader } = useLoadingState(); // Custom hook for loading states
+  const [tokenId, setTokenId] = useState('');
+  const [assetState, setAssetState] = useState({
+    // ... your existing state
+  });
+  const { isMinted, isChecking, owner } = useMintStatus(tokenId);
 
   // 5. Simplified handlers with dispatch
-  const handleAssetChange = (type, value) => {
-    assetDispatch({ type: 'UPDATE_ASSET', assetType: type, value });
-    fetchAsset(assetState.tokenId, { ...assetState.assets, [type]: value });
+  const handleAssetChange = async (type, value) => {
+    if (type === 'tokenId') {
+      setTokenId(value);
+      // Only proceed with asset fetching if the token is minted
+      if (isMinted) {
+        fetchAsset(value, assetState.assets);
+      }
+    } else {
+      setAssetState(prev => ({
+        ...prev,
+        assets: { ...prev.assets, [type]: value }
+      }));
+      if (isMinted) {
+        fetchAsset(tokenId, { ...assetState.assets, [type]: value });
+      }
+    }
   };
 
   // 6. Improved fetch function with error handling and loading states
@@ -109,33 +174,54 @@ function App() {
     }
   };
 
+  // Update your existing handlers to use the mint status
+  const handleTokenSelect = (e) => {
+    const newTokenId = e.target.value;
+    setTokenId(newTokenId);
+  };
+
+  // Only fetch the asset if the token is minted
+  useEffect(() => {
+    if (isMinted && tokenId) {
+      // Your existing asset fetching logic
+      fetchAsset(tokenId);
+    }
+  }, [isMinted, tokenId]);
+
   return (
     <div className="App">
       <Banner />
       
       <AssetDisplay 
         currentImageUrl={assetState.currentImageUrl}
-        showLoader={showLoader}
+        showLoader={isChecking}
         fade={assetState.fade}
       />
 
       <div className="dropdown-container">
-        <AssetSelector
-          label="Select AFA"
-          value={assetState.tokenId}
-          onChange={e => handleAssetChange('tokenId', e.target.value)}
-          options={tokenIds.map(id => ({ value: id, label: id }))}
-        />
+        <select value={tokenId} onChange={handleTokenSelect}>
+          <option value="">Select Token ID</option>
+          {Array.from({ length: 10000 }, (_, i) => (
+            <option key={i} value={i}>{i}</option>
+          ))}
+        </select>
 
-        <AssetSelector
-          label="Outfit"
-          value={assetState.assets.outfit}
-          onChange={e => handleAssetChange('outfit', e.target.value)}
-          options={assetOptions.outfits}
-          disabled={!assetState.tokenId || assetState.assets.thirdAsset === 'selfie' || assetState.assets.clubAsset}
-        />
-        
-        {/* Other asset selectors... */}
+        {isChecking ? (
+          <div>Checking mint status...</div>
+        ) : isMinted ? (
+          <div>
+            <p>Owned by: {owner}</p>
+            <AssetSelector
+              label="Outfit"
+              value={assetState.assets.outfit}
+              onChange={e => handleAssetChange('outfit', e.target.value)}
+              options={assetOptions.outfits}
+              disabled={!tokenId || assetState.assets.thirdAsset === 'selfie' || assetState.assets.clubAsset}
+            />
+          </div>
+        ) : (
+          <div>This token has not been minted yet</div>
+        )}
       </div>
 
       <Footer />
