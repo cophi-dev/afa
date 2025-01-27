@@ -50,6 +50,7 @@ function App() {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [mintedTokens, setMintedTokens] = useState(new Set());
     const suggestionsRef = useRef(null);
+    const [isCheckingMint, setIsCheckingMint] = useState(false);
     
     useEffect(() => {
         if (tokenId) {
@@ -261,38 +262,37 @@ function App() {
         const newTokenId = event.target.value;
         console.log(`Token ID selected: ${newTokenId}`);
         setTokenId(newTokenId);
+        setTokenInput(newTokenId);
 
         if (!newTokenId) return;
 
-        // Use the new checkTokenMintStatus function
         const isMinted = await checkTokenMintStatus(newTokenId);
         if (!isMinted) {
             console.log('Token not minted');
             return;
         }
 
-        // Convert both values to strings to ensure proper comparison
+        // Check eligibility for clubs
         const newIsEliteEligible = eliteTokenIds.includes(newTokenId);
-        console.log(`Is token ID ${newTokenId} elite eligible: ${newIsEliteEligible}`);
         setIsEliteEligible(newIsEliteEligible);
 
+        const newIsDubaiEligible = dubaiTokenIds.includes(newTokenId);
+        setIsDubaiEligible(newIsDubaiEligible);
+
+        // Reset club asset if not eligible
         if (clubAsset === 'elite' && !newIsEliteEligible) {
             setClubAsset('');
         }
-
-        const newIsDubaiEligible = dubaiTokenIds.includes(newTokenId);
-        console.log(`Is token ID ${newTokenId} dubai eligible: ${newIsDubaiEligible}`);
-        setIsDubaiEligible(newIsDubaiEligible);
-
         if (clubAsset === 'dubai' && !newIsDubaiEligible) {
             setClubAsset('');
         }
 
+        // Fetch the initial image
         if (!selectedAsset && !secondAsset && !thirdAsset && !mouthAsset && !hatAsset && !eyesAsset && !clubAsset) {
             fetchAsset(newTokenId, 'AFA', '', '');
             setSelectedAsset('AFA');
         } else {
-            fetchAsset(newTokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, '');
+            fetchAsset(newTokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
         }
     };
     const handleAssetChange = event => {
@@ -323,34 +323,39 @@ function App() {
         setTokenInput(value);
         setTokenId(value);
         setShowSuggestions(false);
+        setIsCheckingMint(true);
 
-        const isMinted = await checkTokenMintStatus(tokenId);
-        if (!isMinted) {
-            console.log('Token not minted');
-            return;
-        }
+        try {
+            const isMinted = await checkTokenMintStatus(tokenId);
+            if (!isMinted) {
+                console.log('Token not minted');
+                return;
+            }
 
-        // Check eligibility for clubs
-        const newIsEliteEligible = eliteTokenIds.includes(value);
-        setIsEliteEligible(newIsEliteEligible);
+            // Check eligibility for clubs
+            const newIsEliteEligible = eliteTokenIds.includes(value);
+            setIsEliteEligible(newIsEliteEligible);
 
-        const newIsDubaiEligible = dubaiTokenIds.includes(value);
-        setIsDubaiEligible(newIsDubaiEligible);
+            const newIsDubaiEligible = dubaiTokenIds.includes(value);
+            setIsDubaiEligible(newIsDubaiEligible);
 
-        // Reset club asset if not eligible
-        if (clubAsset === 'elite' && !newIsEliteEligible) {
-            setClubAsset('');
-        }
-        if (clubAsset === 'dubai' && !newIsDubaiEligible) {
-            setClubAsset('');
-        }
+            // Reset club asset if not eligible
+            if (clubAsset === 'elite' && !newIsEliteEligible) {
+                setClubAsset('');
+            }
+            if (clubAsset === 'dubai' && !newIsDubaiEligible) {
+                setClubAsset('');
+            }
 
-        // Fetch the initial image
-        if (!selectedAsset && !secondAsset && !thirdAsset && !mouthAsset && !hatAsset && !eyesAsset && !clubAsset) {
-            fetchAsset(value, 'AFA', '', '');
-            setSelectedAsset('AFA');
-        } else {
-            fetchAsset(value, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
+            // Fetch the initial image
+            if (!selectedAsset && !secondAsset && !thirdAsset && !mouthAsset && !hatAsset && !eyesAsset && !clubAsset) {
+                fetchAsset(value, 'AFA', '', '');
+                setSelectedAsset('AFA');
+            } else {
+                fetchAsset(value, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
+            }
+        } finally {
+            setIsCheckingMint(false);
         }
     };
 
@@ -386,7 +391,8 @@ function App() {
                                 value={tokenInput}
                                 onChange={handleTokenInput}
                                 placeholder="Enter Token ID (0-9999)"
-                                className="token-input"
+                                className={`token-input ${isCheckingMint ? 'checking' : ''}`}
+                                disabled={isCheckingMint}
                             />
                             {showSuggestions && (
                                 <div className="suggestions-container" ref={suggestionsRef}>
