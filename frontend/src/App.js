@@ -371,10 +371,12 @@ function App() {
         setTokenInput(value);
         
         if (value) {
+            // Use mintedTokens from Etherscan instead of dubai/elite lists
             const suggestions = Array.from(mintedTokens)
-                .filter(id => id.startsWith(value))
+                .filter(id => id.toString().startsWith(value))
                 .sort((a, b) => parseInt(a) - parseInt(b))
                 .slice(0, 5);
+            
             setSuggestions(suggestions);
             setShowSuggestions(suggestions.length > 0);
         } else {
@@ -387,7 +389,29 @@ function App() {
         setTokenInput(value);
         setTokenId(value);
         setShowSuggestions(false);
-        handleTokenChange({ target: { value } });
+
+        // Check eligibility for clubs
+        const newIsEliteEligible = eliteTokenIds.includes(value);
+        setIsEliteEligible(newIsEliteEligible);
+
+        const newIsDubaiEligible = dubaiTokenIds.includes(value);
+        setIsDubaiEligible(newIsDubaiEligible);
+
+        // Reset club asset if not eligible
+        if (clubAsset === 'elite' && !newIsEliteEligible) {
+            setClubAsset('');
+        }
+        if (clubAsset === 'dubai' && !newIsDubaiEligible) {
+            setClubAsset('');
+        }
+
+        // Fetch the initial image
+        if (!selectedAsset && !secondAsset && !thirdAsset && !mouthAsset && !hatAsset && !eyesAsset && !clubAsset) {
+            fetchAsset(value, 'AFA', '', '');
+            setSelectedAsset('AFA');
+        } else {
+            fetchAsset(value, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
+        }
     };
 
     useEffect(() => {
