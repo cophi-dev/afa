@@ -114,19 +114,13 @@ function App() {
         try {
             console.log('Fetching minted tokens...');
             const transactions = await getAllTransactions();
-            
-            if (!transactions || transactions.length === 0) {
-                console.log('No transactions found or error occurred');
-                return;
-            }
-            
             const nftStatuses = processNFTStatuses(transactions);
             
             // Convert to Set of minted token IDs
             const minted = new Set(Array.from(nftStatuses.keys()));
-            console.log('Found minted tokens:', minted.size);
             
             if (minted.size > 0) {
+                console.log(`Found ${minted.size} minted tokens`);
                 setMintedTokens(minted);
                 // After getting minted tokens, fetch club tokens
                 fetchClubTokens();
@@ -371,14 +365,11 @@ function App() {
         setTokenInput(value);
         
         if (value) {
-            console.log('Current minted tokens:', mintedTokens);
             const suggestions = Array.from(mintedTokens)
                 .filter(id => id.toString().startsWith(value))
-                .sort((a, b) => parseInt(a) - parseInt(b))
+                .sort((a, b) => a - b)  // Simple numeric sort
                 .slice(0, 5);
             
-            console.log('Input value:', value);
-            console.log('Found suggestions:', suggestions);
             setSuggestions(suggestions);
             setShowSuggestions(suggestions.length > 0);
         } else {
@@ -388,12 +379,12 @@ function App() {
     };
 
     const handleSuggestionClick = async (value) => {
+        const tokenId = parseInt(value);
         setTokenInput(value);
         setTokenId(value);
         setShowSuggestions(false);
 
-        // Check if token is minted
-        const { isMinted } = await checkMintStatus(value);
+        const isMinted = await checkTokenMintStatus(tokenId);
         if (!isMinted) {
             console.log('Token not minted');
             return;
