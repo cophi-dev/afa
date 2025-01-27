@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import Loader from './Loader';
 import { ethers } from 'ethers';
@@ -63,23 +63,6 @@ const assetOptions = {
   // ... other asset categories
 };
 
-// 3. Custom hooks for data fetching and state management
-const useTokenIds = () => {
-  const [tokenIds, setTokenIds] = useState([]);
-  
-  useEffect(() => {
-    fetch(`${BASE_URL}/api/token-ids`)
-      .then(response => response.ok ? response.json() : Promise.reject('Network error'))
-      .then(data => {
-        const sortedTokenIds = data.map(id => parseInt(id)).sort((a, b) => a - b);
-        setTokenIds(sortedTokenIds);
-      })
-      .catch(error => console.error('Error:', error));
-  }, []);
-
-  return tokenIds;
-};
-
 // Add this custom hook for checking mint status
 const useMintStatus = (tokenId) => {
   const [isMinted, setIsMinted] = useState(false);
@@ -126,11 +109,14 @@ const useMintStatus = (tokenId) => {
 };
 
 function App() {
-  // Use custom hooks
-  const tokenIds = useTokenIds();
   const [tokenId, setTokenId] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestionsRef = useRef(null);
   const [assetState, setAssetState] = useState({
-    // ... your existing state
+    currentImageUrl: null,
+    fade: '',
+    assets: {}
   });
   const { isMinted, isChecking, owner } = useMintStatus(tokenId);
 
@@ -174,19 +160,58 @@ function App() {
     }
   };
 
-  // Update your existing handlers to use the mint status
-  const handleTokenSelect = (e) => {
-    const newTokenId = e.target.value;
-    setTokenId(newTokenId);
+  // Handle input change
+  const handleTokenInput = (e) => {
+    const value = e.target.value;
+    
+    // Only allow numbers and limit to 4 digits (max 9999)
+    const numericValue = value.replace(/[^0-9]/g, '');
+    if (numericValue.length <= 4) {
+      setTokenId(numericValue);
+      
+      // Generate suggestions
+      if (numericValue) {
+        const num = parseInt(numericValue);
+        if (num >= 0 && num <= 9999) {
+          const suggestionList = [];
+          // Add exact match if valid
+          if (num <= 9999) suggestionList.push(num);
+          // Add next few numbers as suggestions
+          for (let i = 1; i <= 4; i++) {
+            if (num + i <= 9999) suggestionList.push(num + i);
+          }
+          setSuggestions(suggestionList);
+          setShowSuggestions(true);
+        } else {
+          setSuggestions([]);
+          setShowSuggestions(false);
+        }
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    }
   };
 
-  // Only fetch the asset if the token is minted
+  // Handle suggestion click
+  const handleSuggestionClick = (value) => {
+    setTokenId(value.toString());
+    setShowSuggestions(false);
+  };
+
+  // Close suggestions when clicking outside
   useEffect(() => {
-    if (isMinted && tokenId) {
-      // Your existing asset fetching logic
-      fetchAsset(tokenId);
-    }
-  }, [isMinted, tokenId]);
+    const handleClickOutside = (event) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
     <div className="App">
@@ -199,12 +224,28 @@ function App() {
       />
 
       <div className="dropdown-container">
-        <select value={tokenId} onChange={handleTokenSelect}>
-          <option value="">Select Token ID</option>
-          {Array.from({ length: 10000 }, (_, i) => (
-            <option key={i} value={i}>{i}</option>
-          ))}
-        </select>
+        <div className="token-input-container">
+          <input
+            type="text"
+            value={tokenId}
+            onChange={handleTokenInput}
+            placeholder="Enter Token ID (0-9999)"
+            className="token-input"
+          />
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="suggestions-container" ref={suggestionsRef}>
+              {suggestions.map((suggestion) => (
+                <div
+                  key={suggestion}
+                  className="suggestion-item"
+                  onClick={() => handleSuggestionClick(suggestion)}
+                >
+                  {suggestion}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {isChecking ? (
           <div>Checking mint status...</div>
@@ -219,9 +260,9 @@ function App() {
               disabled={!tokenId || assetState.assets.thirdAsset === 'selfie' || assetState.assets.clubAsset}
             />
           </div>
-        ) : (
+        ) : tokenId ? (
           <div>This token has not been minted yet</div>
-        )}
+        ) : null}
       </div>
 
       <Footer />
