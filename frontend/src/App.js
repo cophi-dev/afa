@@ -1,11 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import Loader from './Loader';
-import { ethers } from 'ethers';
-import { getAllTransactions, processNFTStatuses } from './services/etherscanService';
-
-const CONTRACT_ADDRESS = '0xfAa0e99EF34Eae8b288CFEeAEa4BF4f5B5f2eaE7';
-const ETHERSCAN_API_KEY = process.env.REACT_APP_ETHERSCAN_API_KEY;
+import { getAllTransactions, processNFTStatuses, checkTokenMintStatus } from './services/etherscanService';
 
 function Banner() {
     return (
@@ -31,53 +27,12 @@ function getContrastYIQ(rgb) {
     return (yiq >= 128) ? 'black' : 'white';
 }
 
-const useMintStatus = (tokenId) => {
-  const [isMinted, setIsMinted] = useState(false);
-  const [isChecking, setIsChecking] = useState(false);
-
-  useEffect(() => {
-    const checkMintStatus = async () => {
-      if (!tokenId) return;
-      
-      setIsChecking(true);
-      try {
-        const provider = new ethers.providers.JsonRpcProvider(
-          process.env.REACT_APP_ETHEREUM_RPC_URL || 'https://eth.llamarpc.com'
-        );
-        
-        const contract = new ethers.Contract(
-          CONTRACT_ADDRESS,
-          ['function ownerOf(uint256 tokenId) view returns (address)'],
-          provider
-        );
-
-        try {
-          await contract.ownerOf(tokenId);
-          setIsMinted(true);
-        } catch (error) {
-          setIsMinted(false);
-        }
-      } catch (error) {
-        console.error('Error checking mint status:', error);
-        setIsMinted(false);
-      } finally {
-        setIsChecking(false);
-      }
-    };
-
-    checkMintStatus();
-  }, [tokenId]);
-
-  return { isMinted, isChecking };
-};
-
 function App() {
     const [eliteTokenIds, setEliteTokenIds] = useState([]); 
     const [isEliteEligible, setIsEliteEligible] = useState(false);
     const [dubaiTokenIds, setDubaiTokenIds] = useState([]); 
     const [isDubaiEligible, setIsDubaiEligible] = useState(false);
     const [tokenId, setTokenId] = useState('');
-    const { isMinted, isChecking } = useMintStatus(tokenId);
     const [selectedAsset, setSelectedAsset] = useState('');
     const [secondAsset, setSecondAsset] = useState('');
     const [thirdAsset, setThirdAsset] = useState('');
@@ -309,8 +264,8 @@ function App() {
 
         if (!newTokenId) return;
 
-        // Check if token is minted
-        const { isMinted } = await checkMintStatus(newTokenId);
+        // Use the new checkTokenMintStatus function
+        const isMinted = await checkTokenMintStatus(newTokenId);
         if (!isMinted) {
             console.log('Token not minted');
             return;
@@ -343,21 +298,6 @@ function App() {
     const handleAssetChange = event => {
         setSelectedAsset(event.target.value);
         fetchAsset(tokenId, event.target.value, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
-    };
-
-    const checkMintStatus = async (tokenId) => {
-        try {
-            const response = await fetch(`https://api.etherscan.io/api?module=token&action=tokennfttx&contractaddress=${CONTRACT_ADDRESS}&tokenid=${tokenId}&apikey=${ETHERSCAN_API_KEY}`);
-            const data = await response.json();
-            
-            if (data.status === '1' && data.result.length > 0) {
-                return { isMinted: true };
-            }
-            return { isMinted: false };
-        } catch (error) {
-            console.error('Error checking mint status:', error);
-            return { isMinted: false };
-        }
     };
 
     const handleTokenInput = (e) => {
