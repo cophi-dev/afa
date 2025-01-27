@@ -5,7 +5,27 @@ import { ethers } from 'ethers';
 
 const CONTRACT_ADDRESS = '0xfAa0e99EF34Eae8b288CFEeAEa4BF4f5B5f2eaE7';
 
+function Banner() {
+    return (
+        <div className="banner">
+            <a href="http://www.apefacingapes.com" target="_blank" rel="noopener noreferrer">
+                <img src="./logo.png" alt="Logo" className="banner-logo" />
+            </a>
+        </div>
+    );
+}
+
+function Footer() {
+    return (
+        <footer className="footer">
+            <p>© 2024 Ape Facing Apes. All rights reserved.</p>
+            <p>© 2024 Yuga Labs, Inc. All marks and assets available are licensed from Yuga Labs, Inc.</p>
+        </footer>
+    );
+}
+
 function getContrastYIQ(rgb) {
+    const yiq = ((rgb[0] * 299) + (rgb[1] * 587) + (rgb[2] * 114)) / 1000;
     return (yiq >= 128) ? 'black' : 'white';
 }
 
