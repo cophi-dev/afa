@@ -239,13 +239,20 @@ def add_asset(image, asset_type, asset_dict):
         with Image.open(asset_path).convert("RGBA") as asset_image:
             print(f"Original size of {asset_type}: {asset_image.size}")
             
-            # Resize all assets to 1000x1000
-            asset_image = asset_image.resize((1000, 1000), Image.LANCZOS)
+            # Special handling for hat assets
+            if asset_dict == hat_assets:
+                # Make hats smaller (adjust size as needed)
+                asset_image = asset_image.resize((500, 500), Image.LANCZOS)
+                # Position the hat at the top of the image
+                temp_img = Image.new("RGBA", (1000, 1000), (0, 0, 0, 0))
+                temp_img.paste(asset_image, (250, 50), asset_image)
+                image.alpha_composite(temp_img)
+            else:
+                # Standard resize for other assets
+                asset_image = asset_image.resize((1000, 1000), Image.LANCZOS)
+                image.alpha_composite(asset_image, (0, 0))
+                
             print(f"Resized size of {asset_type}: {asset_image.size}")
-            
-            # Composite the image
-            image.alpha_composite(asset_image, (0, 0))
-            
     except FileNotFoundError:
         print(f"File not found: {asset_path}")
     except Exception as e:
