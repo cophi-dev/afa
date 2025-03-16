@@ -45,7 +45,14 @@ special_assets = {
     'singe_hoodie': os.path.join(base_dir, 'memes', 'singe_hoodie.png'),
     'singe_hoodie_glow': os.path.join(base_dir, 'memes', 'singe_hoodie_glow.png'),
     'singe_hoodie_robot': os.path.join(base_dir, 'memes', 'singe_hoodie_robot.png'),
-    'singe_hoodie_glow_robot': os.path.join(base_dir, 'memes', 'singe_hoodie_glow_robot.png')
+    'singe_hoodie_glow_robot': os.path.join(base_dir, 'memes', 'singe_hoodie_glow_robot.png'),
+    'new_asset_1': os.path.join(base_dir, 'memes', 'new_asset_1.png'),
+    'new_asset_2': os.path.join(base_dir, 'memes', 'new_asset_2.png'),
+    'mindfully_bored_cap': os.path.join(base_dir, 'memes', 'mindfully bored cap.png'),
+    'mindfully_bored_hoodie': os.path.join(base_dir, 'memes', 'mindfully bored hoodie.png'),
+    'ape_solar_sun_hand': os.path.join(base_dir, 'memes', 'ape solar sun hand.png'),
+    'ape_solar_hoodie_black': os.path.join(base_dir, 'memes', 'ape solar hoodie black.png'),
+    'ape_solar_hoodie_blue': os.path.join(base_dir, 'memes', 'ape solar hoodie blue.png'),
 }
 
 main_assets = {
@@ -235,6 +242,8 @@ def add_asset(image, asset_type, asset_dict):
     print(f"Adding asset: {asset_path}")
     try:
         with Image.open(asset_path).convert("RGBA") as asset_image:
+            # Resize the asset image to 1000x1000
+            asset_image = asset_image.resize((1000, 1000), Image.ANTIALIAS)
             image.alpha_composite(asset_image, (0, 0))
     except FileNotFoundError:
         print(f"File not found: {asset_path}")
