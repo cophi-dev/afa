@@ -48,9 +48,6 @@ special_assets = {
     'singe_hoodie_glow_robot': os.path.join(base_dir, 'memes', 'singe_hoodie_glow_robot.png'),
     'new_asset_1': os.path.join(base_dir, 'memes', 'new_asset_1.png'),
     'new_asset_2': os.path.join(base_dir, 'memes', 'new_asset_2.png'),
-    'mindfully_bored_hoodie': os.path.join(base_dir, 'memes', 'mindfully bored hoodie.png'),
-    'ape_solar_hoodie_black': os.path.join(base_dir, 'memes', 'ape solar hoodie black.png'),
-    'ape_solar_hoodie_blue': os.path.join(base_dir, 'memes', 'ape solar hoodie blue.png'),
 }
 
 main_assets = {
@@ -117,7 +114,6 @@ hat_assets = {
     'pudgy_hat': os.path.join(base_dir, 'memes', 'pudgy_hat.png'),
     'pudgy_hat2': os.path.join(base_dir, 'memes', 'pudgy_hat2.png'),
     'plunger': os.path.join(base_dir, 'memes', 'plunger.png'),
-    'mindfully_bored_cap': os.path.join(base_dir, 'memes', 'mindfully bored cap.png'),
 }
 
 eyes_assets = {
@@ -242,9 +238,21 @@ def add_asset(image, asset_type, asset_dict):
     print(f"Adding asset: {asset_path}")
     try:
         with Image.open(asset_path).convert("RGBA") as asset_image:
-            # Resize the asset image to 1000x1000
-            asset_image = asset_image.resize((1000, 1000), Image.ANTIALIAS)
-            image.alpha_composite(asset_image, (0, 0))
+            print(f"Original size of {asset_type}: {asset_image.size}")
+            
+            # Special handling for the cap
+            if asset_type == 'mindfully_bored_cap':
+                # Adjust size as needed - make it smaller than the default 1000x1000
+                asset_image = asset_image.resize((800, 800), Image.ANTIALIAS)
+                # Position it properly on the image
+                position = (100, 50)  # Adjust x, y coordinates as needed
+                image.paste(asset_image, position, asset_image)
+            else:
+                # Standard resize for other assets
+                asset_image = asset_image.resize((1000, 1000), Image.ANTIALIAS)
+                image.alpha_composite(asset_image, (0, 0))
+                
+            print(f"Resized size of {asset_type}: {asset_image.size}")
     except FileNotFoundError:
         print(f"File not found: {asset_path}")
     return image
