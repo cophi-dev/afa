@@ -388,3 +388,47 @@ body {
         max-width: 400px;
     }
 }
+
+/* Add styles for the dropdown navigation arrows */
+.dropdown-with-arrows {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.dropdown-arrow {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 8px;
+  color: var(--text-color, white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  transition: opacity 0.2s;
+}
+
+.dropdown-arrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.dropdown-arrow:hover:not(:disabled) {
+  opacity: 0.8;
+}
+
+.dropdown-with-arrows .dropdown {
+  flex: 1;
+  margin: 0 5px;
+}
+
+/* Responsive adjustments for arrows */
+@media (max-width: 768px) {
+  .dropdown-arrow {
+    font-size: 18px;
+    padding: 0 5px;
+  }
+}

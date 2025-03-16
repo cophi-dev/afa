@@ -467,6 +467,55 @@ function App() {
         );
     };
 
+    const navigateDropdown = (selectRef, direction) => {
+        if (!selectRef.current) return;
+        
+        const select = selectRef.current;
+        const options = Array.from(select.options).filter(option => !option.disabled);
+        const currentIndex = options.findIndex(option => option.value === select.value);
+        
+        let newIndex;
+        if (direction === 'next') {
+            newIndex = currentIndex < options.length - 1 ? currentIndex + 1 : currentIndex;
+        } else {
+            newIndex = currentIndex > 0 ? currentIndex - 1 : currentIndex;
+        }
+        
+        if (newIndex !== currentIndex) {
+            select.value = options[newIndex].value;
+            
+            // Trigger the appropriate onChange event based on which dropdown is being navigated
+            if (select === outfitRef.current) {
+                handleSecondAssetChange({ target: { value: options[newIndex].value } });
+            } else if (select === mouthRef.current) {
+                handleMouthAssetChange({ target: { value: options[newIndex].value } });
+            } else if (select === hatRef.current) {
+                handleHatAssetChange({ target: { value: options[newIndex].value } });
+            } else if (select === eyesRef.current) {
+                handleEyesAssetChange({ target: { value: options[newIndex].value } });
+            } else if (select === handRef.current) {
+                handleAssetChange({ target: { value: options[newIndex].value } });
+            } else if (select === extraRef.current) {
+                handleThirdAssetChange({ target: { value: options[newIndex].value } });
+            }
+        }
+    };
+
+    // Helper function to check if navigation is possible
+    const canNavigate = (selectRef, direction) => {
+        if (!selectRef.current || !tokenId) return false;
+        
+        const select = selectRef.current;
+        const options = Array.from(select.options).filter(option => !option.disabled);
+        const currentIndex = options.findIndex(option => option.value === select.value);
+        
+        if (direction === 'next') {
+            return currentIndex < options.length - 1;
+        } else {
+            return currentIndex > 0;
+        }
+    };
+
   return (
     <div className="App">
       <Banner />
@@ -508,151 +557,304 @@ function App() {
                     </div>
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Outfit</h3>
-                    <select ref={outfitRef} value={secondAsset} onChange={handleSecondAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}>
-                        <option value="">Select</option>
-                        <option value="mindfully_bored_hoodie">Mindfully Bored Hoodie</option>
-                        <option value="ape_solar_hoodie_black">Ape Solar Hoodie Black</option>
-                        <option value="ape_solar_hoodie_blue">Ape Solar Hoodie Blue</option>
-                        <option value="apefest_merch">Apefest Merch</option>
-                        <option value="tt_hoodie">Top Trader Hoodie</option>
-                        <option value="bimmer_jacket">Bimmer Jacket</option>
-                        <option value="apechain_hoodie_black">Apechain Hoodie Black</option>
-                        <option value="apechain_hoodie_orange">Apechain Hoodie Orange</option>
-                        <option value="apechain_hoodie_blue">Apechain Hoodie Blue</option>
-                        <option value="apefest_jacket">Apefest Jacket</option>
-                        <option value="cheetah_hoodie">Cheetah Hoodie</option>
-                        <option value="naked">No Clothes</option>
-                        <option value="french_stripes">French Stripes</option>
-                        <option value="cats_shirt">Cool Cats Shirt</option>
-                        <option value="singe_hoodie">Singe Hoodie</option>
-                        <option value="singe_hoodie_glow">Singe Hoodie Glow</option>
-                        <option value="applied_primate_coat">Applied Primate Lab Coat</option>
-                        <option value="btc_hoodie">BTC Hoodie</option>
-                        <option value="jacket">Jacket</option>
-                        <option value="blazer">Blazer</option>
-                        <option value="cool_hat">Cool Hat</option>
-
-                    </select>
+                    <div className="dropdown-with-arrows">
+                        <button 
+                            className="dropdown-arrow" 
+                            onClick={() => navigateDropdown(outfitRef, 'prev')}
+                            disabled={!canNavigate(outfitRef, 'prev')}
+                        >
+                            ◀
+                        </button>
+                        <select 
+                            ref={outfitRef} 
+                            value={secondAsset} 
+                            onChange={handleSecondAssetChange} 
+                            className="dropdown" 
+                            disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}
+                        >
+                            <option value="">Select</option>
+                            <option value="mindfully_bored_hoodie">Mindfully Bored Hoodie</option>
+                            <option value="ape_solar_hoodie_black">Ape Solar Hoodie Black</option>
+                            <option value="ape_solar_hoodie_blue">Ape Solar Hoodie Blue</option>
+                            <option value="apefest_merch">Apefest Merch</option>
+                            <option value="tt_hoodie">Top Trader Hoodie</option>
+                            <option value="bimmer_jacket">Bimmer Jacket</option>
+                            <option value="apechain_hoodie_black">Apechain Hoodie Black</option>
+                            <option value="apechain_hoodie_orange">Apechain Hoodie Orange</option>
+                            <option value="apechain_hoodie_blue">Apechain Hoodie Blue</option>
+                            <option value="apefest_jacket">Apefest Jacket</option>
+                            <option value="cheetah_hoodie">Cheetah Hoodie</option>
+                            <option value="naked">No Clothes</option>
+                            <option value="french_stripes">French Stripes</option>
+                            <option value="cats_shirt">Cool Cats Shirt</option>
+                            <option value="singe_hoodie">Singe Hoodie</option>
+                            <option value="singe_hoodie_glow">Singe Hoodie Glow</option>
+                            <option value="applied_primate_coat">Applied Primate Lab Coat</option>
+                            <option value="btc_hoodie">BTC Hoodie</option>
+                            <option value="jacket">Jacket</option>
+                            <option value="blazer">Blazer</option>
+                            <option value="cool_hat">Cool Hat</option>
+                        </select>
+                        <button 
+                            className="dropdown-arrow" 
+                            onClick={() => navigateDropdown(outfitRef, 'next')}
+                            disabled={!canNavigate(outfitRef, 'next')}
+                        >
+                            ▶
+                        </button>
+                    </div>
                 </div>
             </div>
 
       <div className="dropdown-container">
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Mouth</h3>
-                    <select ref={mouthRef} value={mouthAsset} onChange={handleMouthAssetChange} className="dropdown" disabled={!tokenId  || clubAsset === 'elite'}>
-                        <option value="">Select</option>
-                        <option value="apechain_grin">Apechain Grin</option>
-                        <option value="lollipop">Lollipop</option>
-                        <option value="banana_punch_gm">Banana Punch GM</option>
-                        <option value="banana_smile">Banana Smile</option>
-                        <option value="doodles_rainbow">Doodles Rainbow</option>
-                        <option value="big_smile">Big Smile</option>
-                    </select>
+                    <div className="dropdown-with-arrows">
+                        <button 
+                            className="dropdown-arrow" 
+                            onClick={() => navigateDropdown(mouthRef, 'prev')}
+                            disabled={!canNavigate(mouthRef, 'prev')}
+                        >
+                            ◀
+                        </button>
+                        <select 
+                            ref={mouthRef} 
+                            value={mouthAsset} 
+                            onChange={handleMouthAssetChange} 
+                            className="dropdown" 
+                            disabled={!tokenId || clubAsset === 'elite'}
+                        >
+                            <option value="">Select</option>
+                            <option value="apechain_grin">Apechain Grin</option>
+                            <option value="lollipop">Lollipop</option>
+                            <option value="banana_punch_gm">Banana Punch GM</option>
+                            <option value="banana_smile">Banana Smile</option>
+                            <option value="doodles_rainbow">Doodles Rainbow</option>
+                            <option value="big_smile">Big Smile</option>
+                        </select>
+                        <button 
+                            className="dropdown-arrow" 
+                            onClick={() => navigateDropdown(mouthRef, 'next')}
+                            disabled={!canNavigate(mouthRef, 'next')}
+                        >
+                            ▶
+                        </button>
+                    </div>
                 </div>
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Hat</h3>
-                    <select ref={hatRef} value={hatAsset} onChange={handleHatAssetChange} className="dropdown" disabled={!tokenId || clubAsset || secondAsset ==  'singe_hoodie_glow' ||  secondAsset ==  'singe_hoodie'}>
-                        <option value="">Select</option>
-                        <option value="mindfully_bored_cap">Mindfully Bored Cap</option>
-                        <option value="apechain_cap">Apechain Hat</option>
-                        <option value="apechain_hat_blue">Apechain Hat Blue</option>
-                        <option value="apechain_hat_orange">Apechain Hat Orange</option>
-                        <option value="designer_toshiro_hat">Designer Toshiro</option>
-                        <option value="beret">Béret</option>
-                        <option value="cats_hat">Cool Cats</option>
-                        <option value="plunger">Dookey Dash</option>
-                        <option value="pudgy_hat">Pudgy Penguins Hat</option>
-                        <option value="pudgy_hat2">Pudgy Penguins Hat 2</option>
-                        <option value="glitter_cowboy_hat">Glitter Cowboy Hat</option>
-                    </select>
+                    <div className="dropdown-with-arrows">
+                        <button 
+                            className="dropdown-arrow" 
+                            onClick={() => navigateDropdown(hatRef, 'prev')}
+                            disabled={!canNavigate(hatRef, 'prev')}
+                        >
+                            ◀
+                        </button>
+                        <select 
+                            ref={hatRef} 
+                            value={hatAsset} 
+                            onChange={handleHatAssetChange} 
+                            className="dropdown" 
+                            disabled={!tokenId || clubAsset || secondAsset === 'singe_hoodie_glow' || secondAsset === 'singe_hoodie'}
+                        >
+                            <option value="">Select</option>
+                            <option value="mindfully_bored_cap">Mindfully Bored Cap</option>
+                            <option value="apechain_cap">Apechain Hat</option>
+                            <option value="apechain_hat_blue">Apechain Hat Blue</option>
+                            <option value="apechain_hat_orange">Apechain Hat Orange</option>
+                            <option value="designer_toshiro_hat">Designer Toshiro</option>
+                            <option value="beret">Béret</option>
+                            <option value="cats_hat">Cool Cats</option>
+                            <option value="plunger">Dookey Dash</option>
+                            <option value="pudgy_hat">Pudgy Penguins Hat</option>
+                            <option value="pudgy_hat2">Pudgy Penguins Hat 2</option>
+                            <option value="glitter_cowboy_hat">Glitter Cowboy Hat</option>
+                        </select>
+                        <button 
+                            className="dropdown-arrow" 
+                            onClick={() => navigateDropdown(hatRef, 'next')}
+                            disabled={!canNavigate(hatRef, 'next')}
+                        >
+                            ▶
+                        </button>
+                    </div>
                 </div>
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Eyes</h3>
-                    <select ref={eyesRef} value={eyesAsset} onChange={handleEyesAssetChange} className="dropdown" disabled={!tokenId || clubAsset === 'elite'}>
-                        <option value="">Select</option>
-                        <option value="apecoin_glasses">Apecoin Glasses</option>
-                        <option value="apechain_glasses">Apechain Glasses</option>
-                        <option value="vision_pro">Vision Pro</option>
-                        <option value="dookey_eyes">Dookey Dash</option>
-                        <option value="btc_eyes">BTC Coin</option>
-                        <option value="star_glasses">Star Glasses</option>
-                    </select>
+                    <div className="dropdown-with-arrows">
+                        <button 
+                            className="dropdown-arrow" 
+                            onClick={() => navigateDropdown(eyesRef, 'prev')}
+                            disabled={!canNavigate(eyesRef, 'prev')}
+                        >
+                            ◀
+                        </button>
+                        <select 
+                            ref={eyesRef} 
+                            value={eyesAsset} 
+                            onChange={handleEyesAssetChange} 
+                            className="dropdown" 
+                            disabled={!tokenId || clubAsset === 'elite'}
+                        >
+                            <option value="">Select</option>
+                            <option value="apecoin_glasses">Apecoin Glasses</option>
+                            <option value="apechain_glasses">Apechain Glasses</option>
+                            <option value="vision_pro">Vision Pro</option>
+                            <option value="dookey_eyes">Dookey Dash</option>
+                            <option value="btc_eyes">BTC Coin</option>
+                            <option value="star_glasses">Star Glasses</option>
+                        </select>
+                        <button 
+                            className="dropdown-arrow" 
+                            onClick={() => navigateDropdown(eyesRef, 'next')}
+                            disabled={!canNavigate(eyesRef, 'next')}
+                        >
+                            ▶
+                        </button>
+                    </div>
                 </div>
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Extra</h3>
-                    <select ref={extraRef} value={thirdAsset} onChange={handleThirdAssetChange} className="dropdown" disabled={!tokenId || clubAsset === 'elite'}>
-                        <option value="">Select</option>
-                        <option value="top_trader">Top Trader</option>
-                        <option value="top_trader_red">Top Trader Red</option>
-                        <option value="unclogged">Unclogged</option>
-                        <option value="hex_dark">Hex Dark</option>
-                        <option value="hex_light">Hex Light</option>
-                        <option value="small_ape" disabled={secondAsset ==  'singe_hoodie_glow' || selectedAsset == 'dookie_dash'}>Tiny AFA</option>
-                        <option value="confetti">Confetti</option>
-                        <option value="snow">Snow</option>
-                        <option value="selfie" disabled={clubAsset === 'dubai'}>Selfie Head</option>
-                        <option value="transparent">Transparent Background</option>
-                        <option value="verified">Verified</option>
-                    </select>
+                    <div className="dropdown-with-arrows">
+                        <button 
+                            className="dropdown-arrow" 
+                            onClick={() => navigateDropdown(extraRef, 'prev')}
+                            disabled={!canNavigate(extraRef, 'prev')}
+                        >
+                            ◀
+                        </button>
+                        <select 
+                            ref={extraRef} 
+                            value={thirdAsset} 
+                            onChange={handleThirdAssetChange} 
+                            className="dropdown" 
+                            disabled={!tokenId || clubAsset === 'elite'}
+                        >
+                            <option value="">Select</option>
+                            <option value="top_trader">Top Trader</option>
+                            <option value="top_trader_red">Top Trader Red</option>
+                            <option value="unclogged">Unclogged</option>
+                            <option value="hex_dark">Hex Dark</option>
+                            <option value="hex_light">Hex Light</option>
+                            <option value="small_ape" disabled={secondAsset === 'singe_hoodie_glow' || selectedAsset === 'dookie_dash'}>Tiny AFA</option>
+                            <option value="confetti">Confetti</option>
+                            <option value="snow">Snow</option>
+                            <option value="selfie" disabled={clubAsset === 'dubai'}>Selfie Head</option>
+                            <option value="transparent">Transparent Background</option>
+                            <option value="verified">Verified</option>
+                        </select>
+                        <button 
+                            className="dropdown-arrow" 
+                            onClick={() => navigateDropdown(extraRef, 'next')}
+                            disabled={!canNavigate(extraRef, 'next')}
+                        >
+                            ▶
+                        </button>
+                    </div>
                 </div>
             </div>
             <div className="dropdown-container">
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Hand</h3>
-                    <select ref={handRef} value={selectedAsset} onChange={handleAssetChange} className="dropdown" disabled={!tokenId || thirdAsset === 'selfie' || clubAsset === 'elite'}>
-                        <option value="">Select</option>
-                        <option value="ape_solar_sun_hand">Ape Solar Sun Hand</option>
-                        <option value="blever_pass">Blever Pass</option>
-                        <option value="gordon">Gordon ❤️</option>
-                        <option value="dookie_dash">Dookie Dash</option>
-                        <option value="smartphone_gm">Smartphone GM</option>
-                        <option value="sardines">Lisbon Sardines</option>
-                        <option value="ramen">Ramen Bowl</option>
-                        <option value="pray">Pray</option>
-                        <option value="basketball">Basketball</option>
-                        <option value="shiny-gm">GM</option>
-                        <option value="pipe">Pipe</option>
-                        <option value="thumbsup">Thumbs Up</option>
-                        <option value="magic_eden">Magic Eden</option>
-                        <option value="gm_espresso">GM Espresso</option>
-                        <option value="peace">Peace</option>
-                        <option value="cheers" disabled={clubAsset === 'dubai'}>Cheers</option>
-                        <option value="banana">Banana Hand</option>
-                        <option value="otherside">Otherside Bottle</option>
-                        <option value="apecoin_hands1">Apecoin Hands 1</option>
-                        <option value="apecoin_hands2">Apecoin Hands </option>
-                        <option value="moon_coffee">Moon Coffee Company</option>
-                        <option value="candle">Candle</option>
-                        <option value="balloon_fireworks">Balloon & Fireworks</option>
-                        <option value="fireworks">Fireworks</option>
-                        <option value="baguette">Baguette</option>
-                        <option value="clubhouse">Clubhouse Sketch</option>
-                        <option value="matchstick">Matchstick</option>
-                        <option value="balloon_moon">2024 Balloon</option>
-                    </select>
+                    <div className="dropdown-with-arrows">
+                        <button 
+                            className="dropdown-arrow" 
+                            onClick={() => navigateDropdown(handRef, 'prev')}
+                            disabled={!canNavigate(handRef, 'prev')}
+                        >
+                            ◀
+                        </button>
+                        <select 
+                            ref={handRef} 
+                            value={selectedAsset} 
+                            onChange={handleAssetChange} 
+                            className="dropdown" 
+                            disabled={!tokenId || thirdAsset === 'selfie' || clubAsset === 'elite'}
+                        >
+                            <option value="">Select</option>
+                            <option value="ape_solar_sun_hand">Ape Solar Sun Hand</option>
+                            <option value="blever_pass">Blever Pass</option>
+                            <option value="gordon">Gordon ❤️</option>
+                            <option value="dookie_dash">Dookie Dash</option>
+                            <option value="smartphone_gm">Smartphone GM</option>
+                            <option value="sardines">Lisbon Sardines</option>
+                            <option value="ramen">Ramen Bowl</option>
+                            <option value="pray">Pray</option>
+                            <option value="basketball">Basketball</option>
+                            <option value="shiny-gm">GM</option>
+                            <option value="pipe">Pipe</option>
+                            <option value="thumbsup">Thumbs Up</option>
+                            <option value="magic_eden">Magic Eden</option>
+                            <option value="gm_espresso">GM Espresso</option>
+                            <option value="peace">Peace</option>
+                            <option value="cheers" disabled={clubAsset === 'dubai'}>Cheers</option>
+                            <option value="banana">Banana Hand</option>
+                            <option value="otherside">Otherside Bottle</option>
+                            <option value="apecoin_hands1">Apecoin Hands 1</option>
+                            <option value="apecoin_hands2">Apecoin Hands </option>
+                            <option value="moon_coffee">Moon Coffee Company</option>
+                            <option value="candle">Candle</option>
+                            <option value="balloon_fireworks">Balloon & Fireworks</option>
+                            <option value="fireworks">Fireworks</option>
+                            <option value="baguette">Baguette</option>
+                            <option value="clubhouse">Clubhouse Sketch</option>
+                            <option value="matchstick">Matchstick</option>
+                            <option value="balloon_moon">2024 Balloon</option>
+                        </select>
+                        <button 
+                            className="dropdown-arrow" 
+                            onClick={() => navigateDropdown(handRef, 'next')}
+                            disabled={!canNavigate(handRef, 'next')}
+                        >
+                            ▶
+                        </button>
+                    </div>
                 </div>
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Club Assets</h3>
-                    <select 
-                        value={clubAsset} 
-                        onChange={handleClubAssetChange} 
-                        className="dropdown" 
-                        disabled={!tokenId}
-                        title={!tokenId ? "Enter a token ID first" : ""}
-                    >
-                        <option value="">Select</option>
-                        <option 
-                            value="dubai" 
-                            disabled={!isDubaiEligible}
-                            title={!isDubaiEligible ? "This token is not eligible for Dubai club" : ""}
+                    <div className="dropdown-with-arrows">
+                        <button 
+                            className="dropdown-arrow" 
+                            onClick={() => {
+                                const clubRef = { current: document.querySelector('select[value="' + clubAsset + '"]') };
+                                navigateDropdown(clubRef, 'prev');
+                            }}
+                            disabled={!tokenId}
                         >
-                            Dubai Ape Yacht Club
-                        </option>
-                        <option value="elite" disabled={!isEliteEligible}>Elite Apes HK</option>
-                        <option value="ape_solar_sun_hand">Ape Solar Sun Hand</option>
-                    </select>
-          </div>
-      </div>
+                            ◀
+                        </button>
+                        <select 
+                            value={clubAsset} 
+                            onChange={handleClubAssetChange} 
+                            className="dropdown" 
+                            disabled={!tokenId}
+                            title={!tokenId ? "Enter a token ID first" : ""}
+                        >
+                            <option value="">Select</option>
+                            <option 
+                                value="dubai" 
+                                disabled={!isDubaiEligible}
+                                title={!isDubaiEligible ? "This token is not eligible for Dubai club" : ""}
+                            >
+                                Dubai Ape Yacht Club
+                            </option>
+                            <option value="elite" disabled={!isEliteEligible}>Elite Apes HK</option>
+                            <option value="ape_solar_sun_hand">Ape Solar Sun Hand</option>
+                        </select>
+                        <button 
+                            className="dropdown-arrow" 
+                            onClick={() => {
+                                const clubRef = { current: document.querySelector('select[value="' + clubAsset + '"]') };
+                                navigateDropdown(clubRef, 'next');
+                            }}
+                            disabled={!tokenId}
+                        >
+                            ▶
+                        </button>
+                    </div>
+                </div>
+            </div>
       <div className="button-container">
         <button 
             onClick={handleReset}

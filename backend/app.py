@@ -336,6 +336,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     } for attr in attributes)
 
     specific_hats = {
+        "mindfully_bored_cap",
         "Short Mohawk",
         "Girl's Hair Pink",
         "Girl's Hair Short",
@@ -344,6 +345,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         "christmas_hat",
         "christmas_hat2",
         "christmas_hat3"
+        "plunger"
     }
 
     has_crazy_eyes = any(attr["trait_type"] == "Eyes" and attr["value"] == "Crazy" for attr in attributes)
