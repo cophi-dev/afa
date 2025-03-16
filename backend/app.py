@@ -48,14 +48,13 @@ special_assets = {
     'singe_hoodie_glow_robot': os.path.join(base_dir, 'memes', 'singe_hoodie_glow_robot.png'),
     'new_asset_1': os.path.join(base_dir, 'memes', 'new_asset_1.png'),
     'new_asset_2': os.path.join(base_dir, 'memes', 'new_asset_2.png'),
-    'mindfully_bored_cap': os.path.join(base_dir, 'memes', 'mindfully bored cap.png'),
     'mindfully_bored_hoodie': os.path.join(base_dir, 'memes', 'mindfully bored hoodie.png'),
-    'ape_solar_sun_hand': os.path.join(base_dir, 'memes', 'ape solar sun hand.png'),
     'ape_solar_hoodie_black': os.path.join(base_dir, 'memes', 'ape solar hoodie black.png'),
     'ape_solar_hoodie_blue': os.path.join(base_dir, 'memes', 'ape solar hoodie blue.png'),
 }
 
 main_assets = {
+    'ape_solar_sun_hand': os.path.join(base_dir, 'memes', 'ape solar sun hand.png'),
     'blever_pass': os.path.join(base_dir, 'memes', 'blever_pass.png'),
     'gordon': os.path.join(base_dir, 'memes', 'gordon.png'),
     'dookie_dash': os.path.join(base_dir, 'memes', 'dookie_dash.png'),
@@ -83,8 +82,11 @@ main_assets = {
     'moon_coffee': os.path.join(base_dir, 'memes', 'moon_coffee.png'),
     'fireworks': os.path.join(base_dir, 'memes', 'fireworks.png'),
     'balloon_fireworks': os.path.join(base_dir, 'memes', 'balloon_fireworks.png'),
-    'matchstick': os.path.join(base_dir, 'memes', 'matchstick.png')
-    # Add more asset types here as needed
+    'matchstick': os.path.join(base_dir, 'memes', 'matchstick.png'),
+    'mindfully_bored_hoodie': os.path.join(base_dir, 'memes', 'mindfully bored hoodie.png'),
+    'ape_solar_hoodie_black': os.path.join(base_dir, 'memes', 'ape solar hoodie black.png'),
+    'ape_solar_hoodie_blue': os.path.join(base_dir, 'memes', 'ape solar hoodie blue.png'),
+    'ape_solar_sun_hand': os.path.join(base_dir, 'memes', 'ape solar sun hand.png'),
 }
 
 mouth_assets = {
@@ -105,6 +107,7 @@ mouth_assets = {
 }
 
 hat_assets = {
+    'mindfully_bored_cap': os.path.join(base_dir, 'memes', 'mindfully bored cap.png'),
     'designer_toshiro_hat': os.path.join(base_dir, 'memes', 'designer_toshiro_hat.png'),
     'apechain_cap': os.path.join(base_dir, 'memes', 'apechain_cap_black.png'),
     'apechain_hat_blue': os.path.join(base_dir, 'memes', 'apechain_hat_blue.png'),
@@ -114,10 +117,7 @@ hat_assets = {
     'pudgy_hat': os.path.join(base_dir, 'memes', 'pudgy_hat.png'),
     'pudgy_hat2': os.path.join(base_dir, 'memes', 'pudgy_hat2.png'),
     'plunger': os.path.join(base_dir, 'memes', 'plunger.png'),
-    'christmas_hat': os.path.join(base_dir, 'memes', 'christmas_hat.png'),
-    'christmas_hat2': os.path.join(base_dir, 'memes', 'christmas_hat2.png'),
-    'christmas_hat3': os.path.join(base_dir, 'memes', 'christmas_hat3.png'),
-    'glitter_cowboy_hat': os.path.join(base_dir, 'memes', 'glitter_cowboy_hat.png')
+    'mindfully_bored_cap': os.path.join(base_dir, 'memes', 'mindfully bored cap.png'),
 }
 
 eyes_assets = {
