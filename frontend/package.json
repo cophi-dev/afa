@@ -14,7 +14,8 @@
     "react-scripts": "5.0.1",
     "vercel": "^32.7.2",
     "web-vitals": "^2.1.4",
-    "env-cmd": "^10.1.0"
+    "env-cmd": "^10.1.0",
+    "yocto-queue": "^0.1.0"
   },
   "scripts": {
     "start": "env-cmd -f .env.development react-scripts start",
