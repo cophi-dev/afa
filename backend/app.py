@@ -48,10 +48,12 @@ special_assets = {
     'singe_hoodie_glow_robot': os.path.join(base_dir, 'memes', 'singe_hoodie_glow_robot.png'),
     'new_asset_1': os.path.join(base_dir, 'memes', 'new_asset_1.png'),
     'new_asset_2': os.path.join(base_dir, 'memes', 'new_asset_2.png'),
+    'mindfully_bored_hoodie': os.path.join(base_dir, 'memes', 'mindfully bored hoodie.png'),
+    'ape_solar_hoodie_black': os.path.join(base_dir, 'memes', 'ape solar hoodie black.png'),
+    'ape_solar_hoodie_blue': os.path.join(base_dir, 'memes', 'ape solar hoodie blue.png'),
 }
 
 main_assets = {
-    'ape_solar_sun_hand': os.path.join(base_dir, 'memes', 'ape solar sun hand.png'),
     'blever_pass': os.path.join(base_dir, 'memes', 'blever_pass.png'),
     'gordon': os.path.join(base_dir, 'memes', 'gordon.png'),
     'dookie_dash': os.path.join(base_dir, 'memes', 'dookie_dash.png'),
@@ -80,9 +82,6 @@ main_assets = {
     'fireworks': os.path.join(base_dir, 'memes', 'fireworks.png'),
     'balloon_fireworks': os.path.join(base_dir, 'memes', 'balloon_fireworks.png'),
     'matchstick': os.path.join(base_dir, 'memes', 'matchstick.png'),
-    'mindfully_bored_hoodie': os.path.join(base_dir, 'memes', 'mindfully bored hoodie.png'),
-    'ape_solar_hoodie_black': os.path.join(base_dir, 'memes', 'ape solar hoodie black.png'),
-    'ape_solar_hoodie_blue': os.path.join(base_dir, 'memes', 'ape solar hoodie blue.png'),
     'ape_solar_sun_hand': os.path.join(base_dir, 'memes', 'ape solar sun hand.png'),
 }
 
@@ -242,19 +241,28 @@ def add_asset(image, asset_type, asset_dict):
             
             # Special handling for the cap
             if asset_type == 'mindfully_bored_cap':
-                # Adjust size as needed - make it smaller than the default 1000x1000
-                asset_image = asset_image.resize((800, 800), Image.ANTIALIAS)
-                # Position it properly on the image
-                position = (100, 50)  # Adjust x, y coordinates as needed
-                image.paste(asset_image, position, asset_image)
+                # Resize to a smaller size
+                asset_image = asset_image.resize((600, 600), Image.LANCZOS)
+                # Center it on the image
+                position = (200, 50)  # Adjust x, y coordinates as needed
+                temp_img = Image.new("RGBA", (1000, 1000), (0, 0, 0, 0))
+                temp_img.paste(asset_image, position, asset_image)
+                image.alpha_composite(temp_img)
+            # Special handling for hoodies
+            elif asset_type in ['mindfully_bored_hoodie', 'ape_solar_hoodie_black', 'ape_solar_hoodie_blue']:
+                # Ensure proper sizing for hoodies
+                asset_image = asset_image.resize((1000, 1000), Image.LANCZOS)
+                image.alpha_composite(asset_image)
             else:
                 # Standard resize for other assets
-                asset_image = asset_image.resize((1000, 1000), Image.ANTIALIAS)
-                image.alpha_composite(asset_image, (0, 0))
+                asset_image = asset_image.resize((1000, 1000), Image.LANCZOS)
+                image.alpha_composite(asset_image)
                 
             print(f"Resized size of {asset_type}: {asset_image.size}")
     except FileNotFoundError:
         print(f"File not found: {asset_path}")
+    except Exception as e:
+        print(f"Error processing {asset_type}: {e}")
     return image
     
 def is_minted(token_id):
