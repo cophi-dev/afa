@@ -531,8 +531,7 @@ function App() {
                         <option value="jacket">Jacket</option>
                         <option value="blazer">Blazer</option>
                         <option value="cool_hat">Cool Hat</option>
-                        <option value="new_asset_1">New Asset 1</option>
-                        <option value="new_asset_2">New Asset 2</option>
+
                     </select>
                 </div>
             </div>
