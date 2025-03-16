@@ -538,6 +538,14 @@ function App() {
                         <option value="blazer">Blazer</option>
                         {/* <option value="49ers">Super Bowl 49ers</option>
                         <option value="chiefs">Super Bowl Chiefs</option> */}
+                        <option value="cool_hat">Cool Hat</option>
+                        <option value="new_asset_1">New Asset 1</option>
+                        <option value="new_asset_2">New Asset 2</option>
+                        <option value="mindfully_bored_cap">Mindfully Bored Cap</option>
+                        <option value="mindfully_bored_hoodie">Mindfully Bored Hoodie</option>
+                        <option value="ape_solar_sun_hand">Ape Solar Sun Hand</option>
+                        <option value="ape_solar_hoodie_black">Ape Solar Hoodie Black</option>
+                        <option value="ape_solar_hoodie_blue">Ape Solar Hoodie Blue</option>
                     </select>
                 </div>
             </div>
