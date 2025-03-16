@@ -239,20 +239,13 @@ def add_asset(image, asset_type, asset_dict):
         with Image.open(asset_path).convert("RGBA") as asset_image:
             print(f"Original size of {asset_type}: {asset_image.size}")
             
-            # Special handling for hat assets
-            if asset_dict == hat_assets:
-                # Make hats smaller (adjust size as needed)
-                asset_image = asset_image.resize((500, 500), Image.LANCZOS)
-                # Position the hat at the top of the image
-                temp_img = Image.new("RGBA", (1000, 1000), (0, 0, 0, 0))
-                temp_img.paste(asset_image, (250, 50), asset_image)
-                image.alpha_composite(temp_img)
-            else:
-                # Standard resize for other assets
-                asset_image = asset_image.resize((1000, 1000), Image.LANCZOS)
-                image.alpha_composite(asset_image, (0, 0))
-                
+            # Resize all assets to 1000x1000 regardless of type
+            asset_image = asset_image.resize((1000, 1000), Image.LANCZOS)
             print(f"Resized size of {asset_type}: {asset_image.size}")
+            
+            # Composite the image
+            image.alpha_composite(asset_image, (0, 0))
+            
     except FileNotFoundError:
         print(f"File not found: {asset_path}")
     except Exception as e:
@@ -576,6 +569,27 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     # Add clothes asset if it wasn't added and is selected
     if second_asset_type in special_assets and not clothes_added:
         print(f"Adding selected clothes asset: {second_asset_type}")
+        
+        # Special debugging for the new hoodies
+        if second_asset_type in ['mindfully_bored_hoodie', 'ape_solar_hoodie_black', 'ape_solar_hoodie_blue']:
+            print(f"Special debugging for hoodie: {second_asset_type}")
+            hoodie_path = special_assets[second_asset_type]
+            
+            # Check if file exists
+            if not os.path.exists(hoodie_path):
+                print(f"ERROR: Hoodie file does not exist: {hoodie_path}")
+            else:
+                print(f"Hoodie file exists: {hoodie_path}")
+                try:
+                    with Image.open(hoodie_path).convert("RGBA") as hoodie:
+                        print(f"Original hoodie size: {hoodie.size}")
+                        hoodie = hoodie.resize((1000, 1000), Image.LANCZOS)
+                        print(f"Resized hoodie size: {hoodie.size}")
+                        final_image.alpha_composite(hoodie, (0, 0))
+                        print(f"Successfully added hoodie: {second_asset_type}")
+                except Exception as e:
+                    print(f"Error adding hoodie {second_asset_type}: {e}")
+        
         add_asset(final_image, second_asset_type, special_assets)
 
 
@@ -757,6 +771,34 @@ def get_dubai_token_ids():
     except Exception as e:
         print(f"Error in get_dubai_token_ids: {e}")
         return jsonify({'error': 'Internal Server Error'}), 500
+
+@app.route('/api/debug-assets', methods=['GET'])
+def debug_assets():
+    results = {}
+    
+    # Check if hoodie files exist
+    hoodie_files = [
+        'mindfully bored hoodie.png',
+        'ape solar hoodie black.png',
+        'ape solar hoodie blue.png'
+    ]
+    
+    for file in hoodie_files:
+        file_path = os.path.join(base_dir, 'memes', file)
+        results[file] = {
+            'exists': os.path.exists(file_path),
+            'path': file_path
+        }
+        
+        if os.path.exists(file_path):
+            try:
+                with Image.open(file_path) as img:
+                    results[file]['size'] = img.size
+                    results[file]['mode'] = img.mode
+            except Exception as e:
+                results[file]['error'] = str(e)
+    
+    return jsonify(results)
 
 @app.route('/', defaults={'path': ''})
 
