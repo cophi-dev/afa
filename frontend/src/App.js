@@ -660,7 +660,7 @@ function App() {
                             disabled={!tokenId || clubAsset || secondAsset === 'singe_hoodie_glow' || secondAsset === 'singe_hoodie'}
                         >
                             <option value="">Select</option>
-                            <option value="germen_ape_club_hat">German Ape Club</option>
+                            <option value="german_ape_club_hat">German Ape Club</option>
                             <option value="mindfully_bored_cap">Mindfully Bored Cap</option>
                             <option value="apechain_cap">Apechain Hat</option>
                             <option value="apechain_hat_blue">Apechain Hat Blue</option>
