@@ -16,6 +16,7 @@ CORS(app, resources={r"/api/*": {"origins": [
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
 
 special_assets = {
+    'german_ape_club_clothes': os.path.join(base_dir, 'memes', 'german_ape_club_clothes.png'),
     'apefest_merch': os.path.join(base_dir, 'memes', 'apefest_merch.png'),
     'tt_hoodie': os.path.join(base_dir, 'memes', 'tt_hoodie.png'),
     'bimmer_jacket': os.path.join(base_dir, 'memes', 'bimmer_jacket.png'),
@@ -102,6 +103,7 @@ mouth_assets = {
 }
 
 hat_assets = {
+    'german_ape_club_hat': os.path.join(base_dir, 'memes', 'german_ape_club_hat.png'),
     'mindfully_bored_cap': os.path.join(base_dir, 'memes', 'mindfully bored cap.png'),
     'designer_toshiro_hat': os.path.join(base_dir, 'memes', 'designer_toshiro_hat.png'),
     'apechain_cap': os.path.join(base_dir, 'memes', 'apechain_cap_black.png'),
