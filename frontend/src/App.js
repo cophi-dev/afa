@@ -206,7 +206,10 @@ function App() {
                 fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset, mouthAsset, '', eyesAsset, clubAsset);
             }, 0);
         }
-        else fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
+        else {
+          console.log('[handleSecondAssetChange] Fetching with secondAsset:', newSecondAsset); // Log before fetch
+          fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
+        }
     };
     
     const handleMouthAssetChange = event => {
@@ -496,6 +499,16 @@ function App() {
             vegasAsset, // eyesAsset
             ''          // clubAsset
         );
+
+        console.log('[handleSelectVegas] Fetching with Vegas assets:', { 
+          selectedAsset: vegasAsset, 
+          secondAsset: vegasAsset, 
+          thirdAsset: '', 
+          mouthAsset: '', 
+          hatAsset: vegasAsset, 
+          eyesAsset: vegasAsset, 
+          clubAsset: '' 
+        }); // Log before fetch
 
         // Trigger glamour effect
         setVegasButtonClicked(true);
