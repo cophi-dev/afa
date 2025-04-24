@@ -58,6 +58,7 @@ function App() {
     const eyesRef = useRef(null);
     const handRef = useRef(null);
     const extraRef = useRef(null);
+    const [vegasButtonClicked, setVegasButtonClicked] = useState(false); // State for glamour effect
   
   useEffect(() => {
         if (tokenId) {
@@ -495,6 +496,10 @@ function App() {
             vegasAsset, // eyesAsset
             ''          // clubAsset
         );
+
+        // Trigger glamour effect
+        setVegasButtonClicked(true);
+        setTimeout(() => setVegasButtonClicked(false), 1000); // Remove effect after 1 second
     };
 
     const navigateDropdown = (selectRef, direction) => {
@@ -547,7 +552,8 @@ function App() {
     };
 
   return (
-    <div className="App">
+    // Apply glamour class conditionally
+    <div className={`App ${vegasButtonClicked ? 'vegas-glamour' : ''}`}>
       <Banner />
             <div id="asset-display" className={fade ? 'fade-effect' : ''}>
                 <img src={currentImageUrl} alt="Ape" style={{ maxWidth: '100%', height: 'auto' }} />
@@ -556,6 +562,33 @@ function App() {
                         processing new perspective...
                     </div>
                 }
+            </div>
+
+            {/* Move button container here */}
+            <div className="button-container">
+                <button 
+                    onClick={handleReset}
+                    className="action-button reset-button"
+                    title="Reset all selections"
+                >
+                    Reset All
+                </button>
+                <button 
+                    onClick={handleRandomize}
+                    className="action-button random-button"
+                    title="Randomize traits"
+                    disabled={!tokenId}
+                >
+                    New Perspective 👀
+                </button>
+                <button
+                    onClick={handleSelectVegas}
+                    className="action-button vegas-button"
+                    title="Select Vegas Set"
+                    disabled={!tokenId}
+                >
+                    Vegas Set
+                </button>
             </div>
 
             <div className="dropdown-container">
@@ -638,7 +671,7 @@ function App() {
                 </div>
             </div>
 
-      <div className="dropdown-container">
+            <div className="dropdown-container">
                 <div className="dropdown-section">
                     <h3 className="dropdown-header">Mouth</h3>
                     <div className="dropdown-with-arrows">
@@ -891,7 +924,8 @@ function App() {
                     </div>
                 </div> */}
             </div>
-      <div className="button-container">
+      {/* Remove original button container */}
+      {/* <div className="button-container">
         <button 
             onClick={handleReset}
             className="action-button reset-button"
@@ -905,7 +939,7 @@ function App() {
             title="Randomize traits"
             disabled={!tokenId}
         >
-            New Perspective ��
+            New Perspective 👀
         </button>
         <button
             onClick={handleSelectVegas}
@@ -915,7 +949,7 @@ function App() {
         >
             Vegas Set
         </button>
-    </div>
+    </div> */}
       <Footer />
     </div>
   );
