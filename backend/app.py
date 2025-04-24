@@ -51,6 +51,7 @@ special_assets = {
     'mindfully_bored_hoodie': os.path.join(base_dir, 'memes', 'mindfully bored hoodie.png'),
     'ape_solar_hoodie_black': os.path.join(base_dir, 'memes', 'ape solar hoodie black.png'),
     'ape_solar_hoodie_blue': os.path.join(base_dir, 'memes', 'ape solar hoodie blue.png'),
+    'vegas': os.path.join(base_dir, 'memes', 'vegas_shirt.png'),
 }
 
 main_assets = {
@@ -84,7 +85,6 @@ main_assets = {
     'balloon_fireworks': os.path.join(base_dir, 'memes', 'balloon_fireworks.png'),
     'matchstick': os.path.join(base_dir, 'memes', 'matchstick.png'),
     'ape_solar_sun_hand': os.path.join(base_dir, 'memes', 'ape solar sun hand.png'),
-    'vegas': os.path.join(base_dir, 'memes', 'vegas_shirt.png'),
 }
 
 mouth_assets = {
@@ -289,6 +289,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     final_image = Image.new("RGBA", (1000, 1000), (255, 255, 255, 0))
     
     layers = {}
+    determined_clothes_path = None # Initialize determined clothes path
 
     # Check if elite asset is selected
     is_elite_selected = club_asset_type == 'elite'
@@ -445,7 +446,24 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     if has_unshaven_mouth:
         specific_tree = 'tree_unshaven'
     
-    # else use the default 'big_smile'
+    # --- Determine the definitive Clothes path BEFORE the loop --- START
+    original_clothes_value = next((attr["value"] for attr in attributes if attr["trait_type"] == "Clothes"), None)
+
+    if second_asset_type == 'naked':
+        determined_clothes_path = special_assets.get('naked')
+        print(f"Clothes determined: Naked ({determined_clothes_path})")
+    elif second_asset_type in special_assets:
+        determined_clothes_path = special_assets.get(second_asset_type)
+        print(f"Clothes determined: Special Asset '{second_asset_type}' ({determined_clothes_path})")
+    elif original_clothes_value:
+        # Use original clothes if no valid special asset is selected
+        determined_clothes_path = get_image_file("Clothes", original_clothes_value)
+        print(f"Clothes determined: Original '{original_clothes_value}' ({determined_clothes_path})")
+    else:
+        # Fallback to blank if no original clothes and no valid selection
+        determined_clothes_path = os.path.join(base_dir, "_blank.png")
+        print(f"Clothes determined: Fallback Blank ({determined_clothes_path})")
+    # --- Determine the definitive Clothes path BEFORE the loop --- END
 
     # Loop through attributes and compose image
     for attribute in attributes:
@@ -453,6 +471,11 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         value = attribute["value"]
 
     
+        # --- Skip processing original Clothes trait here --- 
+        if trait_type == "Clothes":
+            continue # We handle clothes separately after Fur
+        # --- END Skip --- 
+
         if trait_type == "Background" and third_asset_type == 'transparent':
             print("Applying transparent background")
             image_path = additional_assets['transparent']
@@ -498,8 +521,6 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             # If dubai asset is selected, use a black background
             print("Overlay mouth layer")
             image_path = os.path.join(base_dir, 'Mouth', f"{value}.png")
-        elif trait_type == "Background" and not background_transparent:
-            image_path = get_image_file(trait_type, value)
         elif trait_type == "Background" and not background_transparent:
             image_path = get_image_file(trait_type, value)
         elif trait_type == "Clothes" and second_asset_type in special_assets and not clothes_added:
@@ -554,8 +575,25 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             print(f"File not found for trait_type {trait_type}, value {value}: {image_path}")
 
 
-    # Composite all the layers onto the final image
-    for layer_type in ['Background', 'Fur', 'Eyes', 'Clothes', 'Earring', 'Hat', 'Mouth']:
+    # Composite base layers (Background, Fur)
+    for layer_type in ['Background', 'Fur']: 
+        if layer_type in layers:
+            final_image.alpha_composite(layers[layer_type], (0, 0))
+
+    # --- Explicitly composite the determined Clothes layer --- START
+    if determined_clothes_path:
+        try:
+            # print(f"Compositing determined clothes: {determined_clothes_path}") # Optional: Keep if needed
+            with Image.open(determined_clothes_path).convert("RGBA") as img:
+                 final_image.alpha_composite(img, (0, 0))
+        except FileNotFoundError:
+             print(f"Clothes file not found during explicit composite: {determined_clothes_path}")
+        except Exception as e:
+            print(f"Error compositing determined clothes {determined_clothes_path}: {e}")
+    # --- Explicitly composite the determined Clothes layer --- END
+
+    # Composite remaining layers (Eyes, Earring, Hat, Mouth) 
+    for layer_type in ['Eyes', 'Earring', 'Hat', 'Mouth']:
         if layer_type in layers:
             final_image.alpha_composite(layers[layer_type], (0, 0))
 
@@ -563,20 +601,6 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
 
 
    
-
-
-    # Add clothes asset if it wasn't added and is selected
-    if second_asset_type in special_assets and not clothes_added:
-        print(f"Adding selected clothes asset: {second_asset_type}")
-        add_asset(final_image, second_asset_type, special_assets)
-
-
-    
-    # Add hat asset if it wasn't added and is selected
-    if hat_asset_type in hat_assets and not hat_added:
-        print(f"Adding selected hat asset: {hat_asset_type}")
-        add_asset(final_image, hat_asset_type, hat_assets)
-    
 
 
     if has_crazy_eyes and (has_specific_hat or has_selected_specific_hat):
