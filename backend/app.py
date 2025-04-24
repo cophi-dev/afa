@@ -54,6 +54,7 @@ special_assets = {
 }
 
 main_assets = {
+    'vegas': os.path.join(base_dir, 'memes', 'vegas_hand.png'),
     'blever_pass': os.path.join(base_dir, 'memes', 'blever_pass.png'),
     'gordon': os.path.join(base_dir, 'memes', 'gordon.png'),
     'dookie_dash': os.path.join(base_dir, 'memes', 'dookie_dash.png'),
@@ -83,6 +84,7 @@ main_assets = {
     'balloon_fireworks': os.path.join(base_dir, 'memes', 'balloon_fireworks.png'),
     'matchstick': os.path.join(base_dir, 'memes', 'matchstick.png'),
     'ape_solar_sun_hand': os.path.join(base_dir, 'memes', 'ape solar sun hand.png'),
+    'vegas': os.path.join(base_dir, 'memes', 'vegas_shirt.png'),
 }
 
 mouth_assets = {
@@ -114,6 +116,7 @@ hat_assets = {
     'pudgy_hat': os.path.join(base_dir, 'memes', 'pudgy_hat.png'),
     'pudgy_hat2': os.path.join(base_dir, 'memes', 'pudgy_hat2.png'),
     'plunger': os.path.join(base_dir, 'memes', 'plunger.png'),
+    'vegas': os.path.join(base_dir, 'memes', 'vegas_hat.png'),
 }
 
 eyes_assets = {
@@ -122,7 +125,8 @@ eyes_assets = {
     'btc_eyes': os.path.join(base_dir, 'memes', 'btc_eyes.png'),
     'dookey_eyes': os.path.join(base_dir, 'memes', 'dookey_eyes.png'),
     'star_glasses': os.path.join(base_dir, 'memes', 'star_glasses.png'),
-    'vision_pro': os.path.join(base_dir, 'memes', 'vision_pro.png')
+    'vision_pro': os.path.join(base_dir, 'memes', 'vision_pro.png'),
+    'vegas': os.path.join(base_dir, 'memes', 'vegas_eyes.png'),
 }
 
 club_assets = {

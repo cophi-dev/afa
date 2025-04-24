@@ -573,6 +573,7 @@ function App() {
                             disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}
                         >
                             <option value="">Select</option>
+                            <option value="vegas">Vegas BAYC</option>
                             <option value="german_ape_club_clothes">German Ape Club</option>
                             <option value="mindfully_bored_hoodie">Mindfully Bored Hoodie</option>
                             <option value="ape_solar_hoodie_black">Ape Solar Hoodie Black</option>
@@ -660,6 +661,7 @@ function App() {
                             disabled={!tokenId || clubAsset || secondAsset === 'singe_hoodie_glow' || secondAsset === 'singe_hoodie'}
                         >
                             <option value="">Select</option>
+                            <option value="vegas">Vegas BAYC</option>
                             <option value="german_ape_club_hat">German Ape Club</option>
                             <option value="mindfully_bored_cap">Mindfully Bored Cap</option>
                             <option value="apechain_cap">Apechain Hat</option>
@@ -700,6 +702,7 @@ function App() {
                             disabled={!tokenId || clubAsset === 'elite'}
                         >
                             <option value="">Select</option>
+                            <option value="vegas">Vegas BAYC</option>
                             <option value="apecoin_glasses">Apecoin Glasses</option>
                             <option value="apechain_glasses">Apechain Glasses</option>
                             <option value="vision_pro">Vision Pro</option>
@@ -775,6 +778,7 @@ function App() {
                             disabled={!tokenId || thirdAsset === 'selfie' || clubAsset === 'elite'}
                         >
                             <option value="">Select</option>
+                            <option value="vegas">Vegas BAYC</option>
                             <option value="ape_solar_sun_hand">Ape Solar Sun Hand</option>
                             <option value="blever_pass">Blever Pass</option>
                             <option value="gordon">Gordon ❤️</option>
