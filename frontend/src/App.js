@@ -467,6 +467,36 @@ function App() {
         );
     };
 
+    // Add the new handler function for the Vegas set
+    const handleSelectVegas = () => {
+        if (!tokenId) return; // Do nothing if no token ID is selected
+
+        const vegasAsset = 'vegas';
+
+        // Update states for Vegas assets
+        setSelectedAsset(vegasAsset); // Hand
+        setSecondAsset(vegasAsset); // Outfit
+        setHatAsset(vegasAsset);    // Hat
+        setEyesAsset(vegasAsset);   // Eyes
+
+        // Reset potentially conflicting assets (optional, but good practice)
+        setMouthAsset('');
+        setThirdAsset('');
+        setClubAsset('');
+
+        // Fetch the asset with the Vegas traits
+        fetchAsset(
+            tokenId,
+            vegasAsset, // selectedAsset (Hand)
+            vegasAsset, // secondAsset (Outfit)
+            '',         // thirdAsset (Extra)
+            '',         // mouthAsset
+            vegasAsset, // hatAsset
+            vegasAsset, // eyesAsset
+            ''          // clubAsset
+        );
+    };
+
     const navigateDropdown = (selectRef, direction) => {
         if (!selectRef.current) return;
         
@@ -875,7 +905,15 @@ function App() {
             title="Randomize traits"
             disabled={!tokenId}
         >
-            New Perspective 👀
+            New Perspective ��
+        </button>
+        <button
+            onClick={handleSelectVegas}
+            className="action-button vegas-button"
+            title="Select Vegas Set"
+            disabled={!tokenId}
+        >
+            Vegas Set
         </button>
     </div>
       <Footer />
