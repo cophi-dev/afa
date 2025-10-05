@@ -7,7 +7,7 @@ const CONTRACT_ADDRESS = '0xfAa0e99EF34Eae8b288CFEeAEa4BF4f5B5f2eaE7';
 
 export const getAllTransactions = async () => {
   try {
-    const url = `https://api.etherscan.io/api?module=account&action=tokennfttx&contractaddress=${CONTRACT_ADDRESS}&page=1&offset=10000&startblock=0&endblock=999999999&sort=asc&chainid=1&apikey=${ETHERSCAN_API_KEY}`;
+      const url = `https://api.etherscan.io/v2/api?module=account&action=tokennfttx&contractaddress=${CONTRACT_ADDRESS}&page=1&offset=10000&startblock=0&endblock=999999999&sort=asc&chainid=1&apikey=${ETHERSCAN_API_KEY}`;
     
     console.log('Fetching from URL:', url); // Add this for debugging
     
