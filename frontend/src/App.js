@@ -655,6 +655,7 @@ function App() {
                             <option value="ape_solar_hoodie_black">Ape Solar Hoodie Black</option>
                             <option value="ape_solar_hoodie_blue">Ape Solar Hoodie Blue</option>
                             <option value="apefest_merch">Apefest Merch</option>
+                            <option value="apefest_merch_2025">Apefest Merch 2025</option>
                             <option value="tt_hoodie">Top Trader Hoodie</option>
                             <option value="bimmer_jacket">Bimmer Jacket</option>
                             <option value="apechain_hoodie_black">Apechain Hoodie Black</option>
