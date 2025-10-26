@@ -1,5 +1,19 @@
-.gcloudignore
-.git
-.gitignore
-node_modules/
-# other directories or files to ignore
+# Ignore virtual environments
+env/
+env_backup/
+venv/
+.venv/
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore local development files
+.env
+.DS_Store
+
+# Ignore any other virtual environment folders
+**/bin/python*
+**/bin/activate
