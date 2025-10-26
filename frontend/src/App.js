@@ -649,13 +649,13 @@ function App() {
                             disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}
                         >
                             <option value="">Select</option>
+                            <option value="apefest_merch_2025">Apefest Merch 2025</option>
                             <option value="vegas">Vegas BAYC</option>
                             <option value="german_ape_club_clothes">German Ape Club</option>
                             <option value="mindfully_bored_hoodie">Mindfully Bored Hoodie</option>
                             <option value="ape_solar_hoodie_black">Ape Solar Hoodie Black</option>
                             <option value="ape_solar_hoodie_blue">Ape Solar Hoodie Blue</option>
                             <option value="apefest_merch">Apefest Merch</option>
-                            <option value="apefest_merch_2025">Apefest Merch 2025</option>
                             <option value="tt_hoodie">Top Trader Hoodie</option>
                             <option value="bimmer_jacket">Bimmer Jacket</option>
                             <option value="apechain_hoodie_black">Apechain Hoodie Black</option>
