@@ -6,11 +6,34 @@ import os
 from io import BytesIO
 
 app = Flask(__name__, static_folder='public', static_url_path='/')
-CORS(app, resources={r"/api/*": {"origins": [
+
+allowed_origins = [
     "https://afa-3zwtn2xev-cophidevs-projects.vercel.app",
-    "https://afa-editor.vercel.app", 
-    "http://localhost:3000"
-]}})
+    "https://afa-editor.vercel.app",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
+]
+
+CORS(app, resources={r"/api/*": {"origins": allowed_origins}}, supports_credentials=True)
+
+
+@app.before_request
+def handle_preflight():
+    if request.method == 'OPTIONS':
+        response = app.make_default_options_response()
+        return apply_local_dev_cors(response)
+
+
+@app.after_request
+def apply_local_dev_cors(response):
+    origin = request.headers.get('Origin')
+    if origin and origin.startswith(('http://localhost', 'http://127.0.0.1')):
+        response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+        response.headers['Vary'] = response.headers.get('Vary', 'Origin')
+    return response
 
 # Use absolute paths for file access
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'traits'))
@@ -189,7 +212,8 @@ additional_assets = {
     'hoodie_zombie': os.path.join(base_dir, 'Hoodie_Fur', 'Zombie.png'),
     'hoodie_robot': os.path.join(base_dir, 'Hoodie_Fur', 'Robot.png'),
     'hoodie_death_bot': os.path.join(base_dir, 'Hoodie_Fur', 'Death Bot.png'),
-    'background_glow': os.path.join(base_dir, 'memes', 'background_glow.png')
+    'background_glow': os.path.join(base_dir, 'memes', 'background_glow.png'),
+    'vintage_frame': os.path.join(base_dir, 'memes', 'vintage_frame.png')
     # Add more assets as needed
 }
 
@@ -305,6 +329,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     background_transparent = False
     head_added = False
     eyes_added = False
+    frame_selected = third_asset_type == 'vintage_frame'
 
     # Conditions for specific types of 'big_smile'
     has_black_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Black" for attr in attributes)
@@ -668,13 +693,30 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         add_asset(final_image, asset_type, main_assets)
 
     # Add third asset if specified
-    if third_asset_type in additional_assets:
+    if third_asset_type in additional_assets and not frame_selected:
         print(f"Adding third asset: {third_asset_type}")
         add_asset(final_image, third_asset_type, additional_assets)
 
-  
+    if frame_selected:
+        print("Applying vintage frame overlay")
+        try:
+            scaled_content = final_image.resize(
+                (int(final_image.width * 0.5), int(final_image.height * 0.5)),
+                Image.LANCZOS
+            )
+            framed_canvas = Image.new("RGBA", (1000, 1000), (255, 255, 255, 0))
+            offset_x = (framed_canvas.width - scaled_content.width) // 2
+            offset_y = (framed_canvas.height - scaled_content.height) // 2
+            framed_canvas.paste(scaled_content, (offset_x, offset_y), scaled_content)
+            with Image.open(additional_assets['vintage_frame']).convert("RGBA") as frame_overlay:
+                framed_canvas.alpha_composite(frame_overlay, (0, 0))
+            final_image = framed_canvas
+        except FileNotFoundError:
+            print(f"Vintage frame asset not found: {additional_assets['vintage_frame']}")
+        except Exception as e:
+            print(f"Error applying vintage frame: {e}")
 
-     # Check if 'small_ape' is selected
+    # Check if 'small_ape' is selected
     if third_asset_type == 'small_ape':
         # Resize logic for the ape image
         scale_factor = 0.3  # Example scale factor

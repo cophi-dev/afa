@@ -825,6 +825,7 @@ function App() {
                             <option value="selfie" disabled={clubAsset === 'dubai'}>Selfie Head</option>
                             <option value="transparent">Transparent Background</option>
                             <option value="verified">Verified</option>
+                            <option value="vintage_frame">Vintage Frame</option>
                         </select>
                         <button 
                             className="dropdown-arrow" 
