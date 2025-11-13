@@ -472,47 +472,37 @@ function App() {
     };
 
     // Add the new handler function for the Vegas set
-    const handleSelectVegas = () => {
+    const handleFrameIt = () => {
         if (!tokenId) return; // Do nothing if no token ID is selected
 
-        const vegasAsset = 'vegas';
+        const frameAsset = 'vintage_frame';
 
-        // Update states for Vegas assets
-        setSelectedAsset(vegasAsset); // Hand
-        setSecondAsset(vegasAsset); // Outfit
-        setHatAsset(vegasAsset);    // Hat
-        setEyesAsset(vegasAsset);   // Eyes
+        setThirdAsset(frameAsset);
 
-        // Reset potentially conflicting assets (optional, but good practice)
-        setMouthAsset('');
-        setThirdAsset('');
-        setClubAsset('');
-
-        // Fetch the asset with the Vegas traits
         fetchAsset(
             tokenId,
-            vegasAsset, // selectedAsset (Hand)
-            vegasAsset, // secondAsset (Outfit)
-            '',         // thirdAsset (Extra)
-            '',         // mouthAsset
-            vegasAsset, // hatAsset
-            vegasAsset, // eyesAsset
-            ''          // clubAsset
+            selectedAsset,
+            secondAsset,
+            frameAsset,
+            mouthAsset,
+            hatAsset,
+            eyesAsset,
+            clubAsset
         );
 
-        console.log('[handleSelectVegas] Fetching with Vegas assets:', { 
-          selectedAsset: vegasAsset, 
-          secondAsset: vegasAsset, 
-          thirdAsset: '', 
-          mouthAsset: '', 
-          hatAsset: vegasAsset, 
-          eyesAsset: vegasAsset, 
-          clubAsset: '' 
+        console.log('[handleFrameIt] Applying frame:', { 
+          tokenId,
+          selectedAsset,
+          secondAsset,
+          thirdAsset: frameAsset,
+          mouthAsset,
+          hatAsset,
+          eyesAsset,
+          clubAsset
         }); // Log before fetch
 
-        // Trigger glamour effect
         setVegasButtonClicked(true);
-        setTimeout(() => setVegasButtonClicked(false), 1000); // Remove effect after 1 second
+        setTimeout(() => setVegasButtonClicked(false), 1000);
     };
 
     const navigateDropdown = (selectRef, direction) => {
@@ -595,12 +585,12 @@ function App() {
                     New Perspective 👀
                 </button>
                 <button
-                    onClick={handleSelectVegas}
+                    onClick={handleFrameIt}
                     className="action-button vegas-button"
-                    title="Select Vegas Set"
+                    title="Add Vintage Frame"
                     disabled={!tokenId}
                 >
-                    Vegas Set
+                    Frame It
                 </button>
             </div>
 
