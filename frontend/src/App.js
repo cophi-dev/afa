@@ -42,6 +42,8 @@ function App() {
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [mintedTokens, setMintedTokens] = useState(new Set());
+    const [recentTokenIds, setRecentTokenIds] = useState([]);
+    const [recentImageUrls, setRecentImageUrls] = useState({});
     const suggestionsRef = useRef(null);
     const [isCheckingMint, setIsCheckingMint] = useState(false);
     const [selectedSuggestionIndex] = useState(-1);
@@ -71,6 +73,27 @@ function App() {
             if (minted.size > 0) {
                 setMintedTokens(minted);
             }
+
+            if (Array.isArray(transactions) && transactions.length > 0) {
+                // Sort newest first by timestamp and collect unique token IDs
+                const seen = new Set();
+                const latestIds = [];
+                const sorted = [...transactions].sort(
+                    (a, b) => Number(b.timeStamp) - Number(a.timeStamp)
+                );
+
+                for (const tx of sorted) {
+                    if (!tx || !tx.tokenID) continue;
+                    const id = parseInt(tx.tokenID, 10);
+                    if (!seen.has(id)) {
+                        seen.add(id);
+                        latestIds.push(id);
+                    }
+                    if (latestIds.length >= 9) break;
+                }
+
+                setRecentTokenIds(latestIds);
+            }
         } catch (error) {
             console.error('Error fetching minted tokens:', error);
         }
@@ -80,6 +103,47 @@ function App() {
     useEffect(() => {
         fetchMintedTokens();
     }, [fetchMintedTokens]);
+
+    // Load preview images for the latest mints
+    useEffect(() => {
+        if (!recentTokenIds.length) return;
+
+        const baseUrl = process.env.REACT_APP_API_URL || 'https://afa-editor.ew.r.appspot.com';
+
+        const loadPreviews = async () => {
+            try {
+                const entries = await Promise.all(
+                    recentTokenIds.slice(0, 9).map(async (id) => {
+                        try {
+                            const queryParams = new URLSearchParams({
+                                tokenId: id,
+                                assetType: 'AFA'
+                            });
+                            const url = `${baseUrl}/api/get-asset?${queryParams.toString()}`;
+                            const response = await fetch(url);
+                            if (!response.ok) return null;
+                            const blob = await response.blob();
+                            return [id, URL.createObjectURL(blob)];
+                        } catch {
+                            return null;
+                        }
+                    })
+                );
+
+                const map = {};
+                entries.forEach((entry) => {
+                    if (!entry) return;
+                    const [id, url] = entry;
+                    map[id] = url;
+                });
+                setRecentImageUrls(map);
+            } catch (error) {
+                console.error('Error loading latest mint previews:', error);
+            }
+        };
+
+        loadPreviews();
+    }, [recentTokenIds]);
 
     const fetchAsset = useCallback((
         newTokenId,
@@ -808,6 +872,34 @@ function App() {
                     </div>
                 </div> */}
             </div>
+
+            {recentTokenIds.length > 0 && (
+                <section className="gallery">
+                    <h3 className="gallery-title">Latest mints</h3>
+                    <div className="gallery-grid">
+                        {recentTokenIds.slice(0, 9).map((id) => (
+                            <div key={id} className="gallery-item">
+                                <div className="gallery-thumb">
+                                    {recentImageUrls[id] ? (
+                                        <img
+                                            src={recentImageUrls[id]}
+                                            alt={`AFA #${id}`}
+                                        />
+                                    ) : (
+                                        <div className="gallery-thumb-placeholder">
+                                            #{id}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="gallery-meta">
+                                    <span className="gallery-id">#{id}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
+
       {/* Remove original button container */}
       {/* <div className="button-container">
         <button 
