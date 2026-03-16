@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
-import Loader from './Loader';
 import { getAllTransactions, processNFTStatuses, checkTokenMintStatus } from './services/etherscanService';
 
 function Banner() {
@@ -28,10 +27,6 @@ function getContrastYIQ(rgb) {
 }
 
 function App() {
-    const [eliteTokenIds, setEliteTokenIds] = useState([]); 
-    const [isEliteEligible, setIsEliteEligible] = useState(false);
-    const [dubaiTokenIds, setDubaiTokenIds] = useState([]); 
-    const [isDubaiEligible, setIsDubaiEligible] = useState(false);
     const [tokenId, setTokenId] = useState('');
     const [selectedAsset, setSelectedAsset] = useState('');
     const [secondAsset, setSecondAsset] = useState('');
@@ -43,7 +38,6 @@ function App() {
     const [currentImageUrl, setCurrentImageUrl] = useState('./overview.gif'); // New state for the current image URL
     const [showLoader, setShowLoader] = useState(false); // State to control loader visibility
     const [fade, setFade] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
     const rgbToCss = (rgb) => `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
     const [tokenInput, setTokenInput] = useState('');
     const [suggestions, setSuggestions] = useState([]);
@@ -64,7 +58,7 @@ function App() {
         if (tokenId) {
             fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
         }
-    }, [tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset]);
+    }, [tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset, fetchAsset]);
   useEffect(() => {
         if (thirdAsset === 'selfie') {
             setSecondAsset('');
@@ -74,53 +68,35 @@ function App() {
     }, [thirdAsset]);
     
     // Move the minted tokens fetch to a separate function
-    const fetchMintedTokens = async () => {
+    const fetchMintedTokens = useCallback(async () => {
         try {
-            console.log('Fetching minted tokens...');
             const transactions = await getAllTransactions();
             const nftStatuses = processNFTStatuses(transactions);
-            
-            // Convert to Set of minted token IDs
             const minted = new Set(Array.from(nftStatuses.keys()));
-            
+
             if (minted.size > 0) {
-                console.log(`Found ${minted.size} minted tokens`);
                 setMintedTokens(minted);
-                // After getting minted tokens, fetch club tokens
-                fetchClubTokens();
-            } else {
-                console.log('No minted tokens found');
             }
         } catch (error) {
             console.error('Error fetching minted tokens:', error);
         }
-    };
-
-    // Combine dubai and elite token fetching
-    const fetchClubTokens = async () => {
-        try {
-            const [eliteResponse, dubaiResponse] = await Promise.all([
-                fetch(`${process.env.REACT_APP_API_URL}/api/elite-token-ids`),
-                fetch(`${process.env.REACT_APP_API_URL}/api/dubai-token-ids`)
-            ]);
-
-            const eliteData = await eliteResponse.json();
-            const dubaiData = await dubaiResponse.json();
-
-            setEliteTokenIds(eliteData);
-            setDubaiTokenIds(dubaiData);
-            console.log('Club tokens loaded - Elite:', eliteData.length, 'Dubai:', dubaiData.length);
-        } catch (error) {
-            console.error('Error fetching club tokens:', error);
-        }
-    };
+    }, []);
 
     // Update the useEffect to only call fetchMintedTokens
     useEffect(() => {
         fetchMintedTokens();
-    }, []);
+    }, [fetchMintedTokens]);
 
-    const fetchAsset = (newTokenId, newSelectedAsset, newSecondAsset, newThirdAsset, newMouthAsset, newHatAsset, newEyesAsset, newClubAsset) => {
+    const fetchAsset = useCallback((
+        newTokenId,
+        newSelectedAsset,
+        newSecondAsset,
+        newThirdAsset,
+        newMouthAsset,
+        newHatAsset,
+        newEyesAsset,
+        newClubAsset
+    ) => {
       setShowLoader(true);
     
         const queryParams = new URLSearchParams({
@@ -182,8 +158,8 @@ function App() {
             }, 500); // Match this timeout with the transition duration in CSS
         })
         .catch(error => console.error('Error fetching background color:', error))
-        .finally(() => setIsLoading(false));
-    }
+        .finally(() => {});
+    }, [rgbToCss]);
     
     
     const handleSecondAssetChange = event => {
@@ -229,31 +205,6 @@ function App() {
         fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, newHatAsset, eyesAsset, clubAsset);
     };
 
-    const handleClubAssetChange = event => {
-        const newClubAsset = event.target.value;
-        setClubAsset(newClubAsset);
-    
-        if (newClubAsset === ('elite')) {
-            setSecondAsset('');
-            setHatAsset('');
-            setEyesAsset('');
-            setSelectedAsset('');    
-            
-            // Call fetchAsset with the current clubAsset state
-            setTimeout(() => {
-                fetchAsset(tokenId, '', '', '', '', '', '', newClubAsset);
-            }, 0);
-        }
-        else if (newClubAsset === ('dubai')) {
-            setSecondAsset('');
-            setHatAsset('');            
-            // Call fetchAsset with the current clubAsset state
-            setTimeout(() => {
-                fetchAsset(tokenId, selectedAsset, '', thirdAsset, mouthAsset, '', eyesAsset, newClubAsset);
-            }, 0);
-        }
-    };
-    
     const handleThirdAssetChange = event => {
         const newThirdAsset = event.target.value;
         setThirdAsset(newThirdAsset);
@@ -267,43 +218,6 @@ function App() {
             setTimeout(() => {
                 fetchAsset(tokenId, '', '', newThirdAsset, '', hatAsset, eyesAsset, '');
             }, 0);
-        }
-    };
-    const handleTokenChange = async (event) => {
-        const newTokenId = event.target.value;
-        console.log(`Token ID selected: ${newTokenId}`);
-        setTokenId(newTokenId);
-        setTokenInput(newTokenId);
-
-        if (!newTokenId) return;
-
-        const isMinted = await checkTokenMintStatus(newTokenId);
-        if (!isMinted) {
-            console.log('Token not minted');
-            return;
-        }
-
-        // Check eligibility for clubs
-        const newIsEliteEligible = eliteTokenIds.includes(newTokenId);
-        setIsEliteEligible(newIsEliteEligible);
-
-        const newIsDubaiEligible = dubaiTokenIds.includes(newTokenId);
-        setIsDubaiEligible(newIsDubaiEligible);
-
-        // Reset club asset if not eligible
-        if (clubAsset === 'elite' && !newIsEliteEligible) {
-            setClubAsset('');
-        }
-        if (clubAsset === 'dubai' && !newIsDubaiEligible) {
-            setClubAsset('');
-        }
-
-        // Fetch the initial image
-        if (!selectedAsset && !secondAsset && !thirdAsset && !mouthAsset && !hatAsset && !eyesAsset && !clubAsset) {
-            fetchAsset(newTokenId, 'AFA', '', '');
-            setSelectedAsset('AFA');
-        } else {
-            fetchAsset(newTokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
         }
     };
     const handleAssetChange = event => {
@@ -380,25 +294,6 @@ function App() {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
-
-    const handleKeyDown = (e) => {
-        if (!showSuggestions) return;
-        
-        switch(e.key) {
-            case 'ArrowDown':
-                setSelectedSuggestionIndex(prev => 
-                    prev < suggestions.length - 1 ? prev + 1 : prev);
-                break;
-            case 'ArrowUp':
-                setSelectedSuggestionIndex(prev => prev > 0 ? prev - 1 : prev);
-                break;
-            case 'Enter':
-                if (selectedSuggestionIndex >= 0) {
-                    handleSuggestionClick(suggestions[selectedSuggestionIndex]);
-                }
-                break;
-        }
-    };
 
     const handleReset = () => {
         // Keep the token ID and input
