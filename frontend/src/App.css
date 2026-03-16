@@ -146,6 +146,8 @@ body {
   border: 1px solid var(--border-subtle);
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(16px);
+  position: relative;
+  overflow: visible;
 }
 
 .dropdown-header {
@@ -165,10 +167,22 @@ body {
   border: 1px solid var(--border-subtle);
   font-size: 0.96rem;
   background-color: rgba(10, 12, 18, 0.9);
-  color: var(--text-color);
+  color: #f5f5f7;
   box-sizing: border-box;
   transition: border-color 0.18s ease, box-shadow 0.18s ease,
     background-color 0.18s ease, transform 0.12s ease;
+}
+
+.token-input {
+  background-color: rgba(15, 18, 26, 0.98);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #f5f5f7;
+  text-align: left;
+}
+
+.dropdown option {
+  background-color: #050509;
+  color: #f5f5f7;
 }
 
 .dropdown:hover:not(:disabled),
@@ -317,6 +331,8 @@ body {
   position: relative;
   width: 100%;
   margin: 0 auto;
+  padding-bottom: 12px; /* ensure room for suggestion list */
+  z-index: 10;
 }
 
 .token-input::placeholder {
@@ -336,7 +352,7 @@ body {
   z-index: 1000;
   box-shadow: 0 22px 60px rgba(0, 0, 0, 0.9);
   color: var(--text-color);
-  margin-top: 6px;
+  margin-top: 10px;
 }
 
 .suggestion-item {
@@ -345,9 +361,10 @@ body {
   transition: background-color 0.16s ease, color 0.16s ease,
     transform 0.1s ease;
   color: var(--text-color);
-  background-color: transparent;
+  background-color: rgba(15, 18, 26, 0.96);
   border-bottom: 1px solid rgba(255, 255, 255, 0.03);
   font-size: 0.92rem;
+  text-align: left;
 }
 
 .suggestion-item:hover,
