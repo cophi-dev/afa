@@ -578,3 +578,81 @@ body {
     padding: 0 5px;
   }
 }
+
+/* Latest mints gallery */
+.gallery {
+  width: 100%;
+  max-width: 820px;
+  margin: 32px auto 0;
+  padding: 0 12px 8px;
+}
+
+.gallery-title {
+  font-size: 0.9rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-text);
+  text-align: left;
+  margin-bottom: 10px;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px;
+}
+
+.gallery-item {
+  background: radial-gradient(
+      circle at top,
+      rgba(245, 196, 81, 0.12),
+      transparent 60%
+    ),
+    var(--surface-color);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.gallery-thumb {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #050509;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.gallery-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.gallery-thumb-placeholder {
+  font-size: 0.9rem;
+  color: var(--muted-text);
+}
+
+.gallery-meta {
+  padding: 8px 10px 9px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gallery-id {
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .gallery {
+    max-width: 420px;
+    padding-inline: 6px;
+  }
+}
