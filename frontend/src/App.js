@@ -38,14 +38,13 @@ function App() {
     const [currentImageUrl, setCurrentImageUrl] = useState('./overview.gif'); // New state for the current image URL
     const [showLoader, setShowLoader] = useState(false); // State to control loader visibility
     const [fade, setFade] = useState(false);
-    const rgbToCss = (rgb) => `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
     const [tokenInput, setTokenInput] = useState('');
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [mintedTokens, setMintedTokens] = useState(new Set());
     const suggestionsRef = useRef(null);
     const [isCheckingMint, setIsCheckingMint] = useState(false);
-    const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
+    const [selectedSuggestionIndex] = useState(-1);
     const outfitRef = useRef(null);
     const mouthRef = useRef(null);
     const hatRef = useRef(null);
@@ -54,11 +53,6 @@ function App() {
     const extraRef = useRef(null);
     const [vegasButtonClicked, setVegasButtonClicked] = useState(false); // State for glamour effect
   
-  useEffect(() => {
-        if (tokenId) {
-            fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
-        }
-    }, [tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset, fetchAsset]);
   useEffect(() => {
         if (thirdAsset === 'selfie') {
             setSecondAsset('');
@@ -145,7 +139,7 @@ function App() {
         fetch(`https://afa-editor.ew.r.appspot.com/api/get-background-color?tokenId=${newTokenId}`)
         .then(response => response.json())
         .then(data => {
-            const bgColor = rgbToCss(data.background_color);
+            const bgColor = `rgb(${data.background_color[0]}, ${data.background_color[1]}, ${data.background_color[2]})`;
             const textColor = getContrastYIQ(data.background_color);
             // Apply fade effect
             document.body.classList.add('body-background-fade');
@@ -157,9 +151,14 @@ function App() {
                 document.body.classList.remove('body-background-fade');
             }, 500); // Match this timeout with the transition duration in CSS
         })
-        .catch(error => console.error('Error fetching background color:', error))
-        .finally(() => {});
-    }, [rgbToCss]);
+        .catch(error => console.error('Error fetching background color:', error));
+    }, []);
+
+    useEffect(() => {
+        if (tokenId) {
+            fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
+        }
+    }, [tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset, fetchAsset]);
     
     
     const handleSecondAssetChange = event => {
@@ -255,21 +254,6 @@ function App() {
             if (!isMinted) {
                 console.log('Token not minted');
                 return;
-            }
-
-            // Check eligibility for clubs
-            const newIsEliteEligible = eliteTokenIds.includes(value);
-            setIsEliteEligible(newIsEliteEligible);
-
-            const newIsDubaiEligible = dubaiTokenIds.includes(value);
-            setIsDubaiEligible(newIsDubaiEligible);
-
-            // Reset club asset if not eligible
-            if (clubAsset === 'elite' && !newIsEliteEligible) {
-                setClubAsset('');
-            }
-            if (clubAsset === 'dubai' && !newIsDubaiEligible) {
-                setClubAsset('');
             }
 
             // Fetch the initial image
