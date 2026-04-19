@@ -67,7 +67,7 @@ body {
 }
 
 .body-background-fade {
-  transition: background-color 0.5s ease-in-out;
+  transition: background 0.5s ease-in-out;
 }
 
 .fade-effect {
@@ -617,6 +617,17 @@ body {
   flex-direction: column;
 }
 
+.gallery-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.gallery-link:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
 .gallery-thumb {
   width: 100%;
   aspect-ratio: 1 / 1;
@@ -642,12 +653,19 @@ body {
   padding: 8px 10px 9px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
 }
 
 .gallery-id {
   font-size: 0.88rem;
   font-weight: 500;
+  color: var(--text-color);
+  text-decoration: none;
+}
+
+.gallery-id:hover {
+  color: var(--accent-color);
+  text-decoration: underline;
 }
 
 @media (max-width: 768px) {

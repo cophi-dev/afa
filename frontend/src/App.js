@@ -2,6 +2,10 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
 import { getAllTransactions, processNFTStatuses, checkTokenMintStatus } from './services/etherscanService';
 
+const CONTRACT_ADDRESS = '0xfAa0e99EF34Eae8b288CFEeAEa4BF4f5B5f2eaE7';
+const RECENT_MINT_LINK_BASE =
+    process.env.REACT_APP_TOKEN_LINK_BASE || `https://opensea.io/assets/ethereum/${CONTRACT_ADDRESS}`;
+
 function Banner() {
     return (
         <div className="banner">
@@ -207,8 +211,8 @@ function App() {
             const textColor = getContrastYIQ(data.background_color);
             // Apply fade effect
             document.body.classList.add('body-background-fade');
-            // Change background color
-            document.body.style.backgroundColor = bgColor;
+            // Change full background so it overrides the static gradient
+            document.body.style.background = bgColor;
             document.documentElement.style.setProperty('--text-color', textColor);
             // Remove fade effect after transition
             setTimeout(() => {
@@ -879,20 +883,35 @@ function App() {
                     <div className="gallery-grid">
                         {recentTokenIds.slice(0, 9).map((id) => (
                             <div key={id} className="gallery-item">
-                                <div className="gallery-thumb">
-                                    {recentImageUrls[id] ? (
-                                        <img
-                                            src={recentImageUrls[id]}
-                                            alt={`AFA #${id}`}
-                                        />
-                                    ) : (
-                                        <div className="gallery-thumb-placeholder">
-                                            #{id}
-                                        </div>
-                                    )}
-                                </div>
+                                <a
+                                    className="gallery-link"
+                                    href={`${RECENT_MINT_LINK_BASE}/${id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label={`Open AFA #${id}`}
+                                >
+                                    <div className="gallery-thumb">
+                                        {recentImageUrls[id] ? (
+                                            <img
+                                                src={recentImageUrls[id]}
+                                                alt={`AFA #${id}`}
+                                            />
+                                        ) : (
+                                            <div className="gallery-thumb-placeholder">
+                                                #{id}
+                                            </div>
+                                        )}
+                                    </div>
+                                </a>
                                 <div className="gallery-meta">
-                                    <span className="gallery-id">#{id}</span>
+                                    <a
+                                        className="gallery-id"
+                                        href={`${RECENT_MINT_LINK_BASE}/${id}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        #{id}
+                                    </a>
                                 </div>
                             </div>
                         ))}
