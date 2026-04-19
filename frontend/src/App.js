@@ -793,6 +793,10 @@ function App() {
                             disabled={!tokenId || thirdAsset === 'selfie' || clubAsset === 'elite'}
                         >
                             <option value="">Select</option>
+                            <option value="dr_bombay_strawberry_cream">Dr. Bombay Strawberry Cream</option>
+                            <option value="dr_bombay_baked_blueberry_muffin">Dr. Bombay Baked Blueberry Muffin</option>
+                            <option value="dr_bombay_iced_out_orange">Dr. Bombay Iced Out Orange</option>
+                            <option value="dr_bombay_peanut_butter">Dr. Bombay Peanut Butter</option>
                             <option value="vegas">Vegas BAYC</option>
                             <option value="ape_solar_sun_hand">Ape Solar Sun Hand</option>
                             <option value="blever_pass">Blever Pass</option>
@@ -822,10 +826,6 @@ function App() {
                             <option value="clubhouse">Clubhouse Sketch</option>
                             <option value="matchstick">Matchstick</option>
                             <option value="balloon_moon">2024 Balloon</option>
-                            <option value="dr_bombay_strawberry_cream">Dr. Bombay Strawberry Cream</option>
-                            <option value="dr_bombay_baked_blueberry_muffin">Dr. Bombay Baked Blueberry Muffin</option>
-                            <option value="dr_bombay_iced_out_orange">Dr. Bombay Iced Out Orange</option>
-                            <option value="dr_bombay_peanut_butter">Dr. Bombay Peanut Butter</option>
                         </select>
                         <button 
                             className="dropdown-arrow" 
