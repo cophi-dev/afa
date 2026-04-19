@@ -127,6 +127,13 @@ body {
 
 .dropdown-container:first-of-type {
   margin-top: 24px;
+  position: relative;
+  z-index: 40;
+}
+
+.dropdown-container:not(:first-of-type) {
+  position: relative;
+  z-index: 10;
 }
 
 .dropdown-section {
@@ -235,6 +242,7 @@ body {
   height: 100%;
   object-fit: contain;
   filter: drop-shadow(0 16px 50px rgba(0, 0, 0, 0.9));
+  display: block;
 }
 
 #asset-display.loading::after {
@@ -378,11 +386,20 @@ body {
   border-bottom: none;
 }
 
- .loader {
+.loader {
+  position: absolute;
+  inset: 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100%;
+  padding: 12px;
+  background: rgba(5, 5, 9, 0.38);
+  backdrop-filter: blur(2px);
+  z-index: 5;
+  pointer-events: none;
+  font-size: 0.96rem;
+  color: var(--text-color);
+  text-align: center;
 }
 
 .spinner {
