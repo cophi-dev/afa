@@ -1,10 +1,20 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import './App.css';
-import { getAllTransactions, processNFTStatuses, checkTokenMintStatus } from './services/etherscanService';
+import { getAllTransactions, processNFTStatuses } from './services/etherscanService';
+import { debug, error as logError } from './utils/debug';
 
 const CONTRACT_ADDRESS = '0xfAa0e99EF34Eae8b288CFEeAEa4BF4f5B5f2eaE7';
+const DEFAULT_API_URL = 'https://afa-editor.ew.r.appspot.com';
 const RECENT_MINT_LINK_BASE =
     process.env.REACT_APP_TOKEN_LINK_BASE || `https://opensea.io/assets/ethereum/${CONTRACT_ADDRESS}`;
+const LOADER_MESSAGES = [
+    'Brewing ape magic...',
+    'Polishing pixels...',
+    'Mixing fresh traits...',
+    'Dialing in drip...',
+    'Composing your vibe...',
+    'Rendering the flex...'
+];
 
 function Banner() {
     return (
@@ -31,6 +41,30 @@ function getContrastYIQ(rgb) {
 }
 
 function App() {
+    const apiBaseCandidates = useMemo(() => Array.from(new Set([
+        process.env.REACT_APP_API_URL,
+        DEFAULT_API_URL
+    ].filter(Boolean))), []);
+
+    const fetchFromAnyBase = useCallback(async (pathWithQuery, parser) => {
+        let lastError = null;
+
+        for (const baseUrl of apiBaseCandidates) {
+            try {
+                const response = await fetch(`${baseUrl}${pathWithQuery}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                return await parser(response);
+            } catch (err) {
+                lastError = err;
+                debug('API base failed, trying next', { baseUrl, pathWithQuery, err });
+            }
+        }
+
+        throw lastError || new Error('All API bases failed');
+    }, [apiBaseCandidates]);
+
     const [tokenId, setTokenId] = useState('');
     const [selectedAsset, setSelectedAsset] = useState('');
     const [secondAsset, setSecondAsset] = useState('');
@@ -41,6 +75,7 @@ function App() {
     const [eyesAsset, setEyesAsset] = useState('');
     const [currentImageUrl, setCurrentImageUrl] = useState('./overview.gif'); // New state for the current image URL
     const [showLoader, setShowLoader] = useState(false); // State to control loader visibility
+    const [loaderMessage, setLoaderMessage] = useState(LOADER_MESSAGES[0]);
     const [fade, setFade] = useState(false);
     const [tokenInput, setTokenInput] = useState('');
     const [suggestions, setSuggestions] = useState([]);
@@ -49,7 +84,8 @@ function App() {
     const [recentTokenIds, setRecentTokenIds] = useState([]);
     const [recentImageUrls, setRecentImageUrls] = useState({});
     const suggestionsRef = useRef(null);
-    const [isCheckingMint, setIsCheckingMint] = useState(false);
+    const activeRenderRequestRef = useRef(0);
+    const isCheckingMint = false;
     const [selectedSuggestionIndex] = useState(-1);
     const outfitRef = useRef(null);
     const mouthRef = useRef(null);
@@ -58,7 +94,7 @@ function App() {
     const handRef = useRef(null);
     const extraRef = useRef(null);
     const [vegasButtonClicked, setVegasButtonClicked] = useState(false); // State for glamour effect
-  
+
   useEffect(() => {
         if (thirdAsset === 'selfie') {
             setSecondAsset('');
@@ -99,7 +135,7 @@ function App() {
                 setRecentTokenIds(latestIds);
             }
         } catch (error) {
-            console.error('Error fetching minted tokens:', error);
+            logError('Error fetching minted tokens:', error);
         }
     }, []);
 
@@ -112,8 +148,6 @@ function App() {
     useEffect(() => {
         if (!recentTokenIds.length) return;
 
-        const baseUrl = process.env.REACT_APP_API_URL || 'https://afa-editor.ew.r.appspot.com';
-
         const loadPreviews = async () => {
             try {
                 const entries = await Promise.all(
@@ -123,10 +157,10 @@ function App() {
                                 tokenId: id,
                                 assetType: 'AFA'
                             });
-                            const url = `${baseUrl}/api/get-asset?${queryParams.toString()}`;
-                            const response = await fetch(url);
-                            if (!response.ok) return null;
-                            const blob = await response.blob();
+                            const blob = await fetchFromAnyBase(
+                                `/api/get-asset?${queryParams.toString()}`,
+                                (response) => response.blob()
+                            );
                             return [id, URL.createObjectURL(blob)];
                         } catch {
                             return null;
@@ -142,12 +176,12 @@ function App() {
                 });
                 setRecentImageUrls(map);
             } catch (error) {
-                console.error('Error loading latest mint previews:', error);
+                logError('Error loading latest mint previews:', error);
             }
         };
 
         loadPreviews();
-    }, [recentTokenIds]);
+    }, [recentTokenIds, fetchFromAnyBase]);
 
     const fetchAsset = useCallback((
         newTokenId,
@@ -159,11 +193,14 @@ function App() {
         newEyesAsset,
         newClubAsset
     ) => {
+      const requestId = ++activeRenderRequestRef.current;
       setShowLoader(true);
+      setLoaderMessage(LOADER_MESSAGES[requestId % LOADER_MESSAGES.length]);
+      const resolvedBaseAsset = newSelectedAsset || 'AFA';
     
         const queryParams = new URLSearchParams({
             tokenId: newTokenId,
-            assetType: newSelectedAsset || '',
+            assetType: resolvedBaseAsset,
             secondAssetType: newSecondAsset || '',
             thirdAssetType: newThirdAsset || '',
             mouthAssetType: newMouthAsset || '',
@@ -175,21 +212,17 @@ function App() {
         // Start fade-out effect
       setFade('fade-out');
 
-        const baseUrl = process.env.REACT_APP_API_URL || 'https://afa-editor.ew.r.appspot.com';
-        const url = `${baseUrl}/api/get-asset?${queryParams.toString()}`;
-    
-        fetch(url)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.blob();
-        })
+        fetchFromAnyBase(
+            `/api/get-asset?${queryParams.toString()}`,
+            (response) => response.blob()
+        )
         .then(blob => {
+            if (requestId !== activeRenderRequestRef.current) return;
             const newImageUrl = URL.createObjectURL(blob);
     
             // Update the image URL after fade-out transition
             setTimeout(() => {
+                if (requestId !== activeRenderRequestRef.current) return;
                 setCurrentImageUrl(newImageUrl);
                 setFade('fade-in'); // Start fade-in effect
             }, 500);
@@ -197,30 +230,35 @@ function App() {
             setShowLoader(false);
         })
         .catch(error => {
-            console.error('Error fetching asset:', error);
+            if (requestId !== activeRenderRequestRef.current) return;
+            logError('Error fetching asset:', error);
             setCurrentImageUrl('./overview.gif'); // Reset to default image on error
-      setShowLoader(false);
+            setShowLoader(false);
             setFade('fade-in'); // Start fade-in effect
         });
     
         // Fetch background color separately
-        fetch(`https://afa-editor.ew.r.appspot.com/api/get-background-color?tokenId=${newTokenId}`)
-        .then(response => response.json())
+        fetchFromAnyBase(
+            `/api/get-background-color?tokenId=${newTokenId}`,
+            (response) => response.json()
+        )
         .then(data => {
+            if (requestId !== activeRenderRequestRef.current) return;
             const bgColor = `rgb(${data.background_color[0]}, ${data.background_color[1]}, ${data.background_color[2]})`;
             const textColor = getContrastYIQ(data.background_color);
             // Apply fade effect
             document.body.classList.add('body-background-fade');
             // Change full background so it overrides the static gradient
             document.body.style.background = bgColor;
+            document.documentElement.style.setProperty('--token-background-color', bgColor);
             document.documentElement.style.setProperty('--text-color', textColor);
             // Remove fade effect after transition
             setTimeout(() => {
                 document.body.classList.remove('body-background-fade');
             }, 500); // Match this timeout with the transition duration in CSS
         })
-        .catch(error => console.error('Error fetching background color:', error));
-    }, []);
+        .catch((error) => logError('Error fetching background color:', error));
+    }, [fetchFromAnyBase]);
 
     useEffect(() => {
         if (tokenId) {
@@ -235,41 +273,27 @@ function App() {
         
         if (newSecondAsset === ('singe_hoodie')) {
             setHatAsset('');   
-            
-            // Call fetchAsset with the current clubAsset state
-            setTimeout(() => {
-                fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset, mouthAsset, '', eyesAsset, clubAsset);
-            }, 0);
         }
         else if (newSecondAsset === ('singe_hoodie_glow')) {
             setHatAsset('');   
-            
-            // Call fetchAsset with the current clubAsset state
-            setTimeout(() => {
-                fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset, mouthAsset, '', eyesAsset, clubAsset);
-            }, 0);
         }
         else {
-          console.log('[handleSecondAssetChange] Fetching with secondAsset:', newSecondAsset); // Log before fetch
-          fetchAsset(tokenId, selectedAsset, newSecondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
+            debug('[handleSecondAssetChange] Selected secondAsset', newSecondAsset);
         }
     };
     
     const handleMouthAssetChange = event => {
         const newMouthAsset = event.target.value;
         setMouthAsset(newMouthAsset);
-        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, newMouthAsset, hatAsset, eyesAsset, clubAsset);
     };
 
     const handleEyesAssetChange = event => {
         const newEyesAsset = event.target.value;
         setEyesAsset(newEyesAsset);
-        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, newEyesAsset, clubAsset);
     };
     const handleHatAssetChange = event => {
         const newHatAsset = event.target.value;
         setHatAsset(newHatAsset);
-        fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, newHatAsset, eyesAsset, clubAsset);
     };
 
     const handleThirdAssetChange = event => {
@@ -280,16 +304,10 @@ function App() {
             setSecondAsset('');
             setMouthAsset('');
             setSelectedAsset('');    
-            
-            // Call fetchAsset with the current hatAsset state
-            setTimeout(() => {
-                fetchAsset(tokenId, '', '', newThirdAsset, '', hatAsset, eyesAsset, '');
-            }, 0);
         }
     };
     const handleAssetChange = event => {
         setSelectedAsset(event.target.value);
-        fetchAsset(tokenId, event.target.value, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
     };
 
     const handleTokenInput = (e) => {
@@ -310,30 +328,26 @@ function App() {
         }
     };
 
-    const handleSuggestionClick = async (value) => {
-        const tokenId = parseInt(value);
+    const handleTokenSubmit = (rawValue) => {
+        const value = String(rawValue || '').replace(/[^0-9]/g, '').slice(0, 4);
+        if (!value) return;
+
+        // Reset to a safe default composition when switching token.
+        setSecondAsset('');
+        setThirdAsset('');
+        setMouthAsset('');
+        setHatAsset('');
+        setClubAsset('');
+        setEyesAsset('');
+        setSelectedAsset('');
         setTokenInput(value);
         setTokenId(value);
         setShowSuggestions(false);
-        setIsCheckingMint(true);
+    };
 
-        try {
-            const isMinted = await checkTokenMintStatus(tokenId);
-            if (!isMinted) {
-                console.log('Token not minted');
-                return;
-            }
-
-            // Fetch the initial image
-            if (!selectedAsset && !secondAsset && !thirdAsset && !mouthAsset && !hatAsset && !eyesAsset && !clubAsset) {
-                fetchAsset(value, 'AFA', '', '');
-                setSelectedAsset('AFA');
-            } else {
-                fetchAsset(value, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
-            }
-        } finally {
-            setIsCheckingMint(false);
-        }
+    const handleSuggestionClick = (value) => {
+        // Suggestions are derived from minted token data, so select immediately.
+        handleTokenSubmit(value);
     };
 
     useEffect(() => {
@@ -360,11 +374,7 @@ function App() {
         setClubAsset('');
         setEyesAsset('');
         
-        // Fetch the initial image with just the token ID
-        if (tokenId) {
-            fetchAsset(tokenId, 'AFA', '', '');
-            setSelectedAsset('AFA');
-        }
+        // Keep base hand trait unselected; renderer falls back to AFA automatically.
     };
 
     const handleRandomize = () => {
@@ -404,18 +414,6 @@ function App() {
         setEyesAsset(newEyesAsset);
         setSelectedAsset(newSelectedAsset);
         setThirdAsset(newThirdAsset);
-
-        // Fetch the asset with new random traits
-        fetchAsset(
-            tokenId,
-            newSelectedAsset,
-            newSecondAsset,
-            newThirdAsset,
-            newMouthAsset,
-            newHatAsset,
-            newEyesAsset,
-            clubAsset
-        );
     };
 
     // Add the new handler function for the Vegas set
@@ -426,27 +424,16 @@ function App() {
 
         setThirdAsset(frameAsset);
 
-        fetchAsset(
+        debug('[handleFrameIt] Applying frame', {
             tokenId,
             selectedAsset,
             secondAsset,
-            frameAsset,
+            thirdAsset: frameAsset,
             mouthAsset,
             hatAsset,
             eyesAsset,
             clubAsset
-        );
-
-        console.log('[handleFrameIt] Applying frame:', { 
-          tokenId,
-          selectedAsset,
-          secondAsset,
-          thirdAsset: frameAsset,
-          mouthAsset,
-          hatAsset,
-          eyesAsset,
-          clubAsset
-        }); // Log before fetch
+        });
 
         setVegasButtonClicked(true);
         setTimeout(() => setVegasButtonClicked(false), 1000);
@@ -501,58 +488,105 @@ function App() {
         }
     };
 
+    const traitChips = [
+        { key: 'outfit', label: 'Outfit', value: secondAsset, clear: () => setSecondAsset('') },
+        { key: 'mouth', label: 'Mouth', value: mouthAsset, clear: () => setMouthAsset('') },
+        { key: 'hat', label: 'Hat', value: hatAsset, clear: () => setHatAsset('') },
+        { key: 'eyes', label: 'Eyes', value: eyesAsset, clear: () => setEyesAsset('') },
+        { key: 'hand', label: 'Hand', value: selectedAsset, clear: () => setSelectedAsset('') },
+        { key: 'extra', label: 'Extra', value: thirdAsset, clear: () => setThirdAsset('') }
+    ].filter((t) => Boolean(t.value));
+
+  const appClassName = `App ${vegasButtonClicked ? 'vegas-glamour' : ''} ${tokenId ? 'has-token' : ''}`;
+
   return (
     // Apply glamour class conditionally
-    <div className={`App ${vegasButtonClicked ? 'vegas-glamour' : ''}`}>
+    <div className={appClassName}>
       <Banner />
-            <div id="asset-display" className={fade ? 'fade-effect' : ''}>
-                <img src={currentImageUrl} alt="Ape" style={{ maxWidth: '100%', height: 'auto' }} />
-                {showLoader && 
-                    <div className="loader">
-                        processing new perspective...
-                    </div>
-                }
+      <main className="studio">
+        <section className={`studio-preview ${tokenId ? 'has-token' : ''}`} aria-label="Preview">
+          <div className="preview-card">
+            <div id="asset-display" className={`${fade || ''} ${showLoader ? 'is-loading' : ''}`}>
+              <img src={currentImageUrl} alt="Ape preview" />
+              {showLoader && (
+                <div className="loader" role="status" aria-live="polite">
+                  {loaderMessage}
+                </div>
+              )}
             </div>
+          </div>
 
-            {/* Move button container here */}
-            <div className="button-container">
-                <button 
-                    onClick={handleReset}
-                    className="action-button reset-button"
-                    title="Reset all selections"
-                >
-                    Reset All
-                </button>
-                <button 
-                    onClick={handleRandomize}
-                    className="action-button random-button"
-                    title="Randomize traits"
-                    disabled={!tokenId}
-                >
-                    New Perspective 👀
-                </button>
+          {tokenId && traitChips.length > 0 && (
+            <div className="trait-chips" aria-label="Selected traits">
+              {traitChips.map((chip) => (
                 <button
-                    onClick={handleFrameIt}
-                    className="action-button vegas-button"
-                    title="Add Vintage Frame"
-                    disabled={!tokenId}
+                  key={chip.key}
+                  type="button"
+                  className="trait-chip"
+                  onClick={chip.clear}
+                  title={`Clear ${chip.label}`}
                 >
-                    Frame It
+                  <span className="trait-chip-label">{chip.label}</span>
+                  <span className="trait-chip-x" aria-hidden="true">
+                    ×
+                  </span>
                 </button>
+              ))}
             </div>
+          )}
+        </section>
+        <section className="studio-controls" aria-label="Editor controls">
+          {tokenId && (
+            <div className="button-container">
+              <button
+                onClick={handleReset}
+                className="action-button reset-button"
+                title="Reset all selections"
+              >
+                Reset All
+              </button>
+              <button
+                onClick={handleRandomize}
+                className="action-button random-button"
+                title="Randomize traits"
+              >
+                New Perspective 👀
+              </button>
+              <button
+                onClick={handleFrameIt}
+                className="action-button vegas-button"
+                title="Add Vintage Frame"
+              >
+                Frame It
+              </button>
+            </div>
+          )}
 
-            <div className="dropdown-container">
+          <details className={`panel-group token-panel ${!tokenId ? 'token-panel--prominent' : ''}`} open>
+            <summary className="panel-summary">{tokenId ? 'Token' : 'Enter Token ID'}</summary>
+            <div className="panel-body">
+              <div className="dropdown-container dropdown-container--single">
                     <div className="dropdown-section">
-                        <h3 className="dropdown-header">Select AFA</h3>
+                        {tokenId && <h3 className="dropdown-header">Select AFA</h3>}
+                        {!tokenId && (
+                          <p className="token-help-text">Enter an AFA token ID to load the full editor layout.</p>
+                        )}
                         <div className="token-input-container">
-                            <input
-                                type="text"
-                                value={tokenInput}
-                                onChange={handleTokenInput}
-                                placeholder="Enter Token ID (0-9999)"
-                                className={`token-input ${isCheckingMint ? 'checking' : ''}`}
-                                disabled={isCheckingMint}
-                            />
+                            <div className="token-input-row">
+                                <input
+                                    type="text"
+                                    value={tokenInput}
+                                    onChange={handleTokenInput}
+                                    onKeyDown={(event) => {
+                                        if (event.key === 'Enter') {
+                                            handleTokenSubmit(tokenInput);
+                                        }
+                                    }}
+                                    placeholder="Enter Token ID (0-9999) and press Enter"
+                                    className={`token-input ${isCheckingMint ? 'checking' : ''}`}
+                                    disabled={isCheckingMint}
+                                />
+                            </div>
                             {showSuggestions && (
                                 <div className="suggestions-container" ref={suggestionsRef}>
                                     {suggestions.map((suggestion, index) => (
@@ -568,274 +602,247 @@ function App() {
                             )}
                         </div>
                     </div>
-                <div className="dropdown-section">
-                    <h3 className="dropdown-header">Outfit</h3>
-                    <div className="dropdown-with-arrows">
-                        <button 
-                            className="dropdown-arrow" 
-                            onClick={() => navigateDropdown(outfitRef, 'prev')}
-                            disabled={!canNavigate(outfitRef, 'prev')}
-                        >
-                            ◀
-                        </button>
-                        <select 
-                            ref={outfitRef} 
-                            value={secondAsset} 
-                            onChange={handleSecondAssetChange} 
-                            className="dropdown" 
-                            disabled={!tokenId || thirdAsset === 'selfie' || clubAsset}
-                        >
-                            <option value="">Select</option>
-                            <option value="apefest_merch_2025">Apefest Merch 2025</option>
-                            <option value="vegas">Vegas BAYC</option>
-                            <option value="german_ape_club_clothes">German Ape Club</option>
-                            <option value="mindfully_bored_hoodie">Mindfully Bored Hoodie</option>
-                            <option value="ape_solar_hoodie_black">Ape Solar Hoodie Black</option>
-                            <option value="ape_solar_hoodie_blue">Ape Solar Hoodie Blue</option>
-                            <option value="apefest_merch">Apefest Merch</option>
-                            <option value="tt_hoodie">Top Trader Hoodie</option>
-                            <option value="bimmer_jacket">Bimmer Jacket</option>
-                            <option value="apechain_hoodie_black">Apechain Hoodie Black</option>
-                            <option value="apechain_hoodie_orange">Apechain Hoodie Orange</option>
-                            <option value="apechain_hoodie_blue">Apechain Hoodie Blue</option>
-                            <option value="apefest_jacket">Apefest Jacket</option>
-                            <option value="cheetah_hoodie">Cheetah Hoodie</option>
-                            <option value="naked">No Clothes</option>
-                            <option value="french_stripes">French Stripes</option>
-                            <option value="cats_shirt">Cool Cats Shirt</option>
-                            <option value="singe_hoodie">Singe Hoodie</option>
-                            <option value="singe_hoodie_glow">Singe Hoodie Glow</option>
-                            <option value="applied_primate_coat">Applied Primate Lab Coat</option>
-                            <option value="btc_hoodie">BTC Hoodie</option>
-                            <option value="jacket">Jacket</option>
-                            <option value="blazer">Blazer</option>
-                            <option value="cool_hat">Cool Hat</option>
-                        </select>
-                        <button 
-                            className="dropdown-arrow" 
-                            onClick={() => navigateDropdown(outfitRef, 'next')}
-                            disabled={!canNavigate(outfitRef, 'next')}
-                        >
-                            ▶
-                        </button>
-                    </div>
-                </div>
+              </div>
             </div>
+          </details>
 
-            <div className="dropdown-container">
-                <div className="dropdown-section">
-                    <h3 className="dropdown-header">Mouth</h3>
-                    <div className="dropdown-with-arrows">
-                        <button 
-                            className="dropdown-arrow" 
-                            onClick={() => navigateDropdown(mouthRef, 'prev')}
-                            disabled={!canNavigate(mouthRef, 'prev')}
-                        >
-                            ◀
-                        </button>
-                        <select 
-                            ref={mouthRef} 
-                            value={mouthAsset} 
-                            onChange={handleMouthAssetChange} 
-                            className="dropdown" 
-                            disabled={!tokenId || clubAsset === 'elite'}
-                        >
-                            <option value="">Select</option>
-                            <option value="apechain_grin">Apechain Grin</option>
-                            <option value="lollipop">Lollipop</option>
-                            <option value="banana_punch_gm">Banana Punch GM</option>
-                            <option value="banana_smile">Banana Smile</option>
-                            <option value="doodles_rainbow">Doodles Rainbow</option>
-                            <option value="big_smile">Big Smile</option>
-                        </select>
-                        <button 
-                            className="dropdown-arrow" 
-                            onClick={() => navigateDropdown(mouthRef, 'next')}
-                            disabled={!canNavigate(mouthRef, 'next')}
-                        >
-                            ▶
-                        </button>
+          {tokenId && (
+            <>
+              <details className="panel-group" open>
+                <summary className="panel-summary">Style</summary>
+                <div className="panel-body">
+                  <div className="dropdown-container">
+                    <div className="dropdown-section">
+                        <h3 className="dropdown-header">Outfit</h3>
+                        <div className="dropdown-with-arrows">
+                            <button 
+                                className="dropdown-arrow" 
+                                onClick={() => navigateDropdown(outfitRef, 'prev')}
+                                disabled={!canNavigate(outfitRef, 'prev')}
+                            >
+                                ◀
+                            </button>
+                            <select 
+                                ref={outfitRef} 
+                                value={secondAsset} 
+                                onChange={handleSecondAssetChange} 
+                                className="dropdown" 
+                                disabled={thirdAsset === 'selfie' || clubAsset}
+                            >
+                                <option value="">Select</option>
+                                <option value="apefest_merch_2025">Apefest Merch 2025</option>
+                                <option value="vegas">Vegas BAYC</option>
+                                <option value="german_ape_club_clothes">German Ape Club</option>
+                                <option value="mindfully_bored_hoodie">Mindfully Bored Hoodie</option>
+                                <option value="ape_solar_hoodie_black">Ape Solar Hoodie Black</option>
+                                <option value="ape_solar_hoodie_blue">Ape Solar Hoodie Blue</option>
+                                <option value="apefest_merch">Apefest Merch</option>
+                                <option value="tt_hoodie">Top Trader Hoodie</option>
+                                <option value="bimmer_jacket">Bimmer Jacket</option>
+                                <option value="apechain_hoodie_black">Apechain Hoodie Black</option>
+                                <option value="apechain_hoodie_orange">Apechain Hoodie Orange</option>
+                                <option value="apechain_hoodie_blue">Apechain Hoodie Blue</option>
+                                <option value="apefest_jacket">Apefest Jacket</option>
+                                <option value="cheetah_hoodie">Cheetah Hoodie</option>
+                                <option value="naked">No Clothes</option>
+                                <option value="french_stripes">French Stripes</option>
+                                <option value="cats_shirt">Cool Cats Shirt</option>
+                                <option value="singe_hoodie">Singe Hoodie</option>
+                                <option value="singe_hoodie_glow">Singe Hoodie Glow</option>
+                                <option value="applied_primate_coat">Applied Primate Lab Coat</option>
+                                <option value="btc_hoodie">BTC Hoodie</option>
+                                <option value="jacket">Jacket</option>
+                                <option value="blazer">Blazer</option>
+                                <option value="cool_hat">Cool Hat</option>
+                            </select>
+                            <button 
+                                className="dropdown-arrow" 
+                                onClick={() => navigateDropdown(outfitRef, 'next')}
+                                disabled={!canNavigate(outfitRef, 'next')}
+                            >
+                                ▶
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div className="dropdown-section">
-                    <h3 className="dropdown-header">Hat</h3>
-                    <div className="dropdown-with-arrows">
-                        <button 
-                            className="dropdown-arrow" 
-                            onClick={() => navigateDropdown(hatRef, 'prev')}
-                            disabled={!canNavigate(hatRef, 'prev')}
-                        >
-                            ◀
-                        </button>
-                        <select 
-                            ref={hatRef} 
-                            value={hatAsset} 
-                            onChange={handleHatAssetChange} 
-                            className="dropdown" 
-                            disabled={!tokenId || clubAsset || secondAsset === 'singe_hoodie_glow' || secondAsset === 'singe_hoodie'}
-                        >
-                            <option value="">Select</option>
-                            <option value="vegas">Vegas BAYC</option>
-                            <option value="german_ape_club_hat">German Ape Club</option>
-                            <option value="mindfully_bored_cap">Mindfully Bored Cap</option>
-                            <option value="apechain_cap">Apechain Hat</option>
-                            <option value="apechain_hat_blue">Apechain Hat Blue</option>
-                            <option value="apechain_hat_orange">Apechain Hat Orange</option>
-                            <option value="designer_toshiro_hat">Designer Toshiro</option>
-                            <option value="beret">Béret</option>
-                            <option value="cats_hat">Cool Cats</option>
-                            <option value="plunger">Dookey Dash</option>
-                            <option value="pudgy_hat">Pudgy Penguins Hat</option>
-                            <option value="pudgy_hat2">Pudgy Penguins Hat 2</option>
-                            <option value="glitter_cowboy_hat">Glitter Cowboy Hat</option>
-                        </select>
-                        <button 
-                            className="dropdown-arrow" 
-                            onClick={() => navigateDropdown(hatRef, 'next')}
-                            disabled={!canNavigate(hatRef, 'next')}
-                        >
-                            ▶
-                        </button>
-                    </div>
                 </div>
-                <div className="dropdown-section">
-                    <h3 className="dropdown-header">Eyes</h3>
-                    <div className="dropdown-with-arrows">
-                        <button 
-                            className="dropdown-arrow" 
-                            onClick={() => navigateDropdown(eyesRef, 'prev')}
-                            disabled={!canNavigate(eyesRef, 'prev')}
-                        >
-                            ◀
-                        </button>
-                        <select 
-                            ref={eyesRef} 
-                            value={eyesAsset} 
-                            onChange={handleEyesAssetChange} 
-                            className="dropdown" 
-                            disabled={!tokenId || clubAsset === 'elite'}
-                        >
-                            <option value="">Select</option>
-                            <option value="vegas">Vegas BAYC</option>
-                            <option value="apecoin_glasses">Apecoin Glasses</option>
-                            <option value="apechain_glasses">Apechain Glasses</option>
-                            <option value="vision_pro">Vision Pro</option>
-                            <option value="dookey_eyes">Dookey Dash</option>
-                            <option value="btc_eyes">BTC Coin</option>
-                            <option value="star_glasses">Star Glasses</option>
-                        </select>
-                        <button 
-                            className="dropdown-arrow" 
-                            onClick={() => navigateDropdown(eyesRef, 'next')}
-                            disabled={!canNavigate(eyesRef, 'next')}
-                        >
-                            ▶
-                        </button>
+              </details>
+
+              <details className="panel-group" open>
+                <summary className="panel-summary">Accessories</summary>
+                <div className="panel-body">
+                  <div className="dropdown-container">
+                    <div className="dropdown-section">
+                        <h3 className="dropdown-header">Mouth</h3>
+                        <div className="dropdown-with-arrows">
+                            <button 
+                                className="dropdown-arrow" 
+                                onClick={() => navigateDropdown(mouthRef, 'prev')}
+                                disabled={!canNavigate(mouthRef, 'prev')}
+                            >
+                                ◀
+                            </button>
+                            <select 
+                                ref={mouthRef} 
+                                value={mouthAsset} 
+                                onChange={handleMouthAssetChange} 
+                                className="dropdown" 
+                                disabled={clubAsset === 'elite'}
+                            >
+                                <option value="">Select</option>
+                                <option value="apechain_grin">Apechain Grin</option>
+                                <option value="lollipop">Lollipop</option>
+                                <option value="banana_punch_gm">Banana Punch GM</option>
+                                <option value="banana_smile">Banana Smile</option>
+                                <option value="doodles_rainbow">Doodles Rainbow</option>
+                                <option value="big_smile">Big Smile</option>
+                            </select>
+                            <button 
+                                className="dropdown-arrow" 
+                                onClick={() => navigateDropdown(mouthRef, 'next')}
+                                disabled={!canNavigate(mouthRef, 'next')}
+                            >
+                                ▶
+                            </button>
+                        </div>
                     </div>
-                </div>
-                <div className="dropdown-section">
-                    <h3 className="dropdown-header">Extra</h3>
-                    <div className="dropdown-with-arrows">
-                        <button 
-                            className="dropdown-arrow" 
-                            onClick={() => navigateDropdown(extraRef, 'prev')}
-                            disabled={!canNavigate(extraRef, 'prev')}
-                        >
-                            ◀
-                        </button>
-                        <select 
-                            ref={extraRef} 
-                            value={thirdAsset} 
-                            onChange={handleThirdAssetChange} 
-                            className="dropdown" 
-                            disabled={!tokenId || clubAsset === 'elite'}
-                        >
-                            <option value="">Select</option>
-                            <option value="top_trader">Top Trader</option>
-                            <option value="top_trader_red">Top Trader Red</option>
-                            <option value="unclogged">Unclogged</option>
-                            <option value="hex_dark">Hex Dark</option>
-                            <option value="hex_light">Hex Light</option>
-                            <option value="small_ape" disabled={secondAsset === 'singe_hoodie_glow' || selectedAsset === 'dookie_dash'}>Tiny AFA</option>
-                            <option value="confetti">Confetti</option>
-                            <option value="snow">Snow</option>
-                            <option value="selfie" disabled={clubAsset === 'dubai'}>Selfie Head</option>
-                            <option value="transparent">Transparent Background</option>
-                            <option value="verified">Verified</option>
-                            <option value="vintage_frame">Vintage Frame</option>
-                        </select>
-                        <button 
-                            className="dropdown-arrow" 
-                            onClick={() => navigateDropdown(extraRef, 'next')}
-                            disabled={!canNavigate(extraRef, 'next')}
-                        >
-                            ▶
-                        </button>
+                    <div className="dropdown-section">
+                        <h3 className="dropdown-header">Hat</h3>
+                        <div className="dropdown-with-arrows">
+                            <button 
+                                className="dropdown-arrow" 
+                                onClick={() => navigateDropdown(hatRef, 'prev')}
+                                disabled={!canNavigate(hatRef, 'prev')}
+                            >
+                                ◀
+                            </button>
+                            <select 
+                                ref={hatRef} 
+                                value={hatAsset} 
+                                onChange={handleHatAssetChange} 
+                                className="dropdown" 
+                                disabled={clubAsset || secondAsset === 'singe_hoodie_glow' || secondAsset === 'singe_hoodie'}
+                            >
+                                <option value="">Select</option>
+                                <option value="vegas">Vegas BAYC</option>
+                                <option value="german_ape_club_hat">German Ape Club</option>
+                                <option value="mindfully_bored_cap">Mindfully Bored Cap</option>
+                                <option value="apechain_cap">Apechain Hat</option>
+                                <option value="apechain_hat_blue">Apechain Hat Blue</option>
+                                <option value="apechain_hat_orange">Apechain Hat Orange</option>
+                                <option value="designer_toshiro_hat">Designer Toshiro</option>
+                                <option value="beret">Béret</option>
+                                <option value="cats_hat">Cool Cats</option>
+                                <option value="plunger">Dookey Dash</option>
+                                <option value="pudgy_hat">Pudgy Penguins Hat</option>
+                                <option value="pudgy_hat2">Pudgy Penguins Hat 2</option>
+                                <option value="glitter_cowboy_hat">Glitter Cowboy Hat</option>
+                            </select>
+                            <button 
+                                className="dropdown-arrow" 
+                                onClick={() => navigateDropdown(hatRef, 'next')}
+                                disabled={!canNavigate(hatRef, 'next')}
+                            >
+                                ▶
+                            </button>
+                        </div>
                     </div>
-                </div>
-            </div>
-            <div className="dropdown-container">
-                <div className="dropdown-section">
-                    <h3 className="dropdown-header">Hand</h3>
-                    <div className="dropdown-with-arrows">
-                        <button 
-                            className="dropdown-arrow" 
-                            onClick={() => navigateDropdown(handRef, 'prev')}
-                            disabled={!canNavigate(handRef, 'prev')}
-                        >
-                            ◀
-                        </button>
-                        <select 
-                            ref={handRef} 
-                            value={selectedAsset} 
-                            onChange={handleAssetChange} 
-                            className="dropdown" 
-                            disabled={!tokenId || thirdAsset === 'selfie' || clubAsset === 'elite'}
-                        >
-                            <option value="">Select</option>
-                            <option value="dr_bombay_strawberry_cream">Dr. Bombay Strawberry Cream</option>
-                            <option value="dr_bombay_baked_blueberry_muffin">Dr. Bombay Baked Blueberry Muffin</option>
-                            <option value="dr_bombay_iced_out_orange">Dr. Bombay Iced Out Orange</option>
-                            <option value="dr_bombay_peanut_butter">Dr. Bombay Peanut Butter</option>
-                            <option value="vegas">Vegas BAYC</option>
-                            <option value="ape_solar_sun_hand">Ape Solar Sun Hand</option>
-                            <option value="blever_pass">Blever Pass</option>
-                            <option value="gordon">Gordon ❤️</option>
-                            <option value="dookie_dash">Dookie Dash</option>
-                            <option value="smartphone_gm">Smartphone GM</option>
-                            <option value="sardines">Lisbon Sardines</option>
-                            <option value="ramen">Ramen Bowl</option>
-                            <option value="pray">Pray</option>
-                            <option value="basketball">Basketball</option>
-                            <option value="shiny-gm">GM</option>
-                            <option value="pipe">Pipe</option>
-                            <option value="thumbsup">Thumbs Up</option>
-                            <option value="magic_eden">Magic Eden</option>
-                            <option value="gm_espresso">GM Espresso</option>
-                            <option value="peace">Peace</option>
-                            <option value="cheers" disabled={clubAsset === 'dubai'}>Cheers</option>
-                            <option value="banana">Banana Hand</option>
-                            <option value="otherside">Otherside Bottle</option>
-                            <option value="apecoin_hands1">Apecoin Hands 1</option>
-                            <option value="apecoin_hands2">Apecoin Hands </option>
-                            <option value="moon_coffee">Moon Coffee Company</option>
-                            <option value="candle">Candle</option>
-                            <option value="balloon_fireworks">Balloon & Fireworks</option>
-                            <option value="fireworks">Fireworks</option>
-                            <option value="baguette">Baguette</option>
-                            <option value="clubhouse">Clubhouse Sketch</option>
-                            <option value="matchstick">Matchstick</option>
-                            <option value="balloon_moon">2024 Balloon</option>
-                        </select>
-                        <button 
-                            className="dropdown-arrow" 
-                            onClick={() => navigateDropdown(handRef, 'next')}
-                            disabled={!canNavigate(handRef, 'next')}
-                        >
-                            ▶
-                        </button>
+                    <div className="dropdown-section">
+                        <h3 className="dropdown-header">Eyes</h3>
+                        <div className="dropdown-with-arrows">
+                            <button 
+                                className="dropdown-arrow" 
+                                onClick={() => navigateDropdown(eyesRef, 'prev')}
+                                disabled={!canNavigate(eyesRef, 'prev')}
+                            >
+                                ◀
+                            </button>
+                            <select 
+                                ref={eyesRef} 
+                                value={eyesAsset} 
+                                onChange={handleEyesAssetChange} 
+                                className="dropdown" 
+                                disabled={clubAsset === 'elite'}
+                            >
+                                <option value="">Select</option>
+                                <option value="vegas">Vegas BAYC</option>
+                                <option value="apecoin_glasses">Apecoin Glasses</option>
+                                <option value="apechain_glasses">Apechain Glasses</option>
+                                <option value="vision_pro">Vision Pro</option>
+                                <option value="dookey_eyes">Dookey Dash</option>
+                                <option value="btc_eyes">BTC Coin</option>
+                                <option value="star_glasses">Star Glasses</option>
+                            </select>
+                            <button 
+                                className="dropdown-arrow" 
+                                onClick={() => navigateDropdown(eyesRef, 'next')}
+                                disabled={!canNavigate(eyesRef, 'next')}
+                            >
+                                ▶
+                            </button>
+                        </div>
                     </div>
-                </div>
+                    <div className="dropdown-section">
+                        <h3 className="dropdown-header">Hand</h3>
+                        <div className="dropdown-with-arrows">
+                            <button 
+                                className="dropdown-arrow" 
+                                onClick={() => navigateDropdown(handRef, 'prev')}
+                                disabled={!canNavigate(handRef, 'prev')}
+                            >
+                                ◀
+                            </button>
+                            <select 
+                                ref={handRef} 
+                                value={selectedAsset} 
+                                onChange={handleAssetChange} 
+                                className="dropdown" 
+                                disabled={thirdAsset === 'selfie' || clubAsset === 'elite'}
+                            >
+                                <option value="">Select</option>
+                                <option value="dr_bombay_strawberry_cream">Dr. Bombay Strawberry Cream</option>
+                                <option value="dr_bombay_baked_blueberry_muffin">Dr. Bombay Baked Blueberry Muffin</option>
+                                <option value="dr_bombay_iced_out_orange">Dr. Bombay Iced Out Orange</option>
+                                <option value="dr_bombay_peanut_butter">Dr. Bombay Peanut Butter</option>
+                                <option value="vegas">Vegas BAYC</option>
+                                <option value="ape_solar_sun_hand">Ape Solar Sun Hand</option>
+                                <option value="blever_pass">Blever Pass</option>
+                                <option value="gordon">Gordon ❤️</option>
+                                <option value="dookie_dash">Dookie Dash</option>
+                                <option value="smartphone_gm">Smartphone GM</option>
+                                <option value="sardines">Lisbon Sardines</option>
+                                <option value="ramen">Ramen Bowl</option>
+                                <option value="pray">Pray</option>
+                                <option value="basketball">Basketball</option>
+                                <option value="shiny-gm">GM</option>
+                                <option value="pipe">Pipe</option>
+                                <option value="thumbsup">Thumbs Up</option>
+                                <option value="magic_eden">Magic Eden</option>
+                                <option value="gm_espresso">GM Espresso</option>
+                                <option value="peace">Peace</option>
+                                <option value="cheers" disabled={clubAsset === 'dubai'}>Cheers</option>
+                                <option value="banana">Banana Hand</option>
+                                <option value="otherside">Otherside Bottle</option>
+                                <option value="apecoin_hands1">Apecoin Hands 1</option>
+                                <option value="apecoin_hands2">Apecoin Hands </option>
+                                <option value="moon_coffee">Moon Coffee Company</option>
+                                <option value="candle">Candle</option>
+                                <option value="balloon_fireworks">Balloon & Fireworks</option>
+                                <option value="fireworks">Fireworks</option>
+                                <option value="baguette">Baguette</option>
+                                <option value="clubhouse">Clubhouse Sketch</option>
+                                <option value="matchstick">Matchstick</option>
+                                <option value="balloon_moon">2024 Balloon</option>
+                            </select>
+                            <button 
+                                className="dropdown-arrow" 
+                                onClick={() => navigateDropdown(handRef, 'next')}
+                                disabled={!canNavigate(handRef, 'next')}
+                            >
+                                ▶
+                            </button>
+                        </div>
+                    </div>
                 {/* <div className="dropdown-section">
                     <h3 className="dropdown-header">Club Assets</h3>
                     <div className="dropdown-with-arrows">
@@ -879,49 +886,114 @@ function App() {
                         </button>
                     </div>
                 </div> */}
-            </div>
+                </div>
+                </div>
+              </details>
 
-            {recentTokenIds.length > 0 && (
-                <section className="gallery">
-                    <h3 className="gallery-title">Latest mints</h3>
-                    <div className="gallery-grid">
-                        {recentTokenIds.slice(0, 9).map((id) => (
-                            <div key={id} className="gallery-item">
-                                <a
-                                    className="gallery-link"
-                                    href={`${RECENT_MINT_LINK_BASE}/${id}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    aria-label={`Open AFA #${id}`}
-                                >
-                                    <div className="gallery-thumb">
-                                        {recentImageUrls[id] ? (
-                                            <img
-                                                src={recentImageUrls[id]}
-                                                alt={`AFA #${id}`}
-                                            />
-                                        ) : (
-                                            <div className="gallery-thumb-placeholder">
-                                                #{id}
-                                            </div>
-                                        )}
-                                    </div>
-                                </a>
-                                <div className="gallery-meta">
-                                    <a
-                                        className="gallery-id"
-                                        href={`${RECENT_MINT_LINK_BASE}/${id}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        #{id}
-                                    </a>
-                                </div>
-                            </div>
-                        ))}
+              <details className="panel-group" open>
+                <summary className="panel-summary">Effects</summary>
+                <div className="panel-body">
+                  <div className="dropdown-container">
+                    <div className="dropdown-section">
+                      <h3 className="dropdown-header">Extra</h3>
+                      <div className="dropdown-with-arrows">
+                        <button
+                          className="dropdown-arrow"
+                          onClick={() => navigateDropdown(extraRef, 'prev')}
+                          disabled={!canNavigate(extraRef, 'prev')}
+                        >
+                          ◀
+                        </button>
+                        <select
+                          ref={extraRef}
+                          value={thirdAsset}
+                          onChange={handleThirdAssetChange}
+                          className="dropdown"
+                          disabled={clubAsset === 'elite'}
+                        >
+                          <option value="">Select</option>
+                          <option value="top_trader">Top Trader</option>
+                          <option value="top_trader_red">Top Trader Red</option>
+                          <option value="unclogged">Unclogged</option>
+                          <option value="hex_dark">Hex Dark</option>
+                          <option value="hex_light">Hex Light</option>
+                          <option
+                            value="small_ape"
+                            disabled={secondAsset === 'singe_hoodie_glow' || selectedAsset === 'dookie_dash'}
+                          >
+                            Tiny AFA
+                          </option>
+                          <option value="confetti">Confetti</option>
+                          <option value="snow">Snow</option>
+                          <option value="selfie" disabled={clubAsset === 'dubai'}>
+                            Selfie Head
+                          </option>
+                          <option value="transparent">Transparent Background</option>
+                          <option value="verified">Verified</option>
+                          <option value="vintage_frame">Vintage Frame</option>
+                        </select>
+                        <button
+                          className="dropdown-arrow"
+                          onClick={() => navigateDropdown(extraRef, 'next')}
+                          disabled={!canNavigate(extraRef, 'next')}
+                        >
+                          ▶
+                        </button>
+                      </div>
                     </div>
+                  </div>
+                </div>
+              </details>
+            </>
+          )}
+
+          <details className="panel-group" open>
+            <summary className="panel-summary">Latest mints</summary>
+            <div className="panel-body">
+              {recentTokenIds.length > 0 ? (
+                <section className="gallery">
+                  <h3 className="gallery-title">Latest mints</h3>
+                  <div className="gallery-grid">
+                    {recentTokenIds.slice(0, 9).map((id) => (
+                      <div key={id} className="gallery-item">
+                        <a
+                          className="gallery-link"
+                          href={`${RECENT_MINT_LINK_BASE}/${id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`Open AFA #${id}`}
+                        >
+                          <div className="gallery-thumb">
+                            {recentImageUrls[id] ? (
+                              <img src={recentImageUrls[id]} alt={`AFA #${id}`} />
+                            ) : (
+                              <div className="gallery-thumb-placeholder">#{id}</div>
+                            )}
+                          </div>
+                        </a>
+                        <div className="gallery-meta">
+                          <a
+                            className="gallery-id"
+                            href={`${RECENT_MINT_LINK_BASE}/${id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            #{id}
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </section>
-            )}
+              ) : (
+                <section className="gallery">
+                  <h3 className="gallery-title">Latest mints</h3>
+                </section>
+              )}
+            </div>
+          </details>
+        </section>
+      </main>
 
       {/* Remove original button container */}
       {/* <div className="button-container">

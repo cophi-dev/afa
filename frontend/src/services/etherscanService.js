@@ -1,6 +1,8 @@
+import { debug, error as logError } from '../utils/debug';
+
 const ETHERSCAN_API_KEY = process.env.REACT_APP_ETHERSCAN_API_KEY;
 if (!ETHERSCAN_API_KEY) {
-  console.error('Etherscan API key not found in environment variables');
+  logError('Etherscan API key not found in environment variables');
 }
 
 const CONTRACT_ADDRESS = '0xfAa0e99EF34Eae8b288CFEeAEa4BF4f5B5f2eaE7';
@@ -9,12 +11,12 @@ export const getAllTransactions = async () => {
   try {
       const url = `https://api.etherscan.io/v2/api?module=account&action=tokennfttx&contractaddress=${CONTRACT_ADDRESS}&page=1&offset=10000&startblock=0&endblock=999999999&sort=asc&chainid=1&apikey=${ETHERSCAN_API_KEY}`;
     
-    console.log('Fetching from URL:', url); // Add this for debugging
+    debug('Fetching from URL', url);
     
     const response = await fetch(url);
     const data = await response.json();
     
-    console.log('Etherscan response:', data); // Add this for debugging
+    debug('Etherscan response', data);
     
     if (data.status === '0') {
       throw new Error(data.message || 'Etherscan API error');
@@ -22,14 +24,14 @@ export const getAllTransactions = async () => {
     
     return data.result || [];
   } catch (error) {
-    console.error('Error fetching transactions:', error);
+    logError('Error fetching transactions:', error);
     return [];
   }
 };
 
 export const processNFTStatuses = (transactions) => {
   if (!Array.isArray(transactions)) {
-    console.error('Transactions is not an array:', transactions);
+    logError('Transactions is not an array:', transactions);
     return new Map();
   }
   
@@ -57,7 +59,7 @@ export const checkTokenMintStatus = async (tokenId) => {
     
     return data.status === '1' && data.result && data.result.length > 0;
   } catch (error) {
-    console.error('Error checking token status:', error);
+    logError('Error checking token status:', error);
     return false;
   }
 }; 
