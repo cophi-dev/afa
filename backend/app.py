@@ -79,6 +79,10 @@ special_assets = {
 }
 
 main_assets = {
+    'dr_bombay_strawberry_cream': os.path.join(base_dir, 'memes', 'dr_bombay_strawberry_cream.png'),
+    'dr_bombay_baked_blueberry_muffin': os.path.join(base_dir, 'memes', 'dr_bombay_baked_blueberry_muffin.png'),
+    'dr_bombay_iced_out_orange': os.path.join(base_dir, 'memes', 'dr_bombay_iced_out_orange.png'),
+    'dr_bombay_peanut_butter': os.path.join(base_dir, 'memes', 'dr_bombay_peanut_butter.png'),
     'vegas': os.path.join(base_dir, 'memes', 'vegas_hand.png'),
     'blever_pass': os.path.join(base_dir, 'memes', 'blever_pass.png'),
     'gordon': os.path.join(base_dir, 'memes', 'gordon.png'),
@@ -109,10 +113,6 @@ main_assets = {
     'balloon_fireworks': os.path.join(base_dir, 'memes', 'balloon_fireworks.png'),
     'matchstick': os.path.join(base_dir, 'memes', 'matchstick.png'),
     'ape_solar_sun_hand': os.path.join(base_dir, 'memes', 'ape solar sun hand.png'),
-    'dr_bombay_strawberry_cream': os.path.join(base_dir, 'memes', 'dr_bombay_strawberry_cream.png'),
-    'dr_bombay_baked_blueberry_muffin': os.path.join(base_dir, 'memes', 'dr_bombay_baked_blueberry_muffin.png'),
-    'dr_bombay_iced_out_orange': os.path.join(base_dir, 'memes', 'dr_bombay_iced_out_orange.png'),
-    'dr_bombay_peanut_butter': os.path.join(base_dir, 'memes', 'dr_bombay_peanut_butter.png'),
 }
 
 mouth_assets = {
