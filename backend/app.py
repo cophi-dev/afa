@@ -143,6 +143,7 @@ hat_assets = {
     'beret': os.path.join(base_dir, 'memes', 'beret.png'),
     'pudgy_hat': os.path.join(base_dir, 'memes', 'pudgy_hat.png'),
     'pudgy_hat2': os.path.join(base_dir, 'memes', 'pudgy_hat2.png'),
+    'glitter_cowboy_hat': os.path.join(base_dir, 'memes', 'glitter_cowboy_hat.png'),
     'plunger': os.path.join(base_dir, 'memes', 'plunger.png'),
     'vegas': os.path.join(base_dir, 'memes', 'vegas_hat.png'),
 }
@@ -381,7 +382,7 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         "Laurel Wreath",
         "christmas_hat",
         "christmas_hat2",
-        "christmas_hat3"
+        "christmas_hat3",
         "plunger"
     }
 
