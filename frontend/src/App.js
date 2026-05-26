@@ -565,28 +565,30 @@ function App() {
         </section>
         <section className="studio-controls" aria-label="Editor controls">
           {tokenId && (
-            <div className="button-container">
-              <button
-                onClick={handleReset}
-                className="action-button reset-button"
-                title="Reset all selections"
-              >
-                Reset All
-              </button>
-              <button
-                onClick={handleRandomize}
-                className="action-button random-button"
-                title="Randomize traits"
-              >
-                New Perspective 👀
-              </button>
-              <button
-                onClick={handleFrameIt}
-                className="action-button vegas-button"
-                title="Add Vintage Frame"
-              >
-                Frame It
-              </button>
+            <div className="action-dock" aria-label="Quick actions">
+              <div className="button-container">
+                <button
+                  onClick={handleReset}
+                  className="action-button reset-button"
+                  title="Reset all selections"
+                >
+                  Reset All
+                </button>
+                <button
+                  onClick={handleRandomize}
+                  className="action-button random-button"
+                  title="Randomize traits"
+                >
+                  New Perspective 👀
+                </button>
+                <button
+                  onClick={handleFrameIt}
+                  className="action-button vegas-button"
+                  title="Add Vintage Frame"
+                >
+                  Frame It
+                </button>
+              </div>
             </div>
           )}
 
