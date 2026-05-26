@@ -3,10 +3,7 @@ import './App.css';
 import { getAllTransactions, processNFTStatuses } from './services/etherscanService';
 import { debug, error as logError } from './utils/debug';
 
-const CONTRACT_ADDRESS = '0xfAa0e99EF34Eae8b288CFEeAEa4BF4f5B5f2eaE7';
 const DEFAULT_API_URL = 'https://afa-editor.ew.r.appspot.com';
-const RECENT_MINT_LINK_BASE =
-    process.env.REACT_APP_TOKEN_LINK_BASE || `https://opensea.io/assets/ethereum/${CONTRACT_ADDRESS}`;
 const LOADER_MESSAGES = [
     'Brewing ape magic...',
     'Polishing pixels...',
@@ -38,6 +35,48 @@ function Footer() {
 function getContrastYIQ(rgb) {
     const yiq = ((rgb[0] * 299) + (rgb[1] * 587) + (rgb[2] * 114)) / 1000;
     return (yiq >= 128) ? 'black' : 'white';
+}
+
+function MintedGalleryItem({ id, imageUrl, isSelected, onSelect, onBecomeVisible }) {
+    const ref = useRef(null);
+
+    useEffect(() => {
+        const node = ref.current;
+        if (!node) return undefined;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries.some((entry) => entry.isIntersecting)) {
+                    onBecomeVisible(id);
+                }
+            },
+            { rootMargin: '120px' }
+        );
+        observer.observe(node);
+        return () => observer.disconnect();
+    }, [id, onBecomeVisible]);
+
+    return (
+        <button
+            ref={ref}
+            type="button"
+            className={`gallery-item ${isSelected ? 'is-selected' : ''}`}
+            onClick={() => onSelect(id)}
+            aria-label={`Select AFA #${id}`}
+            aria-pressed={isSelected}
+        >
+            <div className="gallery-thumb">
+                {imageUrl ? (
+                    <img src={imageUrl} alt={`AFA #${id}`} loading="lazy" />
+                ) : (
+                    <div className="gallery-thumb-placeholder">#{id}</div>
+                )}
+            </div>
+            <div className="gallery-meta">
+                <span className="gallery-id">#{id}</span>
+            </div>
+        </button>
+    );
 }
 
 function App() {
@@ -81,10 +120,12 @@ function App() {
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [mintedTokens, setMintedTokens] = useState(new Set());
-    const [recentTokenIds, setRecentTokenIds] = useState([]);
-    const [recentImageUrls, setRecentImageUrls] = useState({});
+    const [mintedTokenIds, setMintedTokenIds] = useState([]);
+    const [mintPreviewUrls, setMintPreviewUrls] = useState({});
     const suggestionsRef = useRef(null);
     const activeRenderRequestRef = useRef(0);
+    const mintPreviewLoadingRef = useRef(new Set());
+    const mintPreviewUrlsRef = useRef({});
     const isCheckingMint = false;
     const [selectedSuggestionIndex] = useState(-1);
     const outfitRef = useRef(null);
@@ -129,10 +170,9 @@ function App() {
                         seen.add(id);
                         latestIds.push(id);
                     }
-                    if (latestIds.length >= 9) break;
                 }
 
-                setRecentTokenIds(latestIds);
+                setMintedTokenIds(latestIds);
             }
         } catch (error) {
             logError('Error fetching minted tokens:', error);
@@ -144,44 +184,32 @@ function App() {
         fetchMintedTokens();
     }, [fetchMintedTokens]);
 
-    // Load preview images for the latest mints
-    useEffect(() => {
-        if (!recentTokenIds.length) return;
+    const loadMintPreview = useCallback(async (id) => {
+        if (mintPreviewUrlsRef.current[id] || mintPreviewLoadingRef.current.has(id)) return;
 
-        const loadPreviews = async () => {
-            try {
-                const entries = await Promise.all(
-                    recentTokenIds.slice(0, 9).map(async (id) => {
-                        try {
-                            const queryParams = new URLSearchParams({
-                                tokenId: id,
-                                assetType: 'AFA'
-                            });
-                            const blob = await fetchFromAnyBase(
-                                `/api/get-asset?${queryParams.toString()}`,
-                                (response) => response.blob()
-                            );
-                            return [id, URL.createObjectURL(blob)];
-                        } catch {
-                            return null;
-                        }
-                    })
-                );
+        mintPreviewLoadingRef.current.add(id);
+        try {
+            const queryParams = new URLSearchParams({
+                tokenId: id,
+                assetType: 'AFA'
+            });
+            const blob = await fetchFromAnyBase(
+                `/api/get-asset?${queryParams.toString()}`,
+                (response) => response.blob()
+            );
+            const url = URL.createObjectURL(blob);
+            mintPreviewUrlsRef.current[id] = url;
+            setMintPreviewUrls((prev) => ({ ...prev, [id]: url }));
+        } catch (error) {
+            debug('Mint preview failed', { id, error });
+        } finally {
+            mintPreviewLoadingRef.current.delete(id);
+        }
+    }, [fetchFromAnyBase]);
 
-                const map = {};
-                entries.forEach((entry) => {
-                    if (!entry) return;
-                    const [id, url] = entry;
-                    map[id] = url;
-                });
-                setRecentImageUrls(map);
-            } catch (error) {
-                logError('Error loading latest mint previews:', error);
-            }
-        };
-
-        loadPreviews();
-    }, [recentTokenIds, fetchFromAnyBase]);
+    const handleMintPreviewVisible = useCallback((id) => {
+        loadMintPreview(id);
+    }, [loadMintPreview]);
 
     const fetchAsset = useCallback((
         newTokenId,
@@ -947,49 +975,31 @@ function App() {
             </>
           )}
 
-          <details className="panel-group" open>
-            <summary className="panel-summary">Latest mints</summary>
+          <details className="panel-group">
+            <summary className="panel-summary">
+              Minted AFAs{mintedTokenIds.length > 0 ? ` (${mintedTokenIds.length})` : ''}
+            </summary>
             <div className="panel-body">
-              {recentTokenIds.length > 0 ? (
-                <section className="gallery">
-                  <h3 className="gallery-title">Latest mints</h3>
-                  <div className="gallery-grid">
-                    {recentTokenIds.slice(0, 9).map((id) => (
-                      <div key={id} className="gallery-item">
-                        <a
-                          className="gallery-link"
-                          href={`${RECENT_MINT_LINK_BASE}/${id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label={`Open AFA #${id}`}
-                        >
-                          <div className="gallery-thumb">
-                            {recentImageUrls[id] ? (
-                              <img src={recentImageUrls[id]} alt={`AFA #${id}`} />
-                            ) : (
-                              <div className="gallery-thumb-placeholder">#{id}</div>
-                            )}
-                          </div>
-                        </a>
-                        <div className="gallery-meta">
-                          <a
-                            className="gallery-id"
-                            href={`${RECENT_MINT_LINK_BASE}/${id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            #{id}
-                          </a>
-                        </div>
-                      </div>
-                    ))}
+              <section className="gallery">
+                {mintedTokenIds.length > 0 ? (
+                  <div className="gallery-scroll">
+                    <div className="gallery-grid">
+                      {mintedTokenIds.map((id) => (
+                        <MintedGalleryItem
+                          key={id}
+                          id={id}
+                          imageUrl={mintPreviewUrls[id]}
+                          isSelected={String(tokenId) === String(id)}
+                          onSelect={handleTokenSubmit}
+                          onBecomeVisible={handleMintPreviewVisible}
+                        />
+                      ))}
+                    </div>
                   </div>
-                </section>
-              ) : (
-                <section className="gallery">
-                  <h3 className="gallery-title">Latest mints</h3>
-                </section>
-              )}
+                ) : (
+                  <p className="gallery-empty">Loading minted AFAs…</p>
+                )}
+              </section>
             </div>
           </details>
         </section>
