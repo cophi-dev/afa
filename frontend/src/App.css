@@ -2916,46 +2916,59 @@ button.gallery-item:focus-visible {
   }
 }
 
-/* Mobile scroll UX: natural page flow, fixed action dock, lighter preview chrome */
+/* Mobile scroll UX: sticky preview, inline actions, lighter chrome */
 @media (max-width: 768px) {
   .App {
-    padding: 8px 12px calc(88px + env(safe-area-inset-bottom, 0px));
+    padding: 8px 12px 18px;
     gap: 10px;
   }
 
   .studio {
-    gap: 12px;
+    gap: 10px;
     padding-bottom: 0 !important;
   }
 
   .studio-preview {
-    position: relative !important;
-    top: auto !important;
-    z-index: 1;
+    position: sticky !important;
+    top: 0;
+    z-index: 20;
     padding: 4px 0 10px !important;
-    background: transparent !important;
+    margin-bottom: 4px;
+    background: linear-gradient(
+      to bottom,
+      rgba(5, 5, 9, 0.96) 0%,
+      rgba(5, 5, 9, 0.92) 78%,
+      rgba(5, 5, 9, 0) 100%
+    );
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
 
   .studio-preview.has-token {
-    background: transparent !important;
+    background: linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--token-background-color, #050509) 94%, transparent) 0%,
+      color-mix(in srgb, var(--token-background-color, #050509) 88%, transparent) 78%,
+      transparent 100%
+    );
   }
 
   .preview-card {
-    padding: 10px;
-    border-radius: 16px;
-    background: rgba(8, 10, 16, 0.72);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    box-shadow: 0 10px 36px rgba(0, 0, 0, 0.35);
+    padding: 6px 8px 8px;
+    border-radius: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
   }
 
   #asset-display {
-    width: min(100%, 300px);
-    max-height: min(44vh, 300px);
+    width: min(100%, 220px);
+    max-height: min(32vh, 220px);
     margin-inline: auto;
-    border-radius: 14px;
+    border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(5, 5, 9, 0.55);
-    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.4);
+    background: rgba(5, 5, 9, 0.45);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
     transform: none !important;
     transition: opacity 0.28s ease;
   }
@@ -2967,7 +2980,7 @@ button.gallery-item:focus-visible {
   }
 
   #asset-display img {
-    filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.65));
+    filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.55));
   }
 
   .trait-chips {
@@ -2979,8 +2992,8 @@ button.gallery-item:focus-visible {
     overscroll-behavior-x: contain;
     scroll-snap-type: x proximity;
     max-width: 100%;
-    margin: 8px 0 0;
-    padding: 0 2px 4px;
+    margin: 6px 0 0;
+    padding: 0 2px 2px;
     gap: 6px;
     scrollbar-width: none;
   }
@@ -2999,34 +3012,22 @@ button.gallery-item:focus-visible {
     gap: 10px;
   }
 
-  .action-dock {
-    height: 0;
-    margin: 0;
+  .button-container {
+    position: static;
+    margin: 0 0 4px;
     padding: 0;
-    overflow: visible;
-  }
-
-  .action-dock .button-container {
-    position: fixed;
-    left: 12px;
-    right: 12px;
-    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-    z-index: 40;
-    margin: 0;
-    padding: 6px;
-    border-radius: 14px;
-    background: rgba(8, 10, 16, 0.94);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     gap: 6px;
   }
 
   .action-button {
     flex: 1 1 0;
     min-width: 0;
-    min-height: 40px;
+    min-height: 38px;
     padding: 8px 6px;
     font-size: 0.8rem;
     touch-action: manipulation;
@@ -3078,18 +3079,12 @@ button.gallery-item:focus-visible {
 
 @media (max-width: 480px) {
   #asset-display {
-    width: min(100%, 260px);
-    max-height: min(40vh, 260px);
-  }
-
-  .action-dock .button-container {
-    left: 10px;
-    right: 10px;
-    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    width: min(100%, 200px);
+    max-height: min(30vh, 200px);
   }
 
   .action-button {
     font-size: 0.76rem;
-    min-height: 38px;
+    min-height: 36px;
   }
 }
