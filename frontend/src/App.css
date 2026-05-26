@@ -2348,6 +2348,46 @@ body {
   flex-direction: column;
 }
 
+button.gallery-item {
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  cursor: pointer;
+  text-align: inherit;
+  font: inherit;
+  color: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+button.gallery-item:hover {
+  border-color: rgba(245, 196, 81, 0.35);
+}
+
+button.gallery-item.is-selected {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 1px var(--accent-color);
+}
+
+button.gallery-item:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+.gallery-scroll {
+  max-height: min(420px, 52vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+}
+
+.gallery-empty {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--muted-text);
+  text-align: left;
+}
+
 .gallery-link {
   display: block;
   color: inherit;
