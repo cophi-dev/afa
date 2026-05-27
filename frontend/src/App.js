@@ -4,6 +4,7 @@ import { getAllTransactions, processNFTStatuses } from './services/etherscanServ
 import { debug, error as logError } from './utils/debug';
 
 const DEFAULT_API_URL = 'https://afa-editor.ew.r.appspot.com';
+const CLAIM_URL = 'https://www.apefacingapes.com/claim';
 const LOADER_MESSAGES = [
     'Brewing ape magic...',
     'Polishing pixels...',
@@ -122,11 +123,12 @@ function App() {
     const [mintedTokens, setMintedTokens] = useState(new Set());
     const [mintedTokenIds, setMintedTokenIds] = useState([]);
     const [mintPreviewUrls, setMintPreviewUrls] = useState({});
+    const [isCheckingMint, setIsCheckingMint] = useState(false);
+    const [unmintedTokenId, setUnmintedTokenId] = useState('');
     const suggestionsRef = useRef(null);
     const activeRenderRequestRef = useRef(0);
     const mintPreviewLoadingRef = useRef(new Set());
     const mintPreviewUrlsRef = useRef({});
-    const isCheckingMint = false;
     const [selectedSuggestionIndex] = useState(-1);
     const outfitRef = useRef(null);
     const mouthRef = useRef(null);
@@ -144,8 +146,45 @@ function App() {
         }
     }, [thirdAsset]);
     
-    // Move the minted tokens fetch to a separate function
+    const applyMintedIdList = useCallback((ids) => {
+        const numericIds = ids
+            .map((id) => parseInt(String(id), 10))
+            .filter((id) => !Number.isNaN(id));
+        if (numericIds.length === 0) return;
+        setMintedTokens(new Set(numericIds));
+        setMintedTokenIds(numericIds);
+    }, []);
+
+    const verifyTokenMinted = useCallback(async (rawId) => {
+        const normalized = String(rawId || '').replace(/[^0-9]/g, '').slice(0, 4);
+        if (!normalized) return false;
+
+        try {
+            const data = await fetchFromAnyBase(
+                `/api/is-minted?tokenId=${encodeURIComponent(normalized)}`,
+                (response) => response.json()
+            );
+            return Boolean(data.minted);
+        } catch (error) {
+            logError('Mint verification failed; denying access', { tokenId: normalized, error });
+            return false;
+        }
+    }, [fetchFromAnyBase]);
+
     const fetchMintedTokens = useCallback(async () => {
+        try {
+            const backendIds = await fetchFromAnyBase(
+                '/api/minted-token-ids',
+                (response) => response.json()
+            );
+            if (Array.isArray(backendIds) && backendIds.length > 0) {
+                applyMintedIdList(backendIds);
+                return;
+            }
+        } catch (error) {
+            debug('Backend mint list unavailable, falling back to Etherscan', error);
+        }
+
         try {
             const transactions = await getAllTransactions();
             const nftStatuses = processNFTStatuses(transactions);
@@ -156,7 +195,6 @@ function App() {
             }
 
             if (Array.isArray(transactions) && transactions.length > 0) {
-                // Sort newest first by timestamp and collect unique token IDs
                 const seen = new Set();
                 const latestIds = [];
                 const sorted = [...transactions].sort(
@@ -177,7 +215,7 @@ function App() {
         } catch (error) {
             logError('Error fetching minted tokens:', error);
         }
-    }, []);
+    }, [applyMintedIdList, fetchFromAnyBase]);
 
     // Update the useEffect to only call fetchMintedTokens
     useEffect(() => {
@@ -260,9 +298,11 @@ function App() {
         .catch(error => {
             if (requestId !== activeRenderRequestRef.current) return;
             logError('Error fetching asset:', error);
-            setCurrentImageUrl('./overview.gif'); // Reset to default image on error
+            setCurrentImageUrl('./overview.gif');
+            setTokenId('');
+            setUnmintedTokenId(String(newTokenId));
             setShowLoader(false);
-            setFade('fade-in'); // Start fade-in effect
+            setFade('fade-in');
         });
     
         // Fetch background color separately
@@ -356,11 +396,7 @@ function App() {
         }
     };
 
-    const handleTokenSubmit = (rawValue) => {
-        const value = String(rawValue || '').replace(/[^0-9]/g, '').slice(0, 4);
-        if (!value) return;
-
-        // Reset to a safe default composition when switching token.
+    const resetTraitSelections = useCallback(() => {
         setSecondAsset('');
         setThirdAsset('');
         setMouthAsset('');
@@ -368,10 +404,34 @@ function App() {
         setClubAsset('');
         setEyesAsset('');
         setSelectedAsset('');
+    }, []);
+
+    const handleTokenSubmit = useCallback(async (rawValue) => {
+        const value = String(rawValue || '').replace(/[^0-9]/g, '').slice(0, 4);
+        if (!value) return false;
+
+        setIsCheckingMint(true);
+        setUnmintedTokenId('');
         setTokenInput(value);
+
+        const minted = await verifyTokenMinted(value);
+        setIsCheckingMint(false);
+
+        if (!minted) {
+            resetTraitSelections();
+            setTokenId('');
+            setUnmintedTokenId(value);
+            setShowSuggestions(false);
+            setCurrentImageUrl('./overview.gif');
+            return false;
+        }
+
+        resetTraitSelections();
+        setUnmintedTokenId('');
         setTokenId(value);
         setShowSuggestions(false);
-    };
+        return true;
+    }, [resetTraitSelections, verifyTokenMinted]);
 
     const handleSuggestionClick = (value) => {
         // Suggestions are derived from minted token data, so select immediately.
@@ -387,21 +447,30 @@ function App() {
         const value = String(urlTokenId).replace(/[^0-9]/g, '').slice(0, 4);
         if (!value) return;
 
-        handleTokenSubmit(value);
+        let cancelled = false;
 
-        const applyTraitParam = (key, setter) => {
-            const raw = params.get(key);
-            if (raw == null || raw === '') return;
-            setter(raw === 'AFA' ? '' : raw);
+        (async () => {
+            const loaded = await handleTokenSubmit(value);
+            if (cancelled || !loaded) return;
+
+            const applyTraitParam = (key, setter) => {
+                const raw = params.get(key);
+                if (raw == null || raw === '') return;
+                setter(raw === 'AFA' ? '' : raw);
+            };
+
+            applyTraitParam('assetType', setSelectedAsset);
+            applyTraitParam('secondAssetType', setSecondAsset);
+            applyTraitParam('thirdAssetType', setThirdAsset);
+            applyTraitParam('mouthAssetType', setMouthAsset);
+            applyTraitParam('hatAssetType', setHatAsset);
+            applyTraitParam('eyesAssetType', setEyesAsset);
+            applyTraitParam('clubAssetType', setClubAsset);
+        })();
+
+        return () => {
+            cancelled = true;
         };
-
-        applyTraitParam('assetType', setSelectedAsset);
-        applyTraitParam('secondAssetType', setSecondAsset);
-        applyTraitParam('thirdAssetType', setThirdAsset);
-        applyTraitParam('mouthAssetType', setMouthAsset);
-        applyTraitParam('hatAssetType', setHatAsset);
-        applyTraitParam('eyesAssetType', setEyesAsset);
-        applyTraitParam('clubAssetType', setClubAsset);
         // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount from URL
     }, []);
 
@@ -571,6 +640,25 @@ function App() {
             </div>
           </div>
 
+          {unmintedTokenId && (
+            <div className="claim-prompt" role="alert">
+              <p className="claim-prompt-title">
+                AFA #{unmintedTokenId} is not minted yet
+              </p>
+              <p className="claim-prompt-copy">
+                Only minted AFAs can be edited. Mint this token to unlock the full editor.
+              </p>
+              <a
+                href={CLAIM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="claim-prompt-cta"
+              >
+                Mint on apefacingapes.com
+              </a>
+            </div>
+          )}
+
           {tokenId && traitChips.length > 0 && (
             <div className="trait-chips" aria-label="Selected traits">
               {traitChips.map((chip) => (
@@ -639,9 +727,10 @@ function App() {
                                             handleTokenSubmit(tokenInput);
                                         }
                                     }}
-                                    placeholder="Enter Token ID (0-9999) and press Enter"
+                                    placeholder="Enter minted Token ID (0-9999)"
                                     className={`token-input ${isCheckingMint ? 'checking' : ''}`}
                                     disabled={isCheckingMint}
+                                    aria-busy={isCheckingMint}
                                 />
                             </div>
                             {showSuggestions && (

@@ -2858,6 +2858,46 @@ button.gallery-item:focus-visible {
   text-align: left;
 }
 
+.claim-prompt {
+  max-width: 560px;
+  margin: 14px auto 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 196, 92, 0.35);
+  background: rgba(255, 196, 92, 0.08);
+  text-align: center;
+}
+
+.claim-prompt-title {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffd98a;
+}
+
+.claim-prompt-copy {
+  margin: 0 0 12px;
+  font-size: 0.86rem;
+  color: rgba(245, 245, 247, 0.78);
+}
+
+.claim-prompt-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: #ffc45c;
+  color: #111318;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.claim-prompt-cta:hover {
+  background: #ffd98a;
+}
+
 .token-input-row {
   display: block;
 }
