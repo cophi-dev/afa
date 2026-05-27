@@ -378,6 +378,33 @@ function App() {
         handleTokenSubmit(value);
     };
 
+    // Deep links from mint progress / share URLs, e.g. ?tokenId=482&assetType=AFA
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const urlTokenId = params.get('tokenId');
+        if (!urlTokenId) return;
+
+        const value = String(urlTokenId).replace(/[^0-9]/g, '').slice(0, 4);
+        if (!value) return;
+
+        handleTokenSubmit(value);
+
+        const applyTraitParam = (key, setter) => {
+            const raw = params.get(key);
+            if (raw == null || raw === '') return;
+            setter(raw === 'AFA' ? '' : raw);
+        };
+
+        applyTraitParam('assetType', setSelectedAsset);
+        applyTraitParam('secondAssetType', setSecondAsset);
+        applyTraitParam('thirdAssetType', setThirdAsset);
+        applyTraitParam('mouthAssetType', setMouthAsset);
+        applyTraitParam('hatAssetType', setHatAsset);
+        applyTraitParam('eyesAssetType', setEyesAsset);
+        applyTraitParam('clubAssetType', setClubAsset);
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount from URL
+    }, []);
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (suggestionsRef.current && !suggestionsRef.current.contains(event.target)) {

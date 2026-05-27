@@ -10,6 +10,8 @@ app = Flask(__name__, static_folder='public', static_url_path='/')
 allowed_origins = [
     "https://afa-3zwtn2xev-cophidevs-projects.vercel.app",
     "https://afa-editor.vercel.app",
+    "https://www.afa-editor.app",
+    "https://afa-editor.app",
     "http://localhost:3000",
     "http://127.0.0.1:3000"
 ]
