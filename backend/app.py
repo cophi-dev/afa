@@ -281,15 +281,40 @@ def add_asset(image, asset_type, asset_dict):
         print(f"Error processing {asset_type}: {e}")
     return image
     
+CLAIM_URL = 'https://www.apefacingapes.com/claim'
+
+
+def load_minted_ids():
+    db_path = os.path.join(os.path.dirname(__file__), 'afa_db.json')
+    with open(db_path, 'r') as file:
+        minted_apes = json.load(file)
+    return {str(ape['TOKENID']).strip() for ape in minted_apes}
+
+
+minted_ids = load_minted_ids()
+
+
+def normalize_token_id(token_id):
+    if token_id is None:
+        return None
+    normalized = str(token_id).strip()
+    return normalized if normalized.isdigit() else None
+
+
 def is_minted(token_id):
-    try:
-        db_path = os.path.join(os.path.dirname(__file__), 'afa_db.json')
-        with open(db_path, 'r') as file:
-            minted_apes = json.load(file)
-        return token_id in [ape['TOKENID'] for ape in minted_apes]
-    except Exception as e:
-        app.logger.error(f"Error in is_minted: {e}")
+    normalized = normalize_token_id(token_id)
+    if not normalized:
         return False
+    return normalized in minted_ids
+
+
+def not_minted_response(token_id):
+    return jsonify({
+        'error': 'Token not minted',
+        'code': 'NOT_MINTED',
+        'tokenId': normalize_token_id(token_id),
+        'claimUrl': CLAIM_URL,
+    }), 403
 
 # Modify this function to return a list of elite token IDs as strings
 def load_elite_ids():
@@ -744,9 +769,31 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     return final_image
     
 
+@app.route('/api/is-minted', methods=['GET'])
+def check_is_minted():
+    token_id = request.args.get('tokenId')
+    normalized = normalize_token_id(token_id)
+    if not normalized:
+        return jsonify({'error': 'tokenId required'}), 400
+    return jsonify({'tokenId': normalized, 'minted': is_minted(normalized)})
+
+
+@app.route('/api/minted-token-ids', methods=['GET'])
+def get_minted_token_ids():
+    try:
+        sorted_ids = sorted(minted_ids, key=int)
+        return jsonify(sorted_ids)
+    except Exception as e:
+        app.logger.error(f"Error in get_minted_token_ids: {e}")
+        return jsonify({'error': 'Internal Server Error'}), 500
+
+
 @app.route('/api/get-asset', methods=['GET'])
 def get_asset():
     token_id = request.args.get('tokenId')
+    if not is_minted(token_id):
+        return not_minted_response(token_id)
+
     asset_type = request.args.get('assetType', '')
     second_asset_type = request.args.get('secondAssetType', '')
     third_asset_type = request.args.get('thirdAssetType', '')
@@ -786,6 +833,9 @@ def get_asset():
 @app.route('/api/get-background-color', methods=['GET'])
 def get_background_color():
     token_id = request.args.get('tokenId')
+    if not is_minted(token_id):
+        return not_minted_response(token_id)
+
     try:
         db_path = os.path.join(os.path.dirname(__file__), 'db.json')
         with open(db_path, 'r') as file:
