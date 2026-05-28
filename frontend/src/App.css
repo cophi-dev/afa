@@ -2381,32 +2381,37 @@ button.gallery-item:focus-visible {
   padding-right: 4px;
 }
 
-.gallery-toolbar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 10px;
+.panel-summary--gallery {
+  gap: 10px;
 }
 
-.gallery-sort {
+.panel-summary-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.panel-summary .gallery-sort {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin: 0;
+  flex-shrink: 0;
 }
 
-.gallery-sort-label {
-  font-size: 0.74rem;
+.panel-summary .gallery-sort-label {
+  font-size: 0.62rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #9aa0af;
   white-space: nowrap;
 }
 
-.gallery-sort-select {
+.panel-summary .gallery-sort-select {
   width: auto;
-  min-width: 140px;
-  min-height: 34px;
-  padding: 6px 28px 6px 10px;
+  min-width: 118px;
+  min-height: 28px;
+  padding: 4px 24px 4px 8px;
+  font-size: 0.78rem;
   cursor: pointer;
 }
 
