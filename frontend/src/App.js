@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import './App.css';
-import { getAllTransactions, processNFTStatuses } from './services/etherscanService';
+import { getAllTransactions } from './services/etherscanService';
 import { debug, error as logError } from './utils/debug';
 
 const DEFAULT_API_URL = 'https://afa-editor.ew.r.appspot.com';
@@ -147,9 +147,14 @@ function App() {
     }, [thirdAsset]);
     
     const applyMintedIdList = useCallback((ids) => {
-        const numericIds = ids
-            .map((id) => parseInt(String(id), 10))
-            .filter((id) => !Number.isNaN(id));
+        const seen = new Set();
+        const numericIds = [];
+        for (const rawId of ids) {
+            const id = parseInt(String(rawId), 10);
+            if (Number.isNaN(id) || seen.has(id)) continue;
+            seen.add(id);
+            numericIds.push(id);
+        }
         if (numericIds.length === 0) return;
         setMintedTokens(new Set(numericIds));
         setMintedTokenIds(numericIds);
@@ -187,30 +192,22 @@ function App() {
 
         try {
             const transactions = await getAllTransactions();
-            const nftStatuses = processNFTStatuses(transactions);
-            const minted = new Set(Array.from(nftStatuses.keys()));
-
-            if (minted.size > 0) {
-                setMintedTokens(minted);
-            }
-
             if (Array.isArray(transactions) && transactions.length > 0) {
                 const seen = new Set();
-                const latestIds = [];
-                const sorted = [...transactions].sort(
-                    (a, b) => Number(b.timeStamp) - Number(a.timeStamp)
+                const mintDateOrder = [];
+                const sortedAsc = [...transactions].sort(
+                    (a, b) => Number(a.timeStamp) - Number(b.timeStamp)
                 );
 
-                for (const tx of sorted) {
+                for (const tx of sortedAsc) {
                     if (!tx || !tx.tokenID) continue;
                     const id = parseInt(tx.tokenID, 10);
-                    if (!seen.has(id)) {
-                        seen.add(id);
-                        latestIds.push(id);
-                    }
+                    if (Number.isNaN(id) || seen.has(id)) continue;
+                    seen.add(id);
+                    mintDateOrder.push(id);
                 }
 
-                setMintedTokenIds(latestIds);
+                applyMintedIdList([...mintDateOrder].reverse());
             }
         } catch (error) {
             logError('Error fetching minted tokens:', error);
@@ -1095,7 +1092,7 @@ function App() {
 
           <details className="panel-group" open>
             <summary className="panel-summary">
-              Minted AFAs{mintedTokenIds.length > 0 ? ` (${mintedTokenIds.length})` : ''}
+              Minted AFAs{mintedTokens.size > 0 ? ` (${mintedTokens.size})` : ''}
             </summary>
             <div className="panel-body">
               <section className="gallery">
