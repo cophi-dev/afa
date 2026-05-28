@@ -200,26 +200,43 @@ function App() {
             return getMintedTokenIdsNewestFirst(transactions);
         };
 
-        const [backendResult, chainIds] = await Promise.all([
-            fetchFromAnyBase(
+        let backendCount = 0;
+
+        try {
+            const backendResult = await fetchFromAnyBase(
                 '/api/minted-token-ids',
                 (response) => response.json()
-            ).catch((error) => {
-                debug('Backend mint list unavailable', error);
-                return [];
-            }),
-            loadChainMintIds().catch((error) => {
-                debug('Etherscan mint list unavailable', error);
-                return [];
-            }),
-        ]);
-
-        const backendIds = Array.isArray(backendResult) ? backendResult : [];
-        const ids = chainIds.length >= backendIds.length ? chainIds : backendIds;
-
-        if (ids.length > 0) {
-            applyMintedIdList(ids);
+            );
+            const backendIds = Array.isArray(backendResult) ? backendResult : [];
+            if (backendIds.length > 0) {
+                applyMintedIdList(backendIds);
+                backendCount = backendIds.length;
+            }
+        } catch (error) {
+            debug('Backend mint list unavailable', error);
         }
+
+        if (backendCount === 0) {
+            try {
+                const chainIds = await loadChainMintIds();
+                if (chainIds.length > 0) {
+                    applyMintedIdList(chainIds);
+                }
+            } catch (error) {
+                debug('Etherscan mint list unavailable', error);
+            }
+            return;
+        }
+
+        loadChainMintIds()
+            .then((chainIds) => {
+                if (chainIds.length > backendCount) {
+                    applyMintedIdList(chainIds);
+                }
+            })
+            .catch((error) => {
+                debug('Etherscan mint list background refresh failed', error);
+            });
     }, [applyMintedIdList, fetchFromAnyBase]);
 
     const sortedMintGalleryIds = useMemo(() => {
@@ -260,6 +277,13 @@ function App() {
     const handleMintPreviewVisible = useCallback((id) => {
         loadMintPreview(id);
     }, [loadMintPreview]);
+
+    useEffect(() => {
+        if (mintedTokenIds.length === 0) return;
+        sortedMintGalleryIds.slice(0, 12).forEach((id) => {
+            loadMintPreview(id);
+        });
+    }, [mintedTokenIds, sortedMintGalleryIds, loadMintPreview]);
 
     const fetchAsset = useCallback((
         newTokenId,
