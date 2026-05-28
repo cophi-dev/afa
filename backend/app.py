@@ -288,10 +288,18 @@ def load_minted_ids():
     db_path = os.path.join(os.path.dirname(__file__), 'afa_db.json')
     with open(db_path, 'r') as file:
         minted_apes = json.load(file)
-    return {str(ape['TOKENID']).strip() for ape in minted_apes}
+    ordered = []
+    id_set = set()
+    for ape in minted_apes:
+        token_id = str(ape.get('TOKENID', '')).strip()
+        if not token_id or not token_id.isdigit() or token_id in id_set:
+            continue
+        id_set.add(token_id)
+        ordered.append(token_id)
+    return ordered, id_set
 
 
-minted_ids = load_minted_ids()
+minted_ids_order, minted_ids = load_minted_ids()
 
 
 def normalize_token_id(token_id):
@@ -781,8 +789,8 @@ def check_is_minted():
 @app.route('/api/minted-token-ids', methods=['GET'])
 def get_minted_token_ids():
     try:
-        sorted_ids = sorted(minted_ids, key=int)
-        return jsonify(sorted_ids)
+        # JSON append order matches mint chronology; return newest first for the gallery.
+        return jsonify(list(reversed(minted_ids_order)))
     except Exception as e:
         app.logger.error(f"Error in get_minted_token_ids: {e}")
         return jsonify({'error': 'Internal Server Error'}), 500
