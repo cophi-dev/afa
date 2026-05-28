@@ -3,6 +3,8 @@ from flask_cors import CORS
 from PIL import Image
 import json
 import os
+import urllib.parse
+import urllib.request
 from io import BytesIO
 
 app = Flask(__name__, static_folder='public', static_url_path='/')
@@ -282,6 +284,8 @@ def add_asset(image, asset_type, asset_dict):
     return image
     
 CLAIM_URL = 'https://www.apefacingapes.com/claim'
+CONTRACT_ADDRESS = '0xfAa0e99EF34Eae8b288CFEeAEa4BF4f5B5f2eaE7'
+ETHERSCAN_API_KEY = os.environ.get('ETHERSCAN_API_KEY', '')
 
 
 def load_minted_ids():
@@ -299,7 +303,57 @@ def load_minted_ids():
     return ordered, id_set
 
 
-minted_ids_order, minted_ids = load_minted_ids()
+def fetch_minted_ids_from_chain():
+    if not ETHERSCAN_API_KEY:
+        return None
+
+    params = urllib.parse.urlencode({
+        'module': 'account',
+        'action': 'tokennfttx',
+        'contractaddress': CONTRACT_ADDRESS,
+        'page': 1,
+        'offset': 10000,
+        'startblock': 0,
+        'endblock': 999999999,
+        'sort': 'asc',
+        'chainid': 1,
+        'apikey': ETHERSCAN_API_KEY,
+    })
+    url = f'https://api.etherscan.io/v2/api?{params}'
+
+    try:
+        with urllib.request.urlopen(url, timeout=30) as response:
+            data = json.load(response)
+        if data.get('status') != '1':
+            print(f"Etherscan mint sync failed: {data.get('message')}")
+            return None
+
+        ordered = []
+        id_set = set()
+        transactions = sorted(data.get('result') or [], key=lambda tx: int(tx.get('timeStamp', 0)))
+        for tx in transactions:
+            token_id = str(tx.get('tokenID', '')).strip()
+            if not token_id or not token_id.isdigit() or token_id in id_set:
+                continue
+            id_set.add(token_id)
+            ordered.append(token_id)
+        return ordered, id_set
+    except Exception as error:
+        print(f"Etherscan mint sync error: {error}")
+        return None
+
+
+def init_minted_ids():
+    local_order, local_set = load_minted_ids()
+    chain_mints = fetch_minted_ids_from_chain()
+    if chain_mints:
+        chain_order, chain_set = chain_mints
+        if len(chain_set) >= len(local_set):
+            return chain_order, chain_set
+    return local_order, local_set
+
+
+minted_ids_order, minted_ids = init_minted_ids()
 
 
 def normalize_token_id(token_id):

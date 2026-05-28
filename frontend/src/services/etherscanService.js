@@ -7,6 +7,28 @@ if (!ETHERSCAN_API_KEY) {
 
 const CONTRACT_ADDRESS = '0xfAa0e99EF34Eae8b288CFEeAEa4BF4f5B5f2eaE7';
 
+export const getMintedTokenIdsNewestFirst = (transactions) => {
+  if (!Array.isArray(transactions) || transactions.length === 0) {
+    return [];
+  }
+
+  const seen = new Set();
+  const mintDateOrder = [];
+  const sortedAsc = [...transactions].sort(
+    (a, b) => Number(a.timeStamp) - Number(b.timeStamp)
+  );
+
+  for (const tx of sortedAsc) {
+    if (!tx || !tx.tokenID) continue;
+    const id = parseInt(tx.tokenID, 10);
+    if (Number.isNaN(id) || seen.has(id)) continue;
+    seen.add(id);
+    mintDateOrder.push(id);
+  }
+
+  return [...mintDateOrder].reverse();
+};
+
 export const getAllTransactions = async () => {
   try {
       const url = `https://api.etherscan.io/v2/api?module=account&action=tokennfttx&contractaddress=${CONTRACT_ADDRESS}&page=1&offset=10000&startblock=0&endblock=999999999&sort=asc&chainid=1&apikey=${ETHERSCAN_API_KEY}`;
