@@ -829,7 +829,7 @@ function App() {
               <details className="panel-group" open>
                 <summary className="panel-summary">Accessories</summary>
                 <div className="panel-body">
-                  <div className="dropdown-container">
+                  <div className="dropdown-container dropdown-container--grid">
                     <div className="dropdown-section">
                         <h3 className="dropdown-header">Mouth</h3>
                         <div className="dropdown-with-arrows">

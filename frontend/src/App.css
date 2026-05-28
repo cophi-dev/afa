@@ -3165,3 +3165,149 @@ button.gallery-item:focus-visible {
     min-height: 36px;
   }
 }
+
+/* Trait controls — compact layout, proportional width */
+@media (min-width: 980px) {
+  .studio {
+    grid-template-columns: minmax(360px, 520px) minmax(280px, 460px);
+    justify-content: center;
+    gap: clamp(16px, 2.5vw, 28px);
+  }
+
+  .studio-controls {
+    max-width: 460px;
+    width: 100%;
+  }
+}
+
+.dropdown-container {
+  grid-template-columns: 1fr;
+  gap: 8px;
+  width: 100%;
+}
+
+.dropdown-container--grid,
+.dropdown-container:has(.dropdown-section:nth-child(2)) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.dropdown-container--single {
+  grid-template-columns: 1fr;
+}
+
+.dropdown-section {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.dropdown-header {
+  margin: 0 0 5px;
+  font-size: 0.68rem;
+  letter-spacing: 0.09em;
+  color: rgba(154, 160, 175, 0.95);
+}
+
+.dropdown,
+.token-input {
+  min-height: 34px;
+  padding: 6px 10px;
+  font-size: 0.84rem;
+  line-height: 1.25;
+  border-radius: 8px;
+}
+
+.dropdown {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239aa0af' d='M3 4.5 6 7.5 9 4.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 11px;
+  padding-right: 28px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.dropdown-with-arrows {
+  min-height: 34px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(10, 12, 18, 0.78);
+  overflow: hidden;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.dropdown-with-arrows:focus-within {
+  border-color: rgba(127, 93, 255, 0.65);
+  box-shadow: 0 0 0 1px rgba(127, 93, 255, 0.32);
+}
+
+.dropdown-with-arrows .dropdown {
+  flex: 1;
+  min-width: 0;
+  min-height: 32px;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+  transform: none;
+}
+
+.dropdown-with-arrows .dropdown:hover:not(:disabled),
+.dropdown-with-arrows .dropdown:focus {
+  border: 0;
+  box-shadow: none;
+  transform: none;
+  background-color: transparent;
+}
+
+.dropdown-arrow {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 32px;
+  padding: 0;
+  font-size: 10px;
+  line-height: 1;
+  color: rgba(154, 160, 175, 0.9);
+  opacity: 0.75;
+  transition: color 0.14s ease, opacity 0.14s ease;
+}
+
+.dropdown-arrow:hover:not(:disabled) {
+  opacity: 1;
+  color: var(--primary-color);
+  transform: none;
+}
+
+.dropdown:hover:not(:disabled),
+.token-input:hover:not(:disabled) {
+  box-shadow: 0 0 0 1px rgba(245, 196, 81, 0.22);
+  transform: none;
+}
+
+.dropdown:focus,
+.token-input:focus {
+  transform: none;
+  box-shadow: 0 0 0 1px rgba(127, 93, 255, 0.38);
+}
+
+.panel-body {
+  padding: 8px 10px 10px;
+}
+
+@media (max-width: 979px) {
+  .dropdown-container--grid,
+  .dropdown-container:has(.dropdown-section:nth-child(2)) {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
