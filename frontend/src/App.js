@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import './App.css';
-import { getAllTransactions } from './services/etherscanService';
+import { getAllTransactions, getMintedTokenIdsNewestFirst, checkTokenMintStatus } from './services/etherscanService';
 import { debug, error as logError } from './utils/debug';
 
 const DEFAULT_API_URL = 'https://afa-editor.ew.r.appspot.com';
@@ -13,6 +13,10 @@ const LOADER_MESSAGES = [
     'Composing your vibe...',
     'Rendering the flex...'
 ];
+const MINT_GALLERY_SORT = {
+    MINT_DATE: 'mintDate',
+    TOKEN_ID: 'tokenId',
+};
 
 function Banner() {
     return (
@@ -122,6 +126,7 @@ function App() {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [mintedTokens, setMintedTokens] = useState(new Set());
     const [mintedTokenIds, setMintedTokenIds] = useState([]);
+    const [mintGallerySort, setMintGallerySort] = useState(MINT_GALLERY_SORT.MINT_DATE);
     const [mintPreviewUrls, setMintPreviewUrls] = useState({});
     const [isCheckingMint, setIsCheckingMint] = useState(false);
     const [unmintedTokenId, setUnmintedTokenId] = useState('');
@@ -164,55 +169,65 @@ function App() {
         const normalized = String(rawId || '').replace(/[^0-9]/g, '').slice(0, 4);
         if (!normalized) return false;
 
+        const numericId = parseInt(normalized, 10);
+        if (!Number.isNaN(numericId) && mintedTokens.has(numericId)) {
+            return true;
+        }
+
         try {
             const data = await fetchFromAnyBase(
                 `/api/is-minted?tokenId=${encodeURIComponent(normalized)}`,
                 (response) => response.json()
             );
-            return Boolean(data.minted);
+            if (Boolean(data.minted)) {
+                return true;
+            }
+        } catch (error) {
+            debug('Mint verification API failed, trying Etherscan', { tokenId: normalized, error });
+        }
+
+        try {
+            return await checkTokenMintStatus(normalized);
         } catch (error) {
             logError('Mint verification failed; denying access', { tokenId: normalized, error });
             return false;
         }
-    }, [fetchFromAnyBase]);
+    }, [fetchFromAnyBase, mintedTokens]);
 
     const fetchMintedTokens = useCallback(async () => {
-        try {
-            const backendIds = await fetchFromAnyBase(
+        const loadChainMintIds = async () => {
+            const transactions = await getAllTransactions();
+            return getMintedTokenIdsNewestFirst(transactions);
+        };
+
+        const [backendResult, chainIds] = await Promise.all([
+            fetchFromAnyBase(
                 '/api/minted-token-ids',
                 (response) => response.json()
-            );
-            if (Array.isArray(backendIds) && backendIds.length > 0) {
-                applyMintedIdList(backendIds);
-                return;
-            }
-        } catch (error) {
-            debug('Backend mint list unavailable, falling back to Etherscan', error);
-        }
+            ).catch((error) => {
+                debug('Backend mint list unavailable', error);
+                return [];
+            }),
+            loadChainMintIds().catch((error) => {
+                debug('Etherscan mint list unavailable', error);
+                return [];
+            }),
+        ]);
 
-        try {
-            const transactions = await getAllTransactions();
-            if (Array.isArray(transactions) && transactions.length > 0) {
-                const seen = new Set();
-                const mintDateOrder = [];
-                const sortedAsc = [...transactions].sort(
-                    (a, b) => Number(a.timeStamp) - Number(b.timeStamp)
-                );
+        const backendIds = Array.isArray(backendResult) ? backendResult : [];
+        const ids = chainIds.length >= backendIds.length ? chainIds : backendIds;
 
-                for (const tx of sortedAsc) {
-                    if (!tx || !tx.tokenID) continue;
-                    const id = parseInt(tx.tokenID, 10);
-                    if (Number.isNaN(id) || seen.has(id)) continue;
-                    seen.add(id);
-                    mintDateOrder.push(id);
-                }
-
-                applyMintedIdList([...mintDateOrder].reverse());
-            }
-        } catch (error) {
-            logError('Error fetching minted tokens:', error);
+        if (ids.length > 0) {
+            applyMintedIdList(ids);
         }
     }, [applyMintedIdList, fetchFromAnyBase]);
+
+    const sortedMintGalleryIds = useMemo(() => {
+        if (mintGallerySort === MINT_GALLERY_SORT.TOKEN_ID) {
+            return [...mintedTokenIds].sort((a, b) => a - b);
+        }
+        return mintedTokenIds;
+    }, [mintedTokenIds, mintGallerySort]);
 
     // Update the useEffect to only call fetchMintedTokens
     useEffect(() => {
@@ -1097,20 +1112,36 @@ function App() {
             <div className="panel-body">
               <section className="gallery">
                 {mintedTokenIds.length > 0 ? (
-                  <div className="gallery-scroll">
-                    <div className="gallery-grid">
-                      {mintedTokenIds.map((id) => (
-                        <MintedGalleryItem
-                          key={id}
-                          id={id}
-                          imageUrl={mintPreviewUrls[id]}
-                          isSelected={String(tokenId) === String(id)}
-                          onSelect={handleTokenSubmit}
-                          onBecomeVisible={handleMintPreviewVisible}
-                        />
-                      ))}
+                  <>
+                    <div className="gallery-toolbar">
+                      <label className="gallery-sort" htmlFor="mint-gallery-sort">
+                        <span className="gallery-sort-label">Sort by</span>
+                        <select
+                          id="mint-gallery-sort"
+                          className="dropdown gallery-sort-select"
+                          value={mintGallerySort}
+                          onChange={(event) => setMintGallerySort(event.target.value)}
+                        >
+                          <option value={MINT_GALLERY_SORT.MINT_DATE}>Mint date</option>
+                          <option value={MINT_GALLERY_SORT.TOKEN_ID}>Token ID</option>
+                        </select>
+                      </label>
                     </div>
-                  </div>
+                    <div className="gallery-scroll">
+                      <div className="gallery-grid">
+                        {sortedMintGalleryIds.map((id) => (
+                          <MintedGalleryItem
+                            key={id}
+                            id={id}
+                            imageUrl={mintPreviewUrls[id]}
+                            isSelected={String(tokenId) === String(id)}
+                            onSelect={handleTokenSubmit}
+                            onBecomeVisible={handleMintPreviewVisible}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </>
                 ) : (
                   <p className="gallery-empty">Loading minted AFAs…</p>
                 )}
