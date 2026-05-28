@@ -1106,42 +1106,49 @@ function App() {
           )}
 
           <details className="panel-group" open>
-            <summary className="panel-summary">
-              Minted AFAs{mintedTokens.size > 0 ? ` (${mintedTokens.size})` : ''}
+            <summary className="panel-summary panel-summary--gallery">
+              <span className="panel-summary-title">
+                Minted AFAs{mintedTokens.size > 0 ? ` (${mintedTokens.size})` : ''}
+              </span>
+              {mintedTokenIds.length > 0 && (
+                <label
+                  className="gallery-sort"
+                  htmlFor="mint-gallery-sort"
+                  onClick={(event) => event.stopPropagation()}
+                  onMouseDown={(event) => event.stopPropagation()}
+                >
+                  <span className="gallery-sort-label">Sort by</span>
+                  <select
+                    id="mint-gallery-sort"
+                    className="dropdown gallery-sort-select"
+                    value={mintGallerySort}
+                    onChange={(event) => setMintGallerySort(event.target.value)}
+                    onClick={(event) => event.stopPropagation()}
+                    onMouseDown={(event) => event.stopPropagation()}
+                  >
+                    <option value={MINT_GALLERY_SORT.MINT_DATE}>Mint date</option>
+                    <option value={MINT_GALLERY_SORT.TOKEN_ID}>Token ID</option>
+                  </select>
+                </label>
+              )}
             </summary>
             <div className="panel-body">
               <section className="gallery">
                 {mintedTokenIds.length > 0 ? (
-                  <>
-                    <div className="gallery-toolbar">
-                      <label className="gallery-sort" htmlFor="mint-gallery-sort">
-                        <span className="gallery-sort-label">Sort by</span>
-                        <select
-                          id="mint-gallery-sort"
-                          className="dropdown gallery-sort-select"
-                          value={mintGallerySort}
-                          onChange={(event) => setMintGallerySort(event.target.value)}
-                        >
-                          <option value={MINT_GALLERY_SORT.MINT_DATE}>Mint date</option>
-                          <option value={MINT_GALLERY_SORT.TOKEN_ID}>Token ID</option>
-                        </select>
-                      </label>
+                  <div className="gallery-scroll">
+                    <div className="gallery-grid">
+                      {sortedMintGalleryIds.map((id) => (
+                        <MintedGalleryItem
+                          key={id}
+                          id={id}
+                          imageUrl={mintPreviewUrls[id]}
+                          isSelected={String(tokenId) === String(id)}
+                          onSelect={handleTokenSubmit}
+                          onBecomeVisible={handleMintPreviewVisible}
+                        />
+                      ))}
                     </div>
-                    <div className="gallery-scroll">
-                      <div className="gallery-grid">
-                        {sortedMintGalleryIds.map((id) => (
-                          <MintedGalleryItem
-                            key={id}
-                            id={id}
-                            imageUrl={mintPreviewUrls[id]}
-                            isSelected={String(tokenId) === String(id)}
-                            onSelect={handleTokenSubmit}
-                            onBecomeVisible={handleMintPreviewVisible}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </>
+                  </div>
                 ) : (
                   <p className="gallery-empty">Loading minted AFAs…</p>
                 )}
