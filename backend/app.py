@@ -694,6 +694,20 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         except FileNotFoundError:
             print(f"File not found for trait_type {trait_type}, value {value}: {image_path}")
 
+    # Custom hat overlays are selected in the editor even when the ape has no Hat trait.
+    if (
+        hat_asset_type in hat_assets
+        and not hat_added
+        and second_asset_type not in ('singe_hoodie', 'singe_hoodie_glow')
+        and club_asset_type != 'dubai'
+    ):
+        try:
+            with Image.open(hat_assets[hat_asset_type]).convert("RGBA") as img:
+                layers['Hat'] = img.copy()
+            hat_added = True
+            print(f"Applied custom hat overlay: {hat_asset_type}")
+        except FileNotFoundError:
+            print(f"Custom hat asset file not found: {hat_assets[hat_asset_type]}")
 
     # Composite base layers (Background, Fur)
     for layer_type in ['Background', 'Fur']: 
