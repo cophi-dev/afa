@@ -8,10 +8,12 @@
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "ethers": "^5.7.2",
+    "gifenc": "^1.0.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.20.1",
     "react-scripts": "5.0.1",
+    "sharp": "^0.34.4",
     "vercel": "^32.7.2",
     "web-vitals": "^2.1.4",
     "env-cmd": "^10.1.0",
@@ -20,6 +22,7 @@
   "scripts": {
     "start": "env-cmd -f .env.development react-scripts start",
     "build": "env-cmd -f .env.production react-scripts build",
+    "generate-favicon": "node scripts/generate-favicon.mjs",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

@@ -2,5 +2,25 @@
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/backend/app" },
     { "source": "/(.*)", "destination": "/frontend/public/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/favicon(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/apple-touch-icon.png",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/favicon-frames/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    }
   ]
 }
