@@ -1,11 +1,15 @@
-from flask import Flask, request, jsonify, send_file, send_from_directory, url_for
+from flask import Flask, request, jsonify, send_file, send_from_directory, url_for, Response
 from flask_cors import CORS
 from PIL import Image
+from html import escape
 import json
 import os
 import urllib.parse
 import urllib.request
 from io import BytesIO
+
+SITE_URL = os.environ.get('SITE_URL', 'https://www.afa-editor.app')
+DEFAULT_OG_IMAGE = f'{SITE_URL}/logo512.png'
 
 app = Flask(__name__, static_folder='public', static_url_path='/')
 
@@ -844,6 +848,54 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
 
     return final_image
     
+
+@app.route('/api/og-preview', methods=['GET'])
+def og_preview():
+    """Minimal HTML with Open Graph tags for social link previews (Discord, Twitter, etc.)."""
+    token_id = normalize_token_id(request.args.get('tokenId'))
+    query_string = request.query_string.decode('utf-8')
+    canonical_url = f'{SITE_URL}/{f"?{query_string}" if query_string else ""}'
+
+    title = 'AFA Editor'
+    description = 'Change your perspective with Ape Facing Apes'
+    og_image = DEFAULT_OG_IMAGE
+    image_width = '512'
+    image_height = '512'
+
+    if token_id:
+        if is_minted(token_id):
+            title = f'AFA #{token_id}'
+            description = f'Customize Ape Facing Apes #{token_id} with new perspectives'
+            og_image = f'{SITE_URL}/api/get-asset?{query_string}' if query_string else f'{SITE_URL}/api/get-asset?tokenId={token_id}&assetType=AFA'
+            image_width = '1000'
+            image_height = '1000'
+        else:
+            title = f'AFA Editor – #{token_id}'
+            description = 'Change your perspective with Ape Facing Apes'
+
+    html = f'''<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>{escape(title)}</title>
+  <meta name="description" content="{escape(description)}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="AFA Editor" />
+  <meta property="og:title" content="{escape(title)}" />
+  <meta property="og:description" content="{escape(description)}" />
+  <meta property="og:url" content="{escape(canonical_url)}" />
+  <meta property="og:image" content="{escape(og_image)}" />
+  <meta property="og:image:width" content="{image_width}" />
+  <meta property="og:image:height" content="{image_height}" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="{escape(title)}" />
+  <meta name="twitter:description" content="{escape(description)}" />
+  <meta name="twitter:image" content="{escape(og_image)}" />
+</head>
+<body></body>
+</html>'''
+    return Response(html, mimetype='text/html; charset=utf-8')
+
 
 @app.route('/api/is-minted', methods=['GET'])
 def check_is_minted():
