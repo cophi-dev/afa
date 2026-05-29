@@ -9,7 +9,8 @@ import urllib.request
 from io import BytesIO
 
 SITE_URL = os.environ.get('SITE_URL', 'https://www.afa-editor.app')
-DEFAULT_OG_IMAGE = f'{SITE_URL}/logo512.png'
+API_URL = os.environ.get('API_URL', 'https://afa-editor.ew.r.appspot.com')
+DEFAULT_OG_IMAGE = f'{SITE_URL}/og-preview.png'
 
 app = Flask(__name__, static_folder='public', static_url_path='/')
 
@@ -859,14 +860,14 @@ def og_preview():
     title = 'AFA Editor'
     description = 'Change your perspective with Ape Facing Apes'
     og_image = DEFAULT_OG_IMAGE
-    image_width = '512'
-    image_height = '512'
+    image_width = '580'
+    image_height = '498'
 
     if token_id:
         if is_minted(token_id):
             title = f'AFA #{token_id}'
             description = f'Customize Ape Facing Apes #{token_id} with new perspectives'
-            og_image = f'{SITE_URL}/api/get-asset?{query_string}' if query_string else f'{SITE_URL}/api/get-asset?tokenId={token_id}&assetType=AFA'
+            og_image = f'{API_URL}/api/get-asset?{query_string}' if query_string else f'{API_URL}/api/get-asset?tokenId={token_id}&assetType=AFA'
             image_width = '1000'
             image_height = '1000'
         else:
