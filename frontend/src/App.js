@@ -4,7 +4,9 @@ import { getAllTransactions, getMintedTokenIdsNewestFirst, checkTokenMintStatus 
 import { debug, error as logError } from './utils/debug';
 
 const DEFAULT_API_URL = 'https://afa-editor.ew.r.appspot.com';
-const CLAIM_URL = 'https://www.apefacingapes.com/claim';
+const MINT_SITE_URL = 'https://www.apefacingapes.com';
+const GRID_VIEW_URL = 'https://afa-progress.com';
+const CLAIM_URL = `${MINT_SITE_URL}/claim`;
 const LOADER_MESSAGES = [
     'Brewing ape magic...',
     'Polishing pixels...',
@@ -21,7 +23,7 @@ const MINT_GALLERY_SORT = {
 function Banner() {
     return (
         <div className="banner">
-            <a href="http://www.apefacingapes.com" target="_blank" rel="noopener noreferrer">
+            <a href={MINT_SITE_URL} target="_blank" rel="noopener noreferrer">
                 <img src="./logo.png" alt="Logo" className="banner-logo" />
             </a>
         </div>
@@ -31,6 +33,14 @@ function Banner() {
 function Footer() {
     return (
         <footer className="footer">
+            <nav className="footer-nav" aria-label="AFA sites">
+                <a href={MINT_SITE_URL} target="_blank" rel="noopener noreferrer">
+                    Mint on apefacingapes.com
+                </a>
+                <a href={GRID_VIEW_URL} target="_blank" rel="noopener noreferrer">
+                    Immersive grid on afa-progress.com
+                </a>
+            </nav>
             <p>© 2024 Ape Facing Apes. All rights reserved.</p>
             <p>© 2024 Yuga Labs, Inc. All marks and assets available are licensed from Yuga Labs, Inc.</p>
         </footer>
