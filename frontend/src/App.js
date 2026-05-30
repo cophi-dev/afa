@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import './App.css';
 import { getAllTransactions, getMintedTokenIdsNewestFirst, checkTokenMintStatus } from './services/etherscanService';
 import { debug, error as logError } from './utils/debug';
+import { Analytics } from '@vercel/analytics/react';
 
 const DEFAULT_API_URL = 'https://afa-editor.ew.r.appspot.com';
 const MINT_SITE_URL = 'https://www.apefacingapes.com';
@@ -1219,6 +1220,7 @@ function App() {
         </button>
     </div> */}
       <Footer />
+      <Analytics />
     </div>
   );
 }
