@@ -1535,13 +1535,20 @@ body {
   margin-inline: auto;
 }
 
+.footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 20px;
+  margin-bottom: 12px;
+}
+
 .footer p {
   margin: 4px 0;
 }
 
 .footer a {
   color: var(--accent-color);
-  margin-left: 6px;
   text-decoration: none;
 }
 
