@@ -1,71 +1,77 @@
-# Getting Started with Create React App
+# AFA Editor
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+**Compose and preview ApeFacingApe (AFA) portraits before you mint.**
 
-## Available Scripts
+Web studio for the [Ape Facing Apes](https://www.apefacingapes.com) collection: pick a BAYC token, layer outfits, hats, eyes, and special sets, render a live preview, and check whether that ape’s AFA is already minted on-chain.
 
-In the project directory, you can run:
+**Live:** [afa-editor.vercel.app](https://afa-editor.vercel.app) · also [afa-editor.app](https://www.afa-editor.app)
 
-### `npm start`
+## Features
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- **Trait studio** — Build an AFA look from selectable layers (outfit, mouth, hat, eyes, hands, extras) with randomize and preset sets (e.g. Vegas).
+- **Live preview** — Server-side compositing via the Python API; animated loader while renders run.
+- **Mint awareness** — Minted gallery synced from chain / API; mint status check per token ID with link to [claim](https://www.apefacingapes.com/claim).
+- **Share previews** — Vercel middleware serves Open Graph HTML for bots (X, Discord, etc.) with composited preview images.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Related projects
 
-### `npm test`
+| Repo | Role |
+|------|------|
+| [afa-minting-progress](https://github.com/cophi-dev/afa-minting-progress) | Full-collection mint progress grid |
+| [nano-bayc](https://github.com/cophi-dev/nano-bayc) | Lightweight BAYC export + mint status |
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Structure
 
-### `npm run build`
+```
+frontend/     React (Create React App) — editor UI, Etherscan helpers
+backend/      Flask — image compositing, trait assets, /api/* routes
+middleware.js Vercel OG / bot HTML for social previews
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Run locally
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Frontend only (points at production API)
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```bash
+cd frontend
+npm install
+cp ../.env.example .env.development
+# Optional: REACT_APP_API_URL=http://localhost:5000
+npm start
+```
 
-### `npm run eject`
+Open [http://localhost:3000](http://localhost:3000).
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Full stack (API + UI)
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```bash
+# Terminal 1 — backend
+cd backend
+pip install -r requirements.txt
+export ETHERSCAN_API_KEY=your_key   # optional, for mint sync
+python3 app.py
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+# Terminal 2 — frontend
+cd frontend
+npm install
+# In .env.development:
+#   REACT_APP_API_URL=http://localhost:5000
+npm start
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Deploy
 
-## Learn More
+- **Frontend + routing:** Vercel (`vercel.json` rewrites `/api/*` to the backend and serves the React build).
+- **Image API:** Google App Engine (`backend/app.yaml`) — default production URL `https://afa-editor.ew.r.appspot.com`.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+Set `REACT_APP_API_URL` and `REACT_APP_ETHERSCAN_API_KEY` in Vercel project settings (see `.env.example`).
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Tech
 
-### Code Splitting
+- React 18, ethers.js, sharp (favicon tooling)
+- Flask, Pillow — compositing and trait pipeline
+- Vercel middleware — OG meta for crawlers
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## Credits
 
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
-# afa
+Built for the Ape Facing Apes community. BAYC marks and assets are used under license from Yuga Labs, Inc.
