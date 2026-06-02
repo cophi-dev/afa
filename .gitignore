@@ -13,6 +13,7 @@ node_modules
 .env.production.local
 frontend/.env.development
 frontend/.env.production
+frontend/.env.production.local
 
 # Local Python venv — never commit
 /env/

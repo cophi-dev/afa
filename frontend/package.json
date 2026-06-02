@@ -21,7 +21,8 @@
   },
   "scripts": {
     "start": "env-cmd -f .env.development react-scripts start",
-    "build": "env-cmd -f .env.production react-scripts build",
+    "build": "react-scripts build",
+    "build:local": "env-cmd -f .env.production react-scripts build",
     "generate-favicon": "node scripts/generate-favicon.mjs",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
