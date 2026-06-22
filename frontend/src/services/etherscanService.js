@@ -6,6 +6,17 @@ if (!ETHERSCAN_API_KEY) {
 }
 
 const CONTRACT_ADDRESS = '0xfAa0e99EF34Eae8b288CFEeAEa4BF4f5B5f2eaE7';
+const ETHERSCAN_V2_BASE = 'https://api.etherscan.io/v2/api';
+const OWNER_OF_SELECTOR = '6352211e';
+
+const buildEtherscanV2Url = (params) => {
+  const query = new URLSearchParams({
+    chainid: '1',
+    apikey: ETHERSCAN_API_KEY,
+    ...params,
+  });
+  return `${ETHERSCAN_V2_BASE}?${query.toString()}`;
+};
 
 export const getMintedTokenIdsNewestFirst = (transactions) => {
   if (!Array.isArray(transactions) || transactions.length === 0) {
@@ -31,19 +42,28 @@ export const getMintedTokenIdsNewestFirst = (transactions) => {
 
 export const getAllTransactions = async () => {
   try {
-      const url = `https://api.etherscan.io/v2/api?module=account&action=tokennfttx&contractaddress=${CONTRACT_ADDRESS}&page=1&offset=10000&startblock=0&endblock=999999999&sort=asc&chainid=1&apikey=${ETHERSCAN_API_KEY}`;
-    
+    const url = buildEtherscanV2Url({
+      module: 'account',
+      action: 'tokennfttx',
+      contractaddress: CONTRACT_ADDRESS,
+      page: '1',
+      offset: '10000',
+      startblock: '0',
+      endblock: '999999999',
+      sort: 'asc',
+    });
+
     debug('Fetching from URL', url);
-    
+
     const response = await fetch(url);
     const data = await response.json();
-    
+
     debug('Etherscan response', data);
-    
+
     if (data.status === '0') {
-      throw new Error(data.message || 'Etherscan API error');
+      throw new Error(data.result || data.message || 'Etherscan API error');
     }
-    
+
     return data.result || [];
   } catch (error) {
     logError('Error fetching transactions:', error);
@@ -72,14 +92,30 @@ export const processNFTStatuses = (transactions) => {
   return nftStatuses;
 };
 
-// Keep this function for individual token checks
+// V1 tokennfttx was deprecated Aug 2025; use V2 eth_call ownerOf for per-token checks.
 export const checkTokenMintStatus = async (tokenId) => {
   try {
-    const url = `https://api.etherscan.io/api?module=token&action=tokennfttx&contractaddress=${CONTRACT_ADDRESS}&tokenid=${tokenId}&apikey=${ETHERSCAN_API_KEY}`;
+    const normalized = String(tokenId || '').replace(/[^0-9]/g, '');
+    if (!normalized) return false;
+
+    const tokenHex = BigInt(normalized).toString(16).padStart(64, '0');
+    const url = buildEtherscanV2Url({
+      module: 'proxy',
+      action: 'eth_call',
+      to: CONTRACT_ADDRESS,
+      data: `0x${OWNER_OF_SELECTOR}${tokenHex}`,
+      tag: 'latest',
+    });
     const response = await fetch(url);
     const data = await response.json();
-    
-    return data.status === '1' && data.result && data.result.length > 0;
+
+    if (data.status === '0') {
+      debug('Etherscan ownerOf check failed', { tokenId: normalized, data });
+      return false;
+    }
+
+    const ownerHex = String(data.result || '');
+    return ownerHex.length >= 42 && ownerHex !== '0x' && !/^0x0+$/i.test(ownerHex);
   } catch (error) {
     logError('Error checking token status:', error);
     return false;
