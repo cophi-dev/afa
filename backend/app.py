@@ -4,6 +4,8 @@ from PIL import Image
 from html import escape
 import json
 import os
+import threading
+import time
 import urllib.parse
 import urllib.request
 from io import BytesIO
@@ -360,6 +362,53 @@ def init_minted_ids():
 
 minted_ids_order, minted_ids = init_minted_ids()
 
+_mint_sync_lock = threading.Lock()
+_last_chain_sync_at = time.time()
+CHAIN_SYNC_COOLDOWN_SECONDS = 60
+
+
+def sync_minted_ids_from_chain(force=False):
+    """Refresh in-memory mint cache from Etherscan when chain has newer mints."""
+    global minted_ids_order, minted_ids, _last_chain_sync_at
+
+    now = time.time()
+    if not force and (now - _last_chain_sync_at) < CHAIN_SYNC_COOLDOWN_SECONDS:
+        return False
+
+    with _mint_sync_lock:
+        now = time.time()
+        if not force and (now - _last_chain_sync_at) < CHAIN_SYNC_COOLDOWN_SECONDS:
+            return False
+
+        chain_mints = fetch_minted_ids_from_chain()
+        _last_chain_sync_at = time.time()
+        if not chain_mints:
+            return False
+
+        chain_order, chain_set = chain_mints
+        if len(chain_set) > len(minted_ids) or force:
+            minted_ids_order = chain_order
+            minted_ids = chain_set
+            print(f"Mint sync updated cache: {len(minted_ids)} tokens")
+            return True
+        return False
+
+
+def reload_minted_ids_from_disk():
+    """Pick up newly added mints from afa_db.json without a server restart."""
+    global minted_ids_order, minted_ids
+    order, id_set = load_minted_ids()
+    if len(id_set) > len(minted_ids):
+        minted_ids_order = order
+        minted_ids = id_set
+        print(f"Mint reload from disk: {len(minted_ids)} tokens")
+        return True
+    return False
+
+
+def refresh_mint_cache(force=False):
+    return sync_minted_ids_from_chain(force=force) or reload_minted_ids_from_disk()
+
 
 def normalize_token_id(token_id):
     if token_id is None:
@@ -372,6 +421,9 @@ def is_minted(token_id):
     normalized = normalize_token_id(token_id)
     if not normalized:
         return False
+    if normalized in minted_ids:
+        return True
+    refresh_mint_cache(force=True)
     return normalized in minted_ids
 
 
@@ -910,6 +962,8 @@ def check_is_minted():
 @app.route('/api/minted-token-ids', methods=['GET'])
 def get_minted_token_ids():
     try:
+        force_refresh = request.args.get('refresh') == '1'
+        refresh_mint_cache(force=force_refresh)
         # JSON append order matches mint chronology; return newest first for the gallery.
         return jsonify(list(reversed(minted_ids_order)))
     except Exception as e:

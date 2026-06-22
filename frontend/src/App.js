@@ -239,10 +239,19 @@ function App() {
         }
 
         loadChainMintIds()
-            .then((chainIds) => {
-                if (chainIds.length > backendCount) {
-                    applyMintedIdList(chainIds);
+            .then(async (chainIds) => {
+                if (chainIds.length <= backendCount) return;
+
+                try {
+                    await fetchFromAnyBase(
+                        '/api/minted-token-ids?refresh=1',
+                        (response) => response.json()
+                    );
+                } catch (error) {
+                    debug('Backend mint cache refresh failed', error);
                 }
+
+                applyMintedIdList(chainIds);
             })
             .catch((error) => {
                 debug('Etherscan mint list background refresh failed', error);
@@ -265,15 +274,26 @@ function App() {
         if (mintPreviewUrlsRef.current[id] || mintPreviewLoadingRef.current.has(id)) return;
 
         mintPreviewLoadingRef.current.add(id);
+        const previewQuery = new URLSearchParams({
+            tokenId: id,
+            assetType: 'AFA'
+        });
+        const fetchPreviewBlob = () => fetchFromAnyBase(
+            `/api/get-asset?${previewQuery.toString()}`,
+            (response) => response.blob()
+        );
+
         try {
-            const queryParams = new URLSearchParams({
-                tokenId: id,
-                assetType: 'AFA'
-            });
-            const blob = await fetchFromAnyBase(
-                `/api/get-asset?${queryParams.toString()}`,
-                (response) => response.blob()
-            );
+            let blob;
+            try {
+                blob = await fetchPreviewBlob();
+            } catch (error) {
+                await fetchFromAnyBase(
+                    '/api/minted-token-ids?refresh=1',
+                    (response) => response.json()
+                );
+                blob = await fetchPreviewBlob();
+            }
             const url = URL.createObjectURL(blob);
             mintPreviewUrlsRef.current[id] = url;
             setMintPreviewUrls((prev) => ({ ...prev, [id]: url }));
@@ -324,10 +344,21 @@ function App() {
         // Start fade-out effect
       setFade('fade-out');
 
-        fetchFromAnyBase(
+        const fetchAssetBlob = () => fetchFromAnyBase(
             `/api/get-asset?${queryParams.toString()}`,
             (response) => response.blob()
-        )
+        );
+
+        const refreshMintCache = () => fetchFromAnyBase(
+            '/api/minted-token-ids?refresh=1',
+            (response) => response.json()
+        );
+
+        fetchAssetBlob()
+        .catch(async (error) => {
+            await refreshMintCache();
+            return fetchAssetBlob();
+        })
         .then(blob => {
             if (requestId !== activeRenderRequestRef.current) return;
             const newImageUrl = URL.createObjectURL(blob);
@@ -352,10 +383,16 @@ function App() {
         });
     
         // Fetch background color separately
-        fetchFromAnyBase(
+        const fetchBackgroundColor = () => fetchFromAnyBase(
             `/api/get-background-color?tokenId=${newTokenId}`,
             (response) => response.json()
-        )
+        );
+
+        fetchBackgroundColor()
+        .catch(async () => {
+            await refreshMintCache();
+            return fetchBackgroundColor();
+        })
         .then(data => {
             if (requestId !== activeRenderRequestRef.current) return;
             const bgColor = `rgb(${data.background_color[0]}, ${data.background_color[1]}, ${data.background_color[2]})`;
