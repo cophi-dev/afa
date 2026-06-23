@@ -98,7 +98,7 @@ export const checkTokenMintStatus = async (tokenId) => {
     const normalized = String(tokenId || '').replace(/[^0-9]/g, '');
     if (!normalized) return false;
 
-    const tokenHex = BigInt(normalized).toString(16).padStart(64, '0');
+    const tokenHex = parseInt(normalized, 10).toString(16).padStart(64, '0');
     const url = buildEtherscanV2Url({
       module: 'proxy',
       action: 'eth_call',
