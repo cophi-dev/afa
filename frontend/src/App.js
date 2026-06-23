@@ -140,6 +140,7 @@ function App() {
     const [mintPreviewUrls, setMintPreviewUrls] = useState({});
     const [isCheckingMint, setIsCheckingMint] = useState(false);
     const [unmintedTokenId, setUnmintedTokenId] = useState('');
+    const [syncPendingTokenId, setSyncPendingTokenId] = useState('');
     const suggestionsRef = useRef(null);
     const activeRenderRequestRef = useRef(0);
     const mintPreviewLoadingRef = useRef(new Set());
@@ -361,6 +362,7 @@ function App() {
         })
         .then(blob => {
             if (requestId !== activeRenderRequestRef.current) return;
+            setSyncPendingTokenId('');
             const newImageUrl = URL.createObjectURL(blob);
     
             // Update the image URL after fade-out transition
@@ -372,9 +374,27 @@ function App() {
     
             setShowLoader(false);
         })
-        .catch(error => {
+        .catch(async (error) => {
             if (requestId !== activeRenderRequestRef.current) return;
+
+            let chainMinted = false;
+            try {
+                chainMinted = await checkTokenMintStatus(String(newTokenId));
+            } catch (verifyError) {
+                debug('On-chain mint re-check failed', { tokenId: newTokenId, verifyError });
+            }
+
+            if (chainMinted) {
+                setUnmintedTokenId('');
+                setSyncPendingTokenId(String(newTokenId));
+                setShowLoader(false);
+                setFade('fade-in');
+                logError('Asset fetch failed but token is minted on-chain; backend may be out of sync', error);
+                return;
+            }
+
             logError('Error fetching asset:', error);
+            setSyncPendingTokenId('');
             setCurrentImageUrl('./overview.gif');
             setTokenId('');
             setUnmintedTokenId(String(newTokenId));
@@ -495,6 +515,7 @@ function App() {
 
         setIsCheckingMint(true);
         setUnmintedTokenId('');
+        setSyncPendingTokenId('');
         setTokenInput(value);
 
         const minted = await verifyTokenMinted(value);
@@ -511,6 +532,7 @@ function App() {
 
         resetTraitSelections();
         setUnmintedTokenId('');
+        setSyncPendingTokenId('');
         setTokenId(value);
         setShowSuggestions(false);
         return true;
@@ -722,6 +744,17 @@ function App() {
               )}
             </div>
           </div>
+
+          {syncPendingTokenId && (
+            <div className="claim-prompt" role="alert">
+              <p className="claim-prompt-title">
+                AFA #{syncPendingTokenId} is minted, but preview is unavailable
+              </p>
+              <p className="claim-prompt-copy">
+                The editor confirmed this token on-chain, but the image server has not synced yet. Try again in a minute or contact support if this persists.
+              </p>
+            </div>
+          )}
 
           {unmintedTokenId && (
             <div className="claim-prompt" role="alert">

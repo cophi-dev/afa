@@ -295,6 +295,16 @@ CONTRACT_ADDRESS = '0xfAa0e99EF34Eae8b288CFEeAEa4BF4f5B5f2eaE7'
 ETHERSCAN_API_KEY = os.environ.get('ETHERSCAN_API_KEY', '')
 ETHERSCAN_V2_BASE = 'https://api.etherscan.io/v2/api'
 OWNER_OF_SELECTOR = '6352211e'
+DEFAULT_ETH_RPC_URLS = [
+    'https://ethereum-rpc.publicnode.com',
+    'https://eth.drpc.org',
+    'https://1rpc.io/eth',
+]
+ETH_RPC_URLS = [
+    url.strip()
+    for url in [os.environ.get('ETH_RPC_URL', ''), *DEFAULT_ETH_RPC_URLS]
+    if url and url.strip()
+]
 
 
 def load_minted_ids():
@@ -412,10 +422,52 @@ def refresh_mint_cache(force=False):
     return sync_minted_ids_from_chain(force=force) or reload_minted_ids_from_disk()
 
 
+def check_token_minted_on_chain_via_rpc(token_id):
+    """Check mint status via public Ethereum JSON-RPC (ownerOf)."""
+    normalized = normalize_token_id(token_id)
+    if not normalized:
+        return False
+
+    token_hex = hex(int(normalized))[2:].zfill(64)
+    payload = json.dumps({
+        'jsonrpc': '2.0',
+        'method': 'eth_call',
+        'params': [{
+            'to': CONTRACT_ADDRESS,
+            'data': f'0x{OWNER_OF_SELECTOR}{token_hex}',
+        }, 'latest'],
+        'id': 1,
+    }).encode()
+
+    for rpc_url in ETH_RPC_URLS:
+        try:
+            request = urllib.request.Request(
+                rpc_url,
+                data=payload,
+                headers={
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'afa-editor/1.0',
+                },
+            )
+            with urllib.request.urlopen(request, timeout=10) as response:
+                data = json.load(response)
+
+            if data.get('error'):
+                continue
+
+            owner_hex = str(data.get('result') or '')
+            if len(owner_hex) >= 42 and owner_hex != '0x' and owner_hex.lower().strip('0x') != '':
+                return True
+        except Exception as error:
+            print(f'RPC mint check failed via {rpc_url} for {normalized}: {error}')
+
+    return False
+
+
 def check_token_minted_via_eth_call(token_id):
     """Check a single token via Etherscan V2 proxy eth_call (ownerOf)."""
     if not ETHERSCAN_API_KEY:
-        return False
+        return check_token_minted_on_chain_via_rpc(token_id)
 
     normalized = normalize_token_id(token_id)
     if not normalized:
@@ -438,13 +490,13 @@ def check_token_minted_via_eth_call(token_id):
             data = json.load(response)
         if data.get('status') == '0':
             print(f"Etherscan ownerOf check failed for {normalized}: {data.get('result') or data.get('message')}")
-            return False
+            return check_token_minted_on_chain_via_rpc(normalized)
 
         owner_hex = str(data.get('result') or '')
         return len(owner_hex) >= 42 and owner_hex != '0x' and owner_hex.lower().strip('0x') != ''
     except Exception as error:
         print(f"Etherscan ownerOf check error for {token_id}: {error}")
-        return False
+        return check_token_minted_on_chain_via_rpc(normalized)
 
 
 def remember_minted_token(token_id):
