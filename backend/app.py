@@ -245,41 +245,47 @@ color_map = {
     "Yellow": (180, 180, 137, 0.4)
 }
 
+def resolve_asset_path(path):
+    """Resolve asset paths on case-sensitive filesystems (e.g. head_zombie.PNG vs .png)."""
+    if os.path.isfile(path):
+        return path
+    directory, filename = os.path.split(path)
+    if not directory or not os.path.isdir(directory):
+        return path
+    target = filename.lower()
+    for entry in os.listdir(directory):
+        if entry.lower() == target:
+            return os.path.join(directory, entry)
+    return path
+
 def get_image_file(trait_type, value):
     if value in special_assets:
         path = special_assets[value]
         print(f"Accessing special asset: {path}")
-        return path
     elif value in mouth_assets:
         path = mouth_assets[value]
         print(f"Accessing mouth asset: {path}")
-        return path
     elif value in eyes_assets:
         path = eyes_assets[value]
         print(f"Accessing eyes asset: {path}")
-        return path
     elif value in hat_assets:
         path = hat_assets[value]
         print(f"Accessing hat asset: {path}")
-        return path
     elif value in club_assets:
         path = club_assets[value]
         print(f"Accessing club asset: {path}")
-        return path
     elif value in additional_assets:
         path = additional_assets[value]
         print(f"Accessing selfie asset: {path}")
-        return path
     elif value:
         path = os.path.join(base_dir, trait_type, f"{value}.png")
-        return path
     else:
         path = os.path.join(base_dir, "_blank.png")
         print(f"Accessing fallback asset: {path}")
-        return path
+    return resolve_asset_path(path)
     
 def add_asset(image, asset_type, asset_dict):
-    asset_path = asset_dict.get(asset_type, os.path.join(base_dir, '_blank.png'))
+    asset_path = resolve_asset_path(asset_dict.get(asset_type, os.path.join(base_dir, '_blank.png')))
     try:
         with Image.open(asset_path).convert("RGBA") as asset_image:
             # All images are already properly sized at 1000x1000
@@ -729,7 +735,10 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     # --- Determine the definitive Clothes path BEFORE the loop --- START
     original_clothes_value = next((attr["value"] for attr in attributes if attr["trait_type"] == "Clothes"), None)
 
-    if second_asset_type == 'naked':
+    if third_asset_type == 'selfie':
+        determined_clothes_path = additional_assets.get('selfie')
+        print(f"Clothes determined: Selfie mode - no clothes ({determined_clothes_path})")
+    elif second_asset_type == 'naked':
         determined_clothes_path = special_assets.get('naked')
         print(f"Clothes determined: Naked ({determined_clothes_path})")
     elif second_asset_type in special_assets:
@@ -848,11 +857,12 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         else:
             image_path = get_image_file(trait_type, value)
 
+        resolved_path = resolve_asset_path(image_path)
         try:
-            with Image.open(image_path).convert("RGBA") as img:
+            with Image.open(resolved_path).convert("RGBA") as img:
                 layers[trait_type] = img.copy()
         except FileNotFoundError:
-            print(f"File not found for trait_type {trait_type}, value {value}: {image_path}")
+            print(f"File not found for trait_type {trait_type}, value {value}: {resolved_path}")
 
     # Custom hat overlays are selected in the editor even when the ape has no Hat trait.
     if (
@@ -861,13 +871,14 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         and second_asset_type not in ('singe_hoodie', 'singe_hoodie_glow')
         and club_asset_type != 'dubai'
     ):
+        hat_path = resolve_asset_path(hat_assets[hat_asset_type])
         try:
-            with Image.open(hat_assets[hat_asset_type]).convert("RGBA") as img:
+            with Image.open(hat_path).convert("RGBA") as img:
                 layers['Hat'] = img.copy()
             hat_added = True
             print(f"Applied custom hat overlay: {hat_asset_type}")
         except FileNotFoundError:
-            print(f"Custom hat asset file not found: {hat_assets[hat_asset_type]}")
+            print(f"Custom hat asset file not found: {hat_path}")
 
     # Composite base layers (Background, Fur)
     for layer_type in ['Background', 'Fur']: 
@@ -876,14 +887,14 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
 
     # --- Explicitly composite the determined Clothes layer --- START
     if determined_clothes_path:
+        resolved_clothes_path = resolve_asset_path(determined_clothes_path)
         try:
-            # print(f"Compositing determined clothes: {determined_clothes_path}") # Optional: Keep if needed
-            with Image.open(determined_clothes_path).convert("RGBA") as img:
+            with Image.open(resolved_clothes_path).convert("RGBA") as img:
                  final_image.alpha_composite(img, (0, 0))
         except FileNotFoundError:
-             print(f"Clothes file not found during explicit composite: {determined_clothes_path}")
+             print(f"Clothes file not found during explicit composite: {resolved_clothes_path}")
         except Exception as e:
-            print(f"Error compositing determined clothes {determined_clothes_path}: {e}")
+            print(f"Error compositing determined clothes {resolved_clothes_path}: {e}")
     # --- Explicitly composite the determined Clothes layer --- END
 
     # Composite remaining layers (Eyes, Earring, Hat, Mouth) 
