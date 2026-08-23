@@ -568,7 +568,15 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     if not ape:
         print(f"No ape found with id: {ape_id}")
         return None
-        
+
+    # Selfie mode: ignore all overlay params, show only native head with original traits
+    if third_asset_type == 'selfie':
+        asset_type = ''
+        second_asset_type = ''
+        mouth_asset_type = ''
+        hat_asset_type = ''
+        eyes_asset_type = ''
+        print(f"Selfie mode: clearing overlay params for ape {ape_id}")
 
     attributes = ape["metadata"]["attributes"]
     final_image = Image.new("RGBA", (1000, 1000), (255, 255, 255, 0))

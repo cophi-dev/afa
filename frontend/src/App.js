@@ -632,13 +632,16 @@ function App() {
         const handOptions = getAvailableOptions(handRef);
         const extraOptions = getAvailableOptions(extraRef);
 
-        // Set random values (only if options are available)
-        const newSecondAsset = outfitOptions.length ? getRandomItem(outfitOptions) : '';
-        const newMouthAsset = mouthOptions.length ? getRandomItem(mouthOptions) : '';
-        const newHatAsset = hatOptions.length ? getRandomItem(hatOptions) : '';
-        const newEyesAsset = eyesOptions.length ? getRandomItem(eyesOptions) : '';
-        const newSelectedAsset = handOptions.length ? getRandomItem(handOptions) : '';
+        // Pick random extra first to check if it's selfie
         const newThirdAsset = extraOptions.length ? getRandomItem(extraOptions) : '';
+
+        // If selfie is picked, clear all overlays; selfie shows only native head
+        const isSelfie = newThirdAsset === 'selfie';
+        const newSecondAsset = isSelfie ? '' : (outfitOptions.length ? getRandomItem(outfitOptions) : '');
+        const newMouthAsset = isSelfie ? '' : (mouthOptions.length ? getRandomItem(mouthOptions) : '');
+        const newHatAsset = isSelfie ? '' : (hatOptions.length ? getRandomItem(hatOptions) : '');
+        const newEyesAsset = isSelfie ? '' : (eyesOptions.length ? getRandomItem(eyesOptions) : '');
+        const newSelectedAsset = isSelfie ? '' : (handOptions.length ? getRandomItem(handOptions) : '');
 
         // Update states
         setSecondAsset(newSecondAsset);
@@ -919,7 +922,6 @@ function App() {
                                 <option value="btc_hoodie">BTC Hoodie</option>
                                 <option value="jacket">Jacket</option>
                                 <option value="blazer">Blazer</option>
-                                <option value="cool_hat">Cool Hat</option>
                             </select>
                             <button 
                                 className="dropdown-arrow" 
