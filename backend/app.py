@@ -989,14 +989,11 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         except Exception as e:
             print(f"Error applying vintage frame: {e}")
 
-    # Check if 'small_ape' is selected
     if third_asset_type == 'small_ape':
-        # Create ape-only image (without background) by compositing all non-bg layers
         ape_only = Image.new("RGBA", (1000, 1000), (255, 255, 255, 0))
         for layer_type in ['Fur', 'Eyes', 'Earring', 'Hat', 'Mouth']:
             if layer_type in layers:
                 ape_only.alpha_composite(layers[layer_type], (0, 0))
-        # Also add clothes if present
         if determined_clothes_path:
             try:
                 with Image.open(resolve_asset_path(determined_clothes_path)).convert("RGBA") as clothes_img:
@@ -1004,23 +1001,23 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             except FileNotFoundError:
                 pass
 
-        # Scale ape to ~50% for readability, use LANCZOS for quality
-        scale_factor = 0.5
-        resized_width = int(ape_only.width * scale_factor)
-        resized_height = int(ape_only.height * scale_factor)
-        try:
-            resized_ape = ape_only.resize((resized_width, resized_height), Image.Resampling.LANCZOS)
-        except AttributeError:
-            resized_ape = ape_only.resize((resized_width, resized_height), Image.LANCZOS)
+        bbox = ape_only.getbbox()
+        if bbox:
+            ape_only = ape_only.crop(bbox)
+        target_h = 340
+        scale = target_h / ape_only.height
+        resized_width = max(1, int(ape_only.width * scale))
+        resized_height = max(1, int(ape_only.height * scale))
+        resample = getattr(Image, 'Resampling', Image).LANCZOS
+        resized_ape = ape_only.resize((resized_width, resized_height), resample)
 
-        # Create final canvas with full-size background, then paste scaled ape
-        final_image = Image.new("RGBA", (1000, 1000), (255, 255, 255, 0))
+        canvas = Image.new("RGBA", (1000, 1000), (255, 255, 255, 0))
         if 'Background' in layers:
-            final_image.alpha_composite(layers['Background'], (0, 0))
-        # Position at bottom center with padding
-        position_x = (final_image.width - resized_width) // 2
-        position_y = final_image.height - resized_height - 20  # 20px padding from bottom
-        final_image.paste(resized_ape, (position_x, position_y), resized_ape)
+            canvas.alpha_composite(layers['Background'], (0, 0))
+        position_x = (canvas.width - resized_width) // 2
+        position_y = canvas.height - resized_height
+        canvas.paste(resized_ape, (position_x, position_y), resized_ape)
+        final_image = canvas
 
 
     return final_image
