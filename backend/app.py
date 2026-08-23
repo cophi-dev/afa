@@ -872,12 +872,11 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             print(f"Error compositing determined clothes {resolved_clothes_path}: {e}")
     # --- Explicitly composite the determined Clothes layer --- END
 
-    # Composite remaining layers (Eyes, Earring, Hat, Mouth)
-    # Skip these layers for selfie mode since selfie only shows the head cutout
-    if third_asset_type != 'selfie':
-        for layer_type in ['Eyes', 'Earring', 'Hat', 'Mouth']:
-            if layer_type in layers:
-                final_image.alpha_composite(layers[layer_type], (0, 0))
+    # Composite remaining layers (Eyes, Earring, Hat, Mouth).
+    # Selfie still needs these (horns, eyes). Only clothes are skipped above.
+    for layer_type in ['Eyes', 'Earring', 'Hat', 'Mouth']:
+        if layer_type in layers:
+            final_image.alpha_composite(layers[layer_type], (0, 0))
 
  
 
