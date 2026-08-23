@@ -157,10 +157,7 @@ function App() {
   useEffect(() => {
         if (thirdAsset === 'selfie') {
             setSecondAsset('');
-            setMouthAsset('');
             setSelectedAsset('');
-            setHatAsset('');
-            setEyesAsset('');
         }
     }, [thirdAsset]);
     
@@ -475,10 +472,7 @@ function App() {
     
         if (newThirdAsset === 'selfie') {
             setSecondAsset('');
-            setMouthAsset('');
             setSelectedAsset('');
-            setHatAsset('');
-            setEyesAsset('');
         }
     };
     const handleAssetChange = event => {
@@ -635,12 +629,11 @@ function App() {
         // Pick random extra first to check if it's selfie
         const newThirdAsset = extraOptions.length ? getRandomItem(extraOptions) : '';
 
-        // If selfie is picked, clear all overlays; selfie shows only native head
         const isSelfie = newThirdAsset === 'selfie';
         const newSecondAsset = isSelfie ? '' : (outfitOptions.length ? getRandomItem(outfitOptions) : '');
-        const newMouthAsset = isSelfie ? '' : (mouthOptions.length ? getRandomItem(mouthOptions) : '');
-        const newHatAsset = isSelfie ? '' : (hatOptions.length ? getRandomItem(hatOptions) : '');
-        const newEyesAsset = isSelfie ? '' : (eyesOptions.length ? getRandomItem(eyesOptions) : '');
+        const newMouthAsset = mouthOptions.length ? getRandomItem(mouthOptions) : '';
+        const newHatAsset = hatOptions.length ? getRandomItem(hatOptions) : '';
+        const newEyesAsset = eyesOptions.length ? getRandomItem(eyesOptions) : '';
         const newSelectedAsset = isSelfie ? '' : (handOptions.length ? getRandomItem(handOptions) : '');
 
         // Update states
@@ -955,7 +948,7 @@ function App() {
                                 value={mouthAsset} 
                                 onChange={handleMouthAssetChange} 
                                 className="dropdown" 
-                                disabled={thirdAsset === 'selfie' || clubAsset === 'elite'}
+                                disabled={clubAsset === 'elite'}
                             >
                                 <option value="">Select</option>
                                 <option value="apechain_grin">Apechain Grin</option>
@@ -989,7 +982,7 @@ function App() {
                                 value={hatAsset} 
                                 onChange={handleHatAssetChange} 
                                 className="dropdown" 
-                                disabled={thirdAsset === 'selfie' || clubAsset || secondAsset === 'singe_hoodie_glow' || secondAsset === 'singe_hoodie'}
+                                disabled={clubAsset || secondAsset === 'singe_hoodie_glow' || secondAsset === 'singe_hoodie'}
                             >
                                 <option value="">Select</option>
                                 <option value="vegas">Vegas BAYC</option>
@@ -1030,7 +1023,7 @@ function App() {
                                 value={eyesAsset} 
                                 onChange={handleEyesAssetChange} 
                                 className="dropdown" 
-                                disabled={thirdAsset === 'selfie' || clubAsset === 'elite'}
+                                disabled={clubAsset === 'elite'}
                             >
                                 <option value="">Select</option>
                                 <option value="vegas">Vegas BAYC</option>
