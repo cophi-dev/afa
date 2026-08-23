@@ -591,26 +591,6 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     eyes_added = False
     frame_selected = third_asset_type == 'vintage_frame'
 
-    # Conditions for specific types of 'big_smile'
-    has_black_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Black" for attr in attributes)
-    has_blue_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Blue" for attr in attributes)
-    has_brown_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Brown" for attr in attributes)
-    has_cheetah_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Cheetah" for attr in attributes)
-    has_cream_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Cream" for attr in attributes)
-    has_dark_brown_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Dark Brown" for attr in attributes)
-    has_death_bot_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Death Bot" for attr in attributes)
-    has_dmt_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Dmt" for attr in attributes)
-    has_golden_brown_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Golden Brown" for attr in attributes)
-    has_gray_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Gray" for attr in attributes)
-    has_noise_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Noise" for attr in attributes)
-    has_pink_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Pink" for attr in attributes)
-    has_red_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Red" for attr in attributes)
-    has_robot_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Robot" for attr in attributes)
-    has_solid_gold_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Solid Gold" for attr in attributes)
-    has_tan_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Tan" for attr in attributes)
-    has_trippy_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Trippy" for attr in attributes)
-    has_white_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "White" for attr in attributes)
-    has_zombie_fur = any(attr["trait_type"] == "Fur" and attr["value"] == "Zombie" for attr in attributes)
     has_blue_beams = any(attr["trait_type"] == "Eyes" and attr["value"] == "Blue Beams" for attr in attributes)
         
     has_multicolor_smile = any(attr["trait_type"] == "Mouth" and attr["value"] == "Grin Multicolored" for attr in attributes)
@@ -668,64 +648,55 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     if has_unshaven_mouth:
         apechain_grin = 'apechain_grin_unshaven'
     
+    # Map fur values to head and hoodie assets
+    fur_to_head_map = {
+        'Black': ('head_black', 'hoodie_black'),
+        'Blue': ('head_blue', 'hoodie_blue'),
+        'Brown': ('head_brown', 'hoodie_brown'),
+        'Cheetah': ('head_cheetah', 'hoodie_brown'),
+        'Cream': ('head_cream', 'hoodie_cream'),
+        'Dark Brown': ('head_dark_brown', 'hoodie_dark_brown'),
+        'Death Bot': ('head_death_bot', 'hoodie_death_bot'),
+        'Dmt': ('head_dmt', 'hoodie_dmt'),
+        'DMT': ('head_dmt', 'hoodie_dmt'),
+        'Golden Brown': ('head_golden_brown', 'hoodie_golden_brown'),
+        'Gray': ('head_gray', 'hoodie_gray'),
+        'Noise': ('head_noise', 'hoodie_noise'),
+        'Pink': ('head_pink', 'hoodie_pink'),
+        'Red': ('head_red', 'hoodie_red'),
+        'Robot': ('head_robot', 'hoodie_robot'),
+        'Solid Gold': ('head_solid_gold', 'hoodie_solid_gold'),
+        'Tan': ('head_tan', 'hoodie_tan'),
+        'Trippy': ('head_trippy', 'hoodie_trippy'),
+        'White': ('head_white', 'hoodie_white'),
+        'Zombie': ('head_zombie', 'hoodie_zombie'),
+    }
+    
+    # Get the fur value from attributes
+    fur_value = next((attr["value"] for attr in attributes if attr["trait_type"] == "Fur"), None)
+    
+    # Look up head and hoodie assets, with case-insensitive fallback
     specific_head = None
-    if has_black_fur:
-        specific_head = 'head_black'
-        hoodie_head = 'hoodie_black'
-    elif has_blue_fur:
-        specific_head = 'head_blue'
-        hoodie_head = 'hoodie_blue'
-    elif has_brown_fur:
-        specific_head = 'head_brown'
-        hoodie_head = 'hoodie_brown'
-    elif has_cheetah_fur:
-        specific_head = 'head_cheetah'
-        hoodie_head = 'hoodie_brown'
-    elif has_cream_fur:
-        specific_head = 'head_cream'
-        hoodie_head = 'hoodie_cream'
-    elif has_dark_brown_fur:
-        specific_head = 'head_dark_brown'
-        hoodie_head = 'hoodie_dark_brown'
-    elif has_death_bot_fur:
-        specific_head = 'head_death_bot'
-        hoodie_head = 'hoodie_death_bot'
-    elif has_dmt_fur:
-        specific_head = 'head_dmt'
-        hoodie_head = 'hoodie_dmt'
-    elif has_golden_brown_fur:
-        specific_head = 'head_golden_brown'
-        hoodie_head = 'hoodie_golden_brown'
-    elif has_gray_fur:
-        specific_head = 'head_gray'
-        hoodie_head = 'hoodie_gray'
-    elif has_noise_fur:
-        specific_head = 'head_noise'
-        hoodie_head = 'hoodie_noise'
-    elif has_pink_fur:
-        specific_head = 'head_pink'
-        hoodie_head = 'hoodie_pink'
-    elif has_red_fur:
-        specific_head = 'head_red'
-        hoodie_head = 'hoodie_red'
-    elif has_robot_fur:
-        specific_head = 'head_robot'
-        hoodie_head = 'hoodie_robot'
-    elif has_solid_gold_fur:
-        specific_head = 'head_solid_gold'
-        hoodie_head = 'hoodie_solid_gold'
-    elif has_tan_fur:
-        specific_head = 'head_tan'
-        hoodie_head = 'hoodie_tan'
-    elif has_trippy_fur:
-        specific_head = 'head_trippy'
-        hoodie_head = 'hoodie_trippy'
-    elif has_white_fur:
-        specific_head = 'head_white'
-        hoodie_head = 'hoodie_white'
-    elif has_zombie_fur:
-        specific_head = 'head_zombie'
-        hoodie_head = 'hoodie_zombie'
+    hoodie_head = None
+    
+    if fur_value:
+        if fur_value in fur_to_head_map:
+            specific_head, hoodie_head = fur_to_head_map[fur_value]
+        else:
+            # Case-insensitive fallback
+            fur_value_lower = fur_value.lower()
+            for key, (head, hoodie) in fur_to_head_map.items():
+                if key.lower() == fur_value_lower:
+                    specific_head, hoodie_head = head, hoodie
+                    print(f"Fur value '{fur_value}' matched via case-insensitive lookup to '{key}'")
+                    break
+        
+        if specific_head is None:
+            print(f"Warning: Unknown fur type '{fur_value}' for ape {ape_id}, selfie head may not display correctly")
+    
+    # Legacy boolean flags for backward compatibility with other code paths
+    has_robot_fur = fur_value in ('Robot',)
+    has_death_bot_fur = fur_value in ('Death Bot',)
 
 
     specific_tree = None
@@ -897,10 +868,12 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             print(f"Error compositing determined clothes {resolved_clothes_path}: {e}")
     # --- Explicitly composite the determined Clothes layer --- END
 
-    # Composite remaining layers (Eyes, Earring, Hat, Mouth) 
-    for layer_type in ['Eyes', 'Earring', 'Hat', 'Mouth']:
-        if layer_type in layers:
-            final_image.alpha_composite(layers[layer_type], (0, 0))
+    # Composite remaining layers (Eyes, Earring, Hat, Mouth)
+    # Skip these layers for selfie mode since selfie only shows the head cutout
+    if third_asset_type != 'selfie':
+        for layer_type in ['Eyes', 'Earring', 'Hat', 'Mouth']:
+            if layer_type in layers:
+                final_image.alpha_composite(layers[layer_type], (0, 0))
 
  
 

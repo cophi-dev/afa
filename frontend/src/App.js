@@ -159,6 +159,8 @@ function App() {
             setSecondAsset('');
             setMouthAsset('');
             setSelectedAsset('');
+            setHatAsset('');
+            setEyesAsset('');
         }
     }, [thirdAsset]);
     
@@ -474,7 +476,9 @@ function App() {
         if (newThirdAsset === 'selfie') {
             setSecondAsset('');
             setMouthAsset('');
-            setSelectedAsset('');    
+            setSelectedAsset('');
+            setHatAsset('');
+            setEyesAsset('');
         }
     };
     const handleAssetChange = event => {
@@ -949,7 +953,7 @@ function App() {
                                 value={mouthAsset} 
                                 onChange={handleMouthAssetChange} 
                                 className="dropdown" 
-                                disabled={clubAsset === 'elite'}
+                                disabled={thirdAsset === 'selfie' || clubAsset === 'elite'}
                             >
                                 <option value="">Select</option>
                                 <option value="apechain_grin">Apechain Grin</option>
@@ -983,7 +987,7 @@ function App() {
                                 value={hatAsset} 
                                 onChange={handleHatAssetChange} 
                                 className="dropdown" 
-                                disabled={clubAsset || secondAsset === 'singe_hoodie_glow' || secondAsset === 'singe_hoodie'}
+                                disabled={thirdAsset === 'selfie' || clubAsset || secondAsset === 'singe_hoodie_glow' || secondAsset === 'singe_hoodie'}
                             >
                                 <option value="">Select</option>
                                 <option value="vegas">Vegas BAYC</option>
@@ -1024,7 +1028,7 @@ function App() {
                                 value={eyesAsset} 
                                 onChange={handleEyesAssetChange} 
                                 className="dropdown" 
-                                disabled={clubAsset === 'elite'}
+                                disabled={thirdAsset === 'selfie' || clubAsset === 'elite'}
                             >
                                 <option value="">Select</option>
                                 <option value="vegas">Vegas BAYC</option>
