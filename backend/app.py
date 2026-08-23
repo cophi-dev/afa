@@ -917,13 +917,23 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         except FileNotFoundError:
             print(f"File not found for Crazy Left Eye: {hoodie_path}")
 
-    if has_blue_beams:
+    # Blue Beams special overlay: only apply if no custom eyes are selected
+    if has_blue_beams and not eyes_asset_type:
         blue_beams_path = os.path.join(base_dir, "Special Cases/Eyes/Blue Beams.png")
         try:
             with Image.open(blue_beams_path).convert("RGBA") as blue_beams:
                 final_image.alpha_composite(blue_beams, (0, 0))
         except FileNotFoundError:
             print(f"File not found for Blue Beams: {blue_beams_path}")
+        
+        # Re-composite custom hat after blue beams so it's not buried
+        if hat_asset_type in hat_assets:
+            hat_path = resolve_asset_path(hat_assets[hat_asset_type])
+            try:
+                with Image.open(hat_path).convert("RGBA") as hat_img:
+                    final_image.alpha_composite(hat_img, (0, 0))
+            except FileNotFoundError:
+                pass
 
     # Composite all the layers onto the final image
     for layer_type in ['Mouth']:
@@ -981,19 +991,35 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
 
     # Check if 'small_ape' is selected
     if third_asset_type == 'small_ape':
-        # Resize logic for the ape image
-        scale_factor = 0.3  # Example scale factor
-        resized_width = int(final_image.width * scale_factor)
-        resized_height = int(final_image.height * scale_factor)
-        resized_ape = final_image.resize((resized_width, resized_height), Image.ANTIALIAS)
-
-        # Create a new canvas and place the resized ape in the center
-        final_image = Image.new("RGBA", (1000, 1000), (255, 255, 255, 0))
-        position_x = (final_image.width - resized_width) // 2
-        position_y = (final_image.height - resized_height)
-        for layer_type in ['Background']:
+        # Create ape-only image (without background) by compositing all non-bg layers
+        ape_only = Image.new("RGBA", (1000, 1000), (255, 255, 255, 0))
+        for layer_type in ['Fur', 'Eyes', 'Earring', 'Hat', 'Mouth']:
             if layer_type in layers:
-                final_image.alpha_composite(layers[layer_type], (0, 0))
+                ape_only.alpha_composite(layers[layer_type], (0, 0))
+        # Also add clothes if present
+        if determined_clothes_path:
+            try:
+                with Image.open(resolve_asset_path(determined_clothes_path)).convert("RGBA") as clothes_img:
+                    ape_only.alpha_composite(clothes_img, (0, 0))
+            except FileNotFoundError:
+                pass
+
+        # Scale ape to ~50% for readability, use LANCZOS for quality
+        scale_factor = 0.5
+        resized_width = int(ape_only.width * scale_factor)
+        resized_height = int(ape_only.height * scale_factor)
+        try:
+            resized_ape = ape_only.resize((resized_width, resized_height), Image.Resampling.LANCZOS)
+        except AttributeError:
+            resized_ape = ape_only.resize((resized_width, resized_height), Image.LANCZOS)
+
+        # Create final canvas with full-size background, then paste scaled ape
+        final_image = Image.new("RGBA", (1000, 1000), (255, 255, 255, 0))
+        if 'Background' in layers:
+            final_image.alpha_composite(layers['Background'], (0, 0))
+        # Position at bottom center with padding
+        position_x = (final_image.width - resized_width) // 2
+        position_y = final_image.height - resized_height - 20  # 20px padding from bottom
         final_image.paste(resized_ape, (position_x, position_y), resized_ape)
 
 
