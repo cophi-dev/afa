@@ -707,8 +707,8 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
     original_clothes_value = next((attr["value"] for attr in attributes if attr["trait_type"] == "Clothes"), None)
 
     if third_asset_type == 'selfie':
-        determined_clothes_path = additional_assets.get('selfie')
-        print(f"Clothes determined: Selfie mode - no clothes ({determined_clothes_path})")
+        determined_clothes_path = None  # Skip clothes entirely for selfie mode
+        print(f"Clothes determined: Selfie mode - skipping clothes composite")
     elif second_asset_type == 'naked':
         determined_clothes_path = special_assets.get('naked')
         print(f"Clothes determined: Naked ({determined_clothes_path})")
@@ -744,8 +744,12 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             print("Applying transparent background")
             image_path = additional_assets['selfie']
         elif trait_type == "Fur" and third_asset_type == 'selfie':
-            print("Applying Head")
-            image_path = additional_assets[specific_head if specific_head in additional_assets else 'transparent']
+            if specific_head and specific_head in additional_assets:
+                image_path = additional_assets[specific_head]
+                print(f"Selfie: Applying head asset '{specific_head}' for fur '{fur_value}'")
+            else:
+                image_path = additional_assets.get('transparent')
+                print(f"Selfie: No head asset for fur '{fur_value}', specific_head='{specific_head}', using transparent")
             head_added = True
         elif trait_type == "Fur" and second_asset_type == 'singe_hoodie':
             image_path = additional_assets[hoodie_head if hoodie_head in additional_assets else 'transparent']
