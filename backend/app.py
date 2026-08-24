@@ -879,9 +879,16 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
 
     # Composite remaining layers (Eyes, Earring, Hat, Mouth).
     # Selfie still needs these (horns, eyes). Only clothes are skipped above.
+    # For Blue Beams: skip Eyes here, composite after Hat so beams are in front.
     for layer_type in ['Eyes', 'Earring', 'Hat', 'Mouth']:
+        if layer_type == 'Eyes' and has_blue_beams and not eyes_asset_type:
+            continue  # Blue Beams eyes will be composited after Hat
         if layer_type in layers:
             final_image.alpha_composite(layers[layer_type], (0, 0))
+    
+    # Blue Beams: composite native Eyes layer AFTER Hat so beams appear in front of caps
+    if has_blue_beams and not eyes_asset_type and 'Eyes' in layers:
+        final_image.alpha_composite(layers['Eyes'], (0, 0))
 
  
 
