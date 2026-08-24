@@ -914,7 +914,8 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
         except FileNotFoundError:
             print(f"File not found for Crazy Left Eye: {hoodie_path}")
 
-    # Blue Beams special overlay: only apply if no custom eyes are selected
+    # Blue Beams special overlay: only apply if no custom eyes are selected.
+    # Blue Beams renders AFTER Hat so the beams appear IN FRONT of caps/hats.
     if has_blue_beams and not eyes_asset_type:
         blue_beams_path = os.path.join(base_dir, "Special Cases/Eyes/Blue Beams.png")
         try:
@@ -922,15 +923,6 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
                 final_image.alpha_composite(blue_beams, (0, 0))
         except FileNotFoundError:
             print(f"File not found for Blue Beams: {blue_beams_path}")
-        
-        # Re-composite custom hat after blue beams so it's not buried
-        if hat_asset_type in hat_assets:
-            hat_path = resolve_asset_path(hat_assets[hat_asset_type])
-            try:
-                with Image.open(hat_path).convert("RGBA") as hat_img:
-                    final_image.alpha_composite(hat_img, (0, 0))
-            except FileNotFoundError:
-                pass
 
     # Composite all the layers onto the final image
     for layer_type in ['Mouth']:
