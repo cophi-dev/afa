@@ -18,10 +18,23 @@ traits/
 ├── Mouth/
 ├── Special Cases/
 ├── memes/
+│   ├── star_glasses/      # preferred Star Glasses per-eye overlays
+│   ├── silvester_eyes/    # legacy alias for star_glasses/
+│   └── star_glasses.png   # generic Star Glasses fallback
 └── _blank.png
 ```
 
 Filenames must match trait values exactly (e.g. `Fur/Black.png`, `Eyes/Laser Eyes.png`).
+Case is resolved at runtime on Linux, but prefer Title Case matching the trait value.
+
+### Star Glasses
+
+Per-eye overlays live under **`memes/star_glasses/`** (preferred) or the legacy
+`memes/silvester_eyes/` folder. File names must match the Eyes trait
+(`Bored.png`, `Wide Eyed.png`, …).
+
+If a per-eye file is missing — or is only a placeholder copy of `Eyes/<Trait>.png` —
+the compositor falls back to `memes/star_glasses.png`.
 
 ## Local setup
 

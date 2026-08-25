@@ -258,6 +258,66 @@ def resolve_asset_path(path):
             return os.path.join(directory, entry)
     return path
 
+
+def _files_identical(path_a, path_b):
+    """True when both paths exist and have identical bytes."""
+    if not (os.path.isfile(path_a) and os.path.isfile(path_b)):
+        return False
+    if os.path.abspath(path_a) == os.path.abspath(path_b):
+        return True
+    if os.path.getsize(path_a) != os.path.getsize(path_b):
+        return False
+    with open(path_a, 'rb') as fa, open(path_b, 'rb') as fb:
+        while True:
+            chunk_a = fa.read(65536)
+            chunk_b = fb.read(65536)
+            if chunk_a != chunk_b:
+                return False
+            if not chunk_a:
+                return True
+
+
+def resolve_star_glasses_path(eye_value):
+    """Resolve Star Glasses overlay for an Eyes trait value.
+
+    Naming convention (in order):
+      1. memes/star_glasses/<Trait>.png   — preferred folder name matching the UI option
+      2. memes/silvester_eyes/<Trait>.png — legacy Silvester pack folder
+      3. memes/star_glasses.png           — generic overlay (same as other eye assets)
+
+    Filenames must match Eyes trait values (case-insensitive via resolve_asset_path).
+    Placeholder copies of the base Eyes layer are skipped so we fall through to the
+    generic star_glasses.png instead of rendering no change.
+    """
+    base_eyes = resolve_asset_path(os.path.join(base_dir, 'Eyes', f"{eye_value}.png"))
+    candidates = [
+        os.path.join(base_dir, 'memes', 'star_glasses', f"{eye_value}.png"),
+        os.path.join(base_dir, 'memes', 'silvester_eyes', f"{eye_value}.png"),
+    ]
+    for candidate in candidates:
+        resolved = resolve_asset_path(candidate)
+        if not os.path.isfile(resolved):
+            continue
+        if _files_identical(resolved, base_eyes):
+            # Placeholder that was never replaced with a real star variant
+            continue
+        return resolved
+
+    generic = resolve_asset_path(eyes_assets['star_glasses'])
+    if os.path.isfile(generic):
+        return generic
+
+    # Last resort: a known generic copy shipped inside the legacy pack
+    for fallback_name in ('Bored.png', 'Sunglasses.png', 'Scumbag.png'):
+        for folder in ('star_glasses', 'silvester_eyes'):
+            fallback = resolve_asset_path(
+                os.path.join(base_dir, 'memes', folder, fallback_name)
+            )
+            if os.path.isfile(fallback) and not _files_identical(fallback, base_eyes):
+                return fallback
+
+    return generic
+
 def get_image_file(trait_type, value):
     if value in special_assets:
         path = special_assets[value]
@@ -798,8 +858,10 @@ def compose_ape(ape_id, data, asset_type, second_asset_type, third_asset_type, m
             clothes_added = True
         elif trait_type == "Eyes":
             if eyes_asset_type == 'star_glasses':
-                # Fetch eyes from the memes/silvester_eyes folder
-                image_path = os.path.join(base_dir, 'memes', 'silvester_eyes', f"{value}.png")
+                # Prefer memes/star_glasses/<Trait>.png; fall back to legacy silvester_eyes/
+                # and finally the generic star_glasses.png overlay.
+                image_path = resolve_star_glasses_path(value)
+                print(f"Applying star glasses for Eyes={value}: {image_path}")
             elif eyes_asset_type in eyes_assets and not eyes_added:
                 print(f"Replacing Eyes with eyes asset: {eyes_asset_type}")
                 image_path = eyes_assets[eyes_asset_type]
