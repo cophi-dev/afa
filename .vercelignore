@@ -1,8 +1,0 @@
-/__sapper__
-/cypress
-/backend/google-cloud-sdk/*
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
