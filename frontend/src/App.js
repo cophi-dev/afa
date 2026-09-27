@@ -5,7 +5,7 @@ import { debug, error as logError } from './utils/debug';
 
 const DEFAULT_API_URL = 'https://afa-editor.ew.r.appspot.com';
 const MINT_SITE_URL = 'https://www.apefacingapes.com';
-const GRID_VIEW_URL = 'https://afa-progress.com';
+const GRID_VIEW_URL = 'https://afa-mint-progress.vercel.app';
 const CLAIM_URL = `${MINT_SITE_URL}/claim`;
 const LOADER_MESSAGES = [
     'Brewing ape magic...',
@@ -38,7 +38,7 @@ function Footer() {
                     Mint on apefacingapes.com
                 </a>
                 <a href={GRID_VIEW_URL} target="_blank" rel="noopener noreferrer">
-                    Immersive grid on afa-progress.com
+                    Immersive grid on afa-mint-progress.vercel.app
                 </a>
             </nav>
             <p>© 2024 Ape Facing Apes. All rights reserved.</p>
