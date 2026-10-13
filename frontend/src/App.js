@@ -99,10 +99,12 @@ function MintedGallery({
     onBecomeVisible,
     sort,
     onSort,
+    search,
 }) {
     return (
         <section className="gallery" aria-label="Minted AFAs">
             <div className="gallery-toolbar">
+                {search}
                 <h2 className="gallery-heading">
                     Minted AFAs{mintedCount > 0 ? ` (${mintedCount})` : ''}
                 </h2>
@@ -936,62 +938,6 @@ function App() {
             <summary className="panel-summary">{tokenId ? 'Token' : 'Enter Token ID'}</summary>
             <div className="panel-body">
               <p className="token-help-text">Type an ID or pick one below.</p>
-              <div className="token-picker">
-              <div className="dropdown-container dropdown-container--single">
-                    <div className="dropdown-section">
-                        <label className="dropdown-header" htmlFor="afa-token-id">Token ID</label>
-                        <div className="token-input-container">
-                            <div className="token-input-row">
-                                <svg className="token-search-icon" viewBox="0 0 24 24" aria-hidden="true">
-                                    <circle cx="11" cy="11" r="6.25" fill="none" stroke="currentColor" strokeWidth="1.75" />
-                                    <path d="M16 16.5 20 20.5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                                </svg>
-                                <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    autoComplete="off"
-                                    spellCheck={false}
-                                    value={tokenInput}
-                                    onChange={handleTokenInput}
-                                    onKeyDown={(event) => {
-                                        if (event.key === 'Enter') {
-                                            handleTokenSubmit(tokenInput);
-                                        }
-                                    }}
-                                    id="afa-token-id"
-                                    size={8}
-                                    placeholder="0–9999"
-                                    className={`token-input ${isCheckingMint ? 'checking' : ''}`}
-                                    disabled={isCheckingMint}
-                                    aria-busy={isCheckingMint}
-                                />
-                                <button
-                                    type="button"
-                                    className="token-go"
-                                    onClick={() => handleTokenSubmit(tokenInput)}
-                                    disabled={isCheckingMint || !String(tokenInput || '').trim()}
-                                    aria-label="Load this token"
-                                >
-                                    Go
-                                </button>
-                            </div>
-                            {showSuggestions && (
-                                <div className="suggestions-container" ref={suggestionsRef} aria-label="Matching token IDs">
-                                    {suggestions.map((suggestion, index) => (
-                                        <button
-                                            type="button"
-                                            key={suggestion}
-                                            className={`suggestion-item ${index === selectedSuggestionIndex ? 'selected' : ''}`}
-                                            onClick={() => handleSuggestionClick(suggestion)}
-                                        >
-                                            {suggestion}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-              </div>
               <MintedGallery
                 mintedCount={mintedTokens.size}
                 isLoading={mintedTokenIds.length === 0}
@@ -1002,8 +948,62 @@ function App() {
                 onBecomeVisible={handleMintPreviewVisible}
                 sort={mintGallerySort}
                 onSort={setMintGallerySort}
+                search={(
+                  <div className="token-search">
+                    <label className="token-search-label" htmlFor="afa-token-id">Token ID</label>
+                    <div className="token-input-container">
+                      <div className="token-input-row">
+                        <svg className="token-search-icon" viewBox="0 0 24 24" aria-hidden="true">
+                          <circle cx="11" cy="11" r="6.25" fill="none" stroke="currentColor" strokeWidth="1.75" />
+                          <path d="M16 16.5 20 20.5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+                        </svg>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          autoComplete="off"
+                          spellCheck={false}
+                          value={tokenInput}
+                          onChange={handleTokenInput}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter') {
+                              handleTokenSubmit(tokenInput);
+                            }
+                          }}
+                          id="afa-token-id"
+                          size={6}
+                          placeholder="0–9999"
+                          className={`token-input ${isCheckingMint ? 'checking' : ''}`}
+                          disabled={isCheckingMint}
+                          aria-busy={isCheckingMint}
+                        />
+                        <button
+                          type="button"
+                          className="token-go"
+                          onClick={() => handleTokenSubmit(tokenInput)}
+                          disabled={isCheckingMint || !String(tokenInput || '').trim()}
+                          aria-label="Load this token"
+                        >
+                          Go
+                        </button>
+                      </div>
+                      {showSuggestions && (
+                        <div className="suggestions-container" ref={suggestionsRef} aria-label="Matching token IDs">
+                          {suggestions.map((suggestion, index) => (
+                            <button
+                              type="button"
+                              key={suggestion}
+                              className={`suggestion-item ${index === selectedSuggestionIndex ? 'selected' : ''}`}
+                              onClick={() => handleSuggestionClick(suggestion)}
+                            >
+                              {suggestion}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               />
-              </div>
             </div>
           </details>
 

@@ -3760,24 +3760,77 @@ textarea {
 
 .token-help-text {
   color: rgba(240, 242, 245, 0.78);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 500;
+  margin: 0 0 10px;
 }
 
 .token-picker {
-  gap: 14px;
-  align-items: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .token-picker > .dropdown-container--single,
 .token-picker .gallery {
-  padding: 14px;
-  border-radius: 16px;
-  background: rgba(16, 18, 22, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.gallery-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px 12px;
+  margin: 0 0 12px;
+}
+
+.token-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 260px;
+  min-width: min(100%, 240px);
+  max-width: 380px;
+}
+
+.token-search-label {
+  flex: 0 0 auto;
+  margin: 0;
+  color: #f0f2f5;
+  font-size: 0.9rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.token-search .token-input-container {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.gallery-heading {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.gallery-sort {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.gallery-sort-label {
+  margin: 0;
 }
 
 .token-panel--prominent .dropdown-section {
@@ -3802,9 +3855,9 @@ textarea {
 .token-input-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 52px;
-  padding: 4px 4px 4px 14px;
+  gap: 6px;
+  min-height: 44px;
+  padding: 2px 2px 2px 12px;
   border-radius: 999px;
   background: rgba(8, 10, 16, 0.72);
   border: 1px solid rgba(255, 255, 255, 0.16);
@@ -3834,7 +3887,7 @@ textarea {
   flex: 1 1 auto;
   min-width: 0;
   width: auto;
-  min-height: 44px;
+  min-height: 36px;
   margin: 0;
   padding: 0 4px;
   border: 0;
@@ -3856,8 +3909,8 @@ textarea {
 
 .token-go {
   flex: 0 0 auto;
-  min-width: 52px;
-  min-height: 44px;
+  min-width: 48px;
+  min-height: 36px;
   padding: 0 16px;
   border: 0;
   border-radius: 999px;
@@ -3887,6 +3940,15 @@ textarea {
 .token-go:focus-visible {
   outline: 2px solid #fff;
   outline-offset: 2px;
+}
+
+.token-search .suggestions-container {
+  position: absolute;
+  z-index: 6;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  margin-top: 0;
 }
 
 .suggestions-container {
@@ -4040,18 +4102,13 @@ button.gallery-item.is-selected {
 
 @media (min-width: 980px) {
   .token-picker {
-    grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
-    gap: 16px;
-    align-items: start;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
-  .token-help-text {
-    margin-bottom: 0;
-  }
-
-  .token-picker > .dropdown-container--single {
-    position: sticky;
-    top: 12px;
+  .gallery-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   }
 }
 
@@ -4142,9 +4199,19 @@ button.gallery-item.is-selected {
     min-width: 0;
   }
 
+  .token-search {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+
+  .gallery-heading {
+    margin-left: 0;
+    white-space: normal;
+  }
+
   .token-picker > .dropdown-container--single,
   .token-picker .gallery {
-    padding: 12px;
+    padding: 0;
   }
 
   .action-button {
