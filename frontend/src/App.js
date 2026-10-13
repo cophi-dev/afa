@@ -942,6 +942,10 @@ function App() {
                         <label className="dropdown-header" htmlFor="afa-token-id">Token ID</label>
                         <div className="token-input-container">
                             <div className="token-input-row">
+                                <svg className="token-search-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <circle cx="11" cy="11" r="6.25" fill="none" stroke="currentColor" strokeWidth="1.75" />
+                                    <path d="M16 16.5 20 20.5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+                                </svg>
                                 <input
                                     type="text"
                                     inputMode="numeric"
@@ -955,11 +959,21 @@ function App() {
                                         }
                                     }}
                                     id="afa-token-id"
-                                    placeholder="Enter minted Token ID (0-9999)"
+                                    size={8}
+                                    placeholder="0–9999"
                                     className={`token-input ${isCheckingMint ? 'checking' : ''}`}
                                     disabled={isCheckingMint}
                                     aria-busy={isCheckingMint}
                                 />
+                                <button
+                                    type="button"
+                                    className="token-go"
+                                    onClick={() => handleTokenSubmit(tokenInput)}
+                                    disabled={isCheckingMint || !String(tokenInput || '').trim()}
+                                    aria-label="Load this token"
+                                >
+                                    Go
+                                </button>
                             </div>
                             {showSuggestions && (
                                 <div className="suggestions-container" ref={suggestionsRef} aria-label="Matching token IDs">
