@@ -1,11 +1,11 @@
 const BOT_UA =
   /bot|crawl|spider|slack|discord|twitter|facebook|linkedin|telegram|whatsapp|embed|preview/i;
 
-const SITE_URL = 'https://www.afa-editor.app';
+const SITE_URL = 'https://afa-editor.app';
 const API_URL = 'https://afa-editor.ew.r.appspot.com';
-const DEFAULT_IMAGE = `${SITE_URL}/og-preview.png`;
-const DEFAULT_IMAGE_WIDTH = '580';
-const DEFAULT_IMAGE_HEIGHT = '498';
+const DEFAULT_IMAGE = `${SITE_URL}/og-image.png`;
+const DEFAULT_IMAGE_WIDTH = '1200';
+const DEFAULT_IMAGE_HEIGHT = '630';
 
 function escapeHtml(value) {
   return String(value)
@@ -23,6 +23,7 @@ function buildOgHtml({ title, description, canonicalUrl, ogImage, imageWidth, im
   <meta charset="utf-8" />
   <title>${escapeHtml(title)}</title>
   <meta name="description" content="${escapeHtml(description)}" />
+  <link rel="canonical" href="${escapeHtml(canonicalUrl)}" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="AFA Editor" />
   <meta property="og:title" content="${escapeHtml(title)}" />
@@ -31,17 +32,19 @@ function buildOgHtml({ title, description, canonicalUrl, ogImage, imageWidth, im
   <meta property="og:image" content="${escapeHtml(ogImage)}" />
   <meta property="og:image:width" content="${imageWidth}" />
   <meta property="og:image:height" content="${imageHeight}" />
+  <meta property="og:image:alt" content="${escapeHtml(title)}" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="${escapeHtml(title)}" />
   <meta name="twitter:description" content="${escapeHtml(description)}" />
   <meta name="twitter:image" content="${escapeHtml(ogImage)}" />
+  <meta name="twitter:image:alt" content="${escapeHtml(title)}" />
 </head>
 <body></body>
 </html>`;
 }
 
 export const config = {
-  matcher: ['/((?!api/|static/|favicon|logo|overview|manifest|robots|apple-touch|og-preview|.*\\..*).*)'],
+  matcher: ['/((?!api/|static/|favicon|logo|overview|manifest|robots|apple-touch|og-preview|og-image|.*\\..*).*)'],
 };
 
 export default async function middleware(request) {

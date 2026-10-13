@@ -24,7 +24,7 @@ function Banner() {
     return (
         <div className="banner">
             <a href={MINT_SITE_URL} target="_blank" rel="noopener noreferrer">
-                <img src="./logo.png" alt="Logo" className="banner-logo" />
+                <img src="./logo.png" alt="Ape Facing Apes" width="2000" height="2000" className="banner-logo" />
             </a>
         </div>
     );
@@ -45,11 +45,6 @@ function Footer() {
             <p>© 2024 Yuga Labs, Inc. All marks and assets available are licensed from Yuga Labs, Inc.</p>
         </footer>
     );
-}
-
-function getContrastYIQ(rgb) {
-    const yiq = ((rgb[0] * 299) + (rgb[1] * 587) + (rgb[2] * 114)) / 1000;
-    return (yiq >= 128) ? 'black' : 'white';
 }
 
 function MintedGalleryItem({ id, imageUrl, isSelected, onSelect, onBecomeVisible }) {
@@ -75,22 +70,89 @@ function MintedGalleryItem({ id, imageUrl, isSelected, onSelect, onBecomeVisible
         <button
             ref={ref}
             type="button"
-            className={`gallery-item ${isSelected ? 'is-selected' : ''}`}
+            className={`gallery-item ${imageUrl ? 'has-image' : 'is-pending'} ${isSelected ? 'is-selected' : ''}`}
             onClick={() => onSelect(id)}
-            aria-label={`Select AFA #${id}`}
             aria-pressed={isSelected}
         >
-            <div className="gallery-thumb">
+            <span className="visually-hidden">Select AFA </span>
+            <div className="gallery-thumb" aria-hidden={imageUrl ? undefined : true}>
                 {imageUrl ? (
-                    <img src={imageUrl} alt={`AFA #${id}`} loading="lazy" />
+                    <img src={imageUrl} alt="" width="1000" height="1000" loading="lazy" decoding="async" />
                 ) : (
-                    <div className="gallery-thumb-placeholder">#{id}</div>
+                    <div className="gallery-skeleton" />
                 )}
             </div>
             <div className="gallery-meta">
                 <span className="gallery-id">#{id}</span>
             </div>
         </button>
+    );
+}
+
+function MintedGallery({
+    mintedCount,
+    isLoading,
+    sortedIds,
+    mintPreviewUrls,
+    tokenId,
+    onSelect,
+    onBecomeVisible,
+    sort,
+    onSort,
+    search,
+}) {
+    return (
+        <section className="gallery" aria-label="Minted AFAs">
+            <div className="gallery-toolbar">
+                {search}
+                <h2 className="gallery-heading">
+                    Minted AFAs{mintedCount > 0 ? ` (${mintedCount})` : ''}
+                </h2>
+                {!isLoading && (
+                    <label className="gallery-sort" htmlFor="mint-gallery-sort">
+                        <span className="gallery-sort-label">Sort by</span>
+                        <select
+                            id="mint-gallery-sort"
+                            className="dropdown gallery-sort-select"
+                            value={sort}
+                            onChange={(event) => onSort(event.target.value)}
+                        >
+                            <option value={MINT_GALLERY_SORT.MINT_DATE}>Mint date</option>
+                            <option value={MINT_GALLERY_SORT.TOKEN_ID}>Token ID</option>
+                        </select>
+                    </label>
+                )}
+            </div>
+            {isLoading ? (
+                <div className="gallery-scroll" aria-busy="true">
+                    <p className="visually-hidden">Loading minted AFAs</p>
+                    <div className="gallery-grid gallery-grid--skeleton">
+                        {Array.from({ length: 8 }, (_, index) => (
+                            <div key={index} className="gallery-item gallery-item--skeleton" aria-hidden="true">
+                                <div className="gallery-thumb">
+                                    <div className="gallery-skeleton" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            ) : (
+                <div className="gallery-scroll">
+                    <div className="gallery-grid">
+                        {sortedIds.map((id) => (
+                            <MintedGalleryItem
+                                key={id}
+                                id={id}
+                                imageUrl={mintPreviewUrls[id]}
+                                isSelected={String(tokenId) === String(id)}
+                                onSelect={onSelect}
+                                onBecomeVisible={onBecomeVisible}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
+        </section>
     );
 }
 
@@ -153,6 +215,7 @@ function App() {
     const handRef = useRef(null);
     const extraRef = useRef(null);
     const [vegasButtonClicked, setVegasButtonClicked] = useState(false); // State for glamour effect
+    const [shareNote, setShareNote] = useState('');
 
   useEffect(() => {
         if (thirdAsset === 'selfie') {
@@ -414,18 +477,11 @@ function App() {
         })
         .then(data => {
             if (requestId !== activeRenderRequestRef.current) return;
-            const bgColor = `rgb(${data.background_color[0]}, ${data.background_color[1]}, ${data.background_color[2]})`;
-            const textColor = getContrastYIQ(data.background_color);
-            // Apply fade effect
-            document.body.classList.add('body-background-fade');
-            // Change full background so it overrides the static gradient
-            document.body.style.background = bgColor;
-            document.documentElement.style.setProperty('--token-background-color', bgColor);
-            document.documentElement.style.setProperty('--text-color', textColor);
-            // Remove fade effect after transition
-            setTimeout(() => {
-                document.body.classList.remove('body-background-fade');
-            }, 500); // Match this timeout with the transition duration in CSS
+            const [red, green, blue] = data.background_color;
+            document.documentElement.style.setProperty(
+                '--preview-frame-color',
+                `rgb(${red}, ${green}, ${blue})`
+            );
         })
         .catch((error) => logError('Error fetching background color:', error));
     }, [fetchFromAnyBase]);
@@ -668,52 +724,73 @@ function App() {
         setTimeout(() => setVegasButtonClicked(false), 1000);
     };
 
-    const navigateDropdown = (selectRef, direction) => {
-        if (!selectRef.current) return;
-        
-        const select = selectRef.current;
-        const options = Array.from(select.options).filter(option => !option.disabled);
-        const currentIndex = options.findIndex(option => option.value === select.value);
-        
-        let newIndex;
-        if (direction === 'next') {
-            newIndex = currentIndex < options.length - 1 ? currentIndex + 1 : currentIndex;
-        } else {
-            newIndex = currentIndex > 0 ? currentIndex - 1 : currentIndex;
-        }
-        
-        if (newIndex !== currentIndex) {
-            select.value = options[newIndex].value;
-            
-            // Trigger the appropriate onChange event based on which dropdown is being navigated
-            if (select === outfitRef.current) {
-                handleSecondAssetChange({ target: { value: options[newIndex].value } });
-            } else if (select === mouthRef.current) {
-                handleMouthAssetChange({ target: { value: options[newIndex].value } });
-            } else if (select === hatRef.current) {
-                handleHatAssetChange({ target: { value: options[newIndex].value } });
-            } else if (select === eyesRef.current) {
-                handleEyesAssetChange({ target: { value: options[newIndex].value } });
-            } else if (select === handRef.current) {
-                handleAssetChange({ target: { value: options[newIndex].value } });
-            } else if (select === extraRef.current) {
-                handleThirdAssetChange({ target: { value: options[newIndex].value } });
-            }
-        }
+    useEffect(() => {
+        if (!tokenId) return undefined;
+        const next = new URLSearchParams();
+        next.set('tokenId', String(tokenId));
+        const setIf = (key, value) => {
+            if (value) next.set(key, value);
+        };
+        setIf('assetType', selectedAsset);
+        setIf('secondAssetType', secondAsset);
+        setIf('thirdAssetType', thirdAsset);
+        setIf('mouthAssetType', mouthAsset);
+        setIf('hatAssetType', hatAsset);
+        setIf('eyesAssetType', eyesAsset);
+        setIf('clubAssetType', clubAsset);
+        const query = next.toString();
+        if (window.location.search === `?${query}`) return undefined;
+        window.history.replaceState(null, '', `${window.location.pathname}?${query}`);
+        return undefined;
+    }, [tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset]);
+
+    useEffect(() => {
+        if (!shareNote) return undefined;
+        const timerId = window.setTimeout(() => setShareNote(''), 2200);
+        return () => window.clearTimeout(timerId);
+    }, [shareNote]);
+
+    const handleDownload = () => {
+        if (!currentImageUrl.startsWith('blob:')) return;
+        const link = document.createElement('a');
+        link.href = currentImageUrl;
+        link.download = `afa-${tokenId}.png`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
     };
 
-    // Helper function to check if navigation is possible
-    const canNavigate = (selectRef, direction) => {
-        if (!selectRef.current || !tokenId) return false;
-        
-        const select = selectRef.current;
-        const options = Array.from(select.options).filter(option => !option.disabled);
-        const currentIndex = options.findIndex(option => option.value === select.value);
-        
-        if (direction === 'next') {
-            return currentIndex < options.length - 1;
-        } else {
-            return currentIndex > 0;
+    const handleShare = async () => {
+        const url = window.location.href;
+        const shareData = {
+            title: `AFA #${tokenId}`,
+            text: `Ape Facing Apes #${tokenId}`,
+            url,
+        };
+        try {
+            if (navigator.share) {
+                if (currentImageUrl.startsWith('blob:') && typeof navigator.canShare === 'function') {
+                    const blob = await fetch(currentImageUrl).then((response) => response.blob());
+                    const file = new File([blob], `afa-${tokenId}.png`, { type: blob.type || 'image/png' });
+                    if (navigator.canShare({ files: [file] })) {
+                        await navigator.share({ ...shareData, files: [file] });
+                        return;
+                    }
+                }
+                await navigator.share(shareData);
+                return;
+            }
+            await navigator.clipboard.writeText(url);
+            setShareNote('Link copied');
+        } catch (error) {
+            if (error && error.name === 'AbortError') return;
+            try {
+                await navigator.clipboard.writeText(url);
+                setShareNote('Link copied');
+            } catch (copyError) {
+                debug('Share failed', copyError);
+                setShareNote('Copy the page link');
+            }
         }
     };
 
@@ -731,19 +808,47 @@ function App() {
   return (
     // Apply glamour class conditionally
     <div className={appClassName}>
+      <a className="skip-link" href="#editor-controls">Skip to editor</a>
       <Banner />
       <main className="studio">
         <section className={`studio-preview ${tokenId ? 'has-token' : ''}`} aria-label="Preview">
           <div className="preview-card">
             <div id="asset-display" className={`${fade || ''} ${showLoader ? 'is-loading' : ''}`}>
-              <img src={currentImageUrl} alt="Ape preview" />
+              <img src={currentImageUrl} alt="Ape preview" width="1200" height="1200" />
               {showLoader && (
                 <div className="loader" role="status" aria-live="polite">
-                  {loaderMessage}
+                  <div className="loader-progress" aria-hidden="true">
+                    <span />
+                  </div>
+                  <span>{loaderMessage}</span>
                 </div>
               )}
             </div>
           </div>
+
+          {tokenId && (
+            <div className="preview-actions">
+              <button
+                type="button"
+                className="preview-download"
+                onClick={handleDownload}
+                disabled={!String(currentImageUrl).startsWith('blob:')}
+              >
+                Download PNG
+              </button>
+              <button type="button" className="preview-share" onClick={handleShare}>
+                {shareNote || 'Share'}
+              </button>
+              <a
+                className="preview-mint"
+                href={CLAIM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Mint
+              </a>
+            </div>
+          )}
 
           {syncPendingTokenId && (
             <div className="claim-prompt" role="alert">
@@ -794,30 +899,36 @@ function App() {
             </div>
           )}
         </section>
-        <section className="studio-controls" aria-label="Editor controls">
+        <section id="editor-controls" className="studio-controls" aria-label="Editor controls">
           {tokenId && (
             <div className="action-dock" aria-label="Quick actions">
               <div className="button-container">
                 <button
+                  type="button"
                   onClick={handleReset}
                   className="action-button reset-button"
-                  title="Reset all selections"
+                  title="Clears every trait. Keeps this ape."
+                  data-tooltip="Clears every trait. Keeps this ape."
                 >
-                  Reset All
+                  Reset traits
                 </button>
                 <button
+                  type="button"
                   onClick={handleRandomize}
                   className="action-button random-button"
-                  title="Randomize traits"
+                  title="Randomizes outfit, mouth, hat, eyes, hand, and extra."
+                  data-tooltip="Randomizes outfit, mouth, hat, eyes, hand, and extra."
                 >
-                  New Perspective 👀
+                  Randomize 👀
                 </button>
                 <button
+                  type="button"
                   onClick={handleFrameIt}
                   className="action-button vegas-button"
-                  title="Add Vintage Frame"
+                  title="Adds the vintage frame."
+                  data-tooltip="Adds the vintage frame."
                 >
-                  Frame It
+                  Add frame
                 </button>
               </div>
             </div>
@@ -826,45 +937,73 @@ function App() {
           <details className={`panel-group token-panel ${!tokenId ? 'token-panel--prominent' : ''}`} open>
             <summary className="panel-summary">{tokenId ? 'Token' : 'Enter Token ID'}</summary>
             <div className="panel-body">
-              <div className="dropdown-container dropdown-container--single">
-                    <div className="dropdown-section">
-                        {tokenId && <h3 className="dropdown-header">Select AFA</h3>}
-                        {!tokenId && (
-                          <p className="token-help-text">Enter an AFA token ID to load the full editor layout.</p>
-                        )}
-                        <div className="token-input-container">
-                            <div className="token-input-row">
-                                <input
-                                    type="text"
-                                    value={tokenInput}
-                                    onChange={handleTokenInput}
-                                    onKeyDown={(event) => {
-                                        if (event.key === 'Enter') {
-                                            handleTokenSubmit(tokenInput);
-                                        }
-                                    }}
-                                    placeholder="Enter minted Token ID (0-9999)"
-                                    className={`token-input ${isCheckingMint ? 'checking' : ''}`}
-                                    disabled={isCheckingMint}
-                                    aria-busy={isCheckingMint}
-                                />
-                            </div>
-                            {showSuggestions && (
-                                <div className="suggestions-container" ref={suggestionsRef}>
-                                    {suggestions.map((suggestion, index) => (
-                                        <div
-                                            key={suggestion}
-                                            className={`suggestion-item ${index === selectedSuggestionIndex ? 'selected' : ''}`}
-                                            onClick={() => handleSuggestionClick(suggestion)}
-                                        >
-                                            {suggestion}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+              <p className="token-help-text">Type an ID or pick one below.</p>
+              <MintedGallery
+                mintedCount={mintedTokens.size}
+                isLoading={mintedTokenIds.length === 0}
+                sortedIds={sortedMintGalleryIds}
+                mintPreviewUrls={mintPreviewUrls}
+                tokenId={tokenId}
+                onSelect={handleTokenSubmit}
+                onBecomeVisible={handleMintPreviewVisible}
+                sort={mintGallerySort}
+                onSort={setMintGallerySort}
+                search={(
+                  <div className="token-search">
+                    <label className="token-search-label" htmlFor="afa-token-id">Token ID</label>
+                    <div className="token-input-container">
+                      <div className="token-input-row">
+                        <svg className="token-search-icon" viewBox="0 0 24 24" aria-hidden="true">
+                          <circle cx="11" cy="11" r="6.25" fill="none" stroke="currentColor" strokeWidth="1.75" />
+                          <path d="M16 16.5 20 20.5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+                        </svg>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          autoComplete="off"
+                          spellCheck={false}
+                          value={tokenInput}
+                          onChange={handleTokenInput}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter') {
+                              handleTokenSubmit(tokenInput);
+                            }
+                          }}
+                          id="afa-token-id"
+                          size={6}
+                          placeholder="0–9999"
+                          className={`token-input ${isCheckingMint ? 'checking' : ''}`}
+                          disabled={isCheckingMint}
+                          aria-busy={isCheckingMint}
+                        />
+                        <button
+                          type="button"
+                          className="token-go"
+                          onClick={() => handleTokenSubmit(tokenInput)}
+                          disabled={isCheckingMint || !String(tokenInput || '').trim()}
+                          aria-label="Load this token"
+                        >
+                          Go
+                        </button>
+                      </div>
+                      {showSuggestions && (
+                        <div className="suggestions-container" ref={suggestionsRef} aria-label="Matching token IDs">
+                          {suggestions.map((suggestion, index) => (
+                            <button
+                              type="button"
+                              key={suggestion}
+                              className={`suggestion-item ${index === selectedSuggestionIndex ? 'selected' : ''}`}
+                              onClick={() => handleSuggestionClick(suggestion)}
+                            >
+                              {suggestion}
+                            </button>
+                          ))}
                         </div>
+                      )}
                     </div>
-              </div>
+                  </div>
+                )}
+              />
             </div>
           </details>
 
@@ -875,16 +1014,10 @@ function App() {
                 <div className="panel-body">
                   <div className="dropdown-container">
                     <div className="dropdown-section">
-                        <h3 className="dropdown-header">Outfit</h3>
+                        <label className="dropdown-header" htmlFor="outfit-select">Outfit</label>
                         <div className="dropdown-with-arrows">
-                            <button 
-                                className="dropdown-arrow" 
-                                onClick={() => navigateDropdown(outfitRef, 'prev')}
-                                disabled={!canNavigate(outfitRef, 'prev')}
-                            >
-                                ◀
-                            </button>
                             <select 
+                                id="outfit-select" 
                                 ref={outfitRef} 
                                 value={secondAsset} 
                                 onChange={handleSecondAssetChange} 
@@ -916,13 +1049,6 @@ function App() {
                                 <option value="jacket">Jacket</option>
                                 <option value="blazer">Blazer</option>
                             </select>
-                            <button 
-                                className="dropdown-arrow" 
-                                onClick={() => navigateDropdown(outfitRef, 'next')}
-                                disabled={!canNavigate(outfitRef, 'next')}
-                            >
-                                ▶
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -934,16 +1060,10 @@ function App() {
                 <div className="panel-body">
                   <div className="dropdown-container dropdown-container--grid">
                     <div className="dropdown-section">
-                        <h3 className="dropdown-header">Mouth</h3>
+                        <label className="dropdown-header" htmlFor="mouth-select">Mouth</label>
                         <div className="dropdown-with-arrows">
-                            <button 
-                                className="dropdown-arrow" 
-                                onClick={() => navigateDropdown(mouthRef, 'prev')}
-                                disabled={!canNavigate(mouthRef, 'prev')}
-                            >
-                                ◀
-                            </button>
                             <select 
+                                id="mouth-select" 
                                 ref={mouthRef} 
                                 value={mouthAsset} 
                                 onChange={handleMouthAssetChange} 
@@ -958,26 +1078,13 @@ function App() {
                                 <option value="doodles_rainbow">Doodles Rainbow</option>
                                 <option value="big_smile">Big Smile</option>
                             </select>
-                            <button 
-                                className="dropdown-arrow" 
-                                onClick={() => navigateDropdown(mouthRef, 'next')}
-                                disabled={!canNavigate(mouthRef, 'next')}
-                            >
-                                ▶
-                            </button>
                         </div>
                     </div>
                     <div className="dropdown-section">
-                        <h3 className="dropdown-header">Hat</h3>
+                        <label className="dropdown-header" htmlFor="hat-select">Hat</label>
                         <div className="dropdown-with-arrows">
-                            <button 
-                                className="dropdown-arrow" 
-                                onClick={() => navigateDropdown(hatRef, 'prev')}
-                                disabled={!canNavigate(hatRef, 'prev')}
-                            >
-                                ◀
-                            </button>
                             <select 
+                                id="hat-select" 
                                 ref={hatRef} 
                                 value={hatAsset} 
                                 onChange={handleHatAssetChange} 
@@ -999,26 +1106,13 @@ function App() {
                                 <option value="pudgy_hat2">Pudgy Penguins Hat 2</option>
                                 <option value="glitter_cowboy_hat">Glitter Cowboy Hat</option>
                             </select>
-                            <button 
-                                className="dropdown-arrow" 
-                                onClick={() => navigateDropdown(hatRef, 'next')}
-                                disabled={!canNavigate(hatRef, 'next')}
-                            >
-                                ▶
-                            </button>
                         </div>
                     </div>
                     <div className="dropdown-section">
-                        <h3 className="dropdown-header">Eyes</h3>
+                        <label className="dropdown-header" htmlFor="eyes-select">Eyes</label>
                         <div className="dropdown-with-arrows">
-                            <button 
-                                className="dropdown-arrow" 
-                                onClick={() => navigateDropdown(eyesRef, 'prev')}
-                                disabled={!canNavigate(eyesRef, 'prev')}
-                            >
-                                ◀
-                            </button>
                             <select 
+                                id="eyes-select" 
                                 ref={eyesRef} 
                                 value={eyesAsset} 
                                 onChange={handleEyesAssetChange} 
@@ -1034,26 +1128,13 @@ function App() {
                                 <option value="btc_eyes">BTC Coin</option>
                                 <option value="star_glasses">Star Glasses</option>
                             </select>
-                            <button 
-                                className="dropdown-arrow" 
-                                onClick={() => navigateDropdown(eyesRef, 'next')}
-                                disabled={!canNavigate(eyesRef, 'next')}
-                            >
-                                ▶
-                            </button>
                         </div>
                     </div>
                     <div className="dropdown-section">
-                        <h3 className="dropdown-header">Hand</h3>
+                        <label className="dropdown-header" htmlFor="hand-select">Hand</label>
                         <div className="dropdown-with-arrows">
-                            <button 
-                                className="dropdown-arrow" 
-                                onClick={() => navigateDropdown(handRef, 'prev')}
-                                disabled={!canNavigate(handRef, 'prev')}
-                            >
-                                ◀
-                            </button>
                             <select 
+                                id="hand-select" 
                                 ref={handRef} 
                                 value={selectedAsset} 
                                 onChange={handleAssetChange} 
@@ -1095,28 +1176,11 @@ function App() {
                                 <option value="matchstick">Matchstick</option>
                                 <option value="balloon_moon">2024 Balloon</option>
                             </select>
-                            <button 
-                                className="dropdown-arrow" 
-                                onClick={() => navigateDropdown(handRef, 'next')}
-                                disabled={!canNavigate(handRef, 'next')}
-                            >
-                                ▶
-                            </button>
                         </div>
                     </div>
                 {/* <div className="dropdown-section">
                     <h3 className="dropdown-header">Club Assets</h3>
                     <div className="dropdown-with-arrows">
-                        <button 
-                            className="dropdown-arrow" 
-                            onClick={() => {
-                                const clubRef = { current: document.querySelector('select[value="' + clubAsset + '"]') };
-                                navigateDropdown(clubRef, 'prev');
-                            }}
-                            disabled={!tokenId}
-                        >
-                            ◀
-                        </button>
                         <select 
                             value={clubAsset} 
                             onChange={handleClubAssetChange} 
@@ -1135,16 +1199,6 @@ function App() {
                             <option value="elite" disabled={!isEliteEligible}>Elite Apes HK</option>
                             <option value="ape_solar_sun_hand">Ape Solar Sun Hand</option>
                         </select>
-                        <button 
-                            className="dropdown-arrow" 
-                            onClick={() => {
-                                const clubRef = { current: document.querySelector('select[value="' + clubAsset + '"]') };
-                                navigateDropdown(clubRef, 'next');
-                            }}
-                            disabled={!tokenId}
-                        >
-                            ▶
-                        </button>
                     </div>
                 </div> */}
                 </div>
@@ -1156,16 +1210,10 @@ function App() {
                 <div className="panel-body">
                   <div className="dropdown-container">
                     <div className="dropdown-section">
-                      <h3 className="dropdown-header">Extra</h3>
+                      <label className="dropdown-header" htmlFor="extra-select">Extra</label>
                       <div className="dropdown-with-arrows">
-                        <button
-                          className="dropdown-arrow"
-                          onClick={() => navigateDropdown(extraRef, 'prev')}
-                          disabled={!canNavigate(extraRef, 'prev')}
-                        >
-                          ◀
-                        </button>
                         <select
+                          id="extra-select"
                           ref={extraRef}
                           value={thirdAsset}
                           onChange={handleThirdAssetChange}
@@ -1193,13 +1241,6 @@ function App() {
                           <option value="verified">Verified</option>
                           <option value="vintage_frame">Vintage Frame</option>
                         </select>
-                        <button
-                          className="dropdown-arrow"
-                          onClick={() => navigateDropdown(extraRef, 'next')}
-                          disabled={!canNavigate(extraRef, 'next')}
-                        >
-                          ▶
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -1208,56 +1249,6 @@ function App() {
             </>
           )}
 
-          <details className="panel-group" open>
-            <summary className="panel-summary panel-summary--gallery">
-              <span className="panel-summary-title">
-                Minted AFAs{mintedTokens.size > 0 ? ` (${mintedTokens.size})` : ''}
-              </span>
-              {mintedTokenIds.length > 0 && (
-                <label
-                  className="gallery-sort"
-                  htmlFor="mint-gallery-sort"
-                  onClick={(event) => event.stopPropagation()}
-                  onMouseDown={(event) => event.stopPropagation()}
-                >
-                  <span className="gallery-sort-label">Sort by</span>
-                  <select
-                    id="mint-gallery-sort"
-                    className="dropdown gallery-sort-select"
-                    value={mintGallerySort}
-                    onChange={(event) => setMintGallerySort(event.target.value)}
-                    onClick={(event) => event.stopPropagation()}
-                    onMouseDown={(event) => event.stopPropagation()}
-                  >
-                    <option value={MINT_GALLERY_SORT.MINT_DATE}>Mint date</option>
-                    <option value={MINT_GALLERY_SORT.TOKEN_ID}>Token ID</option>
-                  </select>
-                </label>
-              )}
-            </summary>
-            <div className="panel-body">
-              <section className="gallery">
-                {mintedTokenIds.length > 0 ? (
-                  <div className="gallery-scroll">
-                    <div className="gallery-grid">
-                      {sortedMintGalleryIds.map((id) => (
-                        <MintedGalleryItem
-                          key={id}
-                          id={id}
-                          imageUrl={mintPreviewUrls[id]}
-                          isSelected={String(tokenId) === String(id)}
-                          onSelect={handleTokenSubmit}
-                          onBecomeVisible={handleMintPreviewVisible}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <p className="gallery-empty">Loading minted AFAs…</p>
-                )}
-              </section>
-            </div>
-          </details>
         </section>
       </main>
 

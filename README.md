@@ -4,7 +4,7 @@
 
 Web studio for the [Ape Facing Apes](https://www.apefacingapes.com) collection: pick a BAYC token, layer outfits, hats, eyes, and special sets, render a live preview, and check whether that ape’s AFA is already minted on-chain.
 
-**Live:** [afa-editor.vercel.app](https://afa-editor.vercel.app) · also [afa-editor.app](https://www.afa-editor.app)
+**Live:** [afa-editor.app](https://afa-editor.app) · [www.afa-editor.app](https://www.afa-editor.app) · [afa-editor.vercel.app](https://afa-editor.vercel.app)
 
 ## Features
 
@@ -23,9 +23,10 @@ Web studio for the [Ape Facing Apes](https://www.apefacingapes.com) collection: 
 ## Structure
 
 ```
-frontend/     React (Create React App) — editor UI, Etherscan helpers
+frontend/     React (Create React App) — editor UI
+frontend/api  Vercel Serverless Functions — Etherscan proxy (also mirrored at /api)
 backend/      Flask — image compositing, trait assets, /api/* routes
-middleware.js Vercel OG / bot HTML for social previews
+middleware.js Vercel OG / bot HTML for social previews (also frontend/middleware.js)
 ```
 
 ## Run locally
@@ -64,7 +65,7 @@ npm start
 - **Frontend + routing:** Vercel (`vercel.json` rewrites `/api/*` to the backend and serves the React build).
 - **Image API:** Google App Engine (`backend/app.yaml`) — default production URL `https://afa-editor.ew.r.appspot.com`.
 
-Set `REACT_APP_API_URL` and `REACT_APP_ETHERSCAN_API_KEY` in Vercel project settings (see `.env.example`).
+Set `REACT_APP_API_URL` and `ETHERSCAN_API_KEY` in Vercel project settings (see `.env.example`). `ETHERSCAN_API_KEY` is read only by the serverless chain proxy (`/api/chain/owner-of`, `/api/chain/transfers`) and must not use the `REACT_APP_` prefix. The browser bundle does not call Etherscan directly.
 
 ## Tech
 

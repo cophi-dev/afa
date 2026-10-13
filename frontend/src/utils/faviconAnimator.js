@@ -4,7 +4,8 @@ const INTERVAL_MS = 650;
 
 /** Cycle BAYC background frames while the tab is open (GIF favicons don't animate in most browsers). */
 export function startFaviconAnimation() {
-  if (typeof document === 'undefined') return undefined;
+  if (typeof document === 'undefined' || typeof window === 'undefined') return undefined;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
 
   const publicUrl = process.env.PUBLIC_URL || '';
   const frameBase = `${publicUrl}/favicon-frames`;

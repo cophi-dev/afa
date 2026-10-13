@@ -1,21 +1,8 @@
-import { debug, error as logError } from '../utils/debug';
+import { error as logError } from '../utils/debug';
 
-const ETHERSCAN_API_KEY = process.env.REACT_APP_ETHERSCAN_API_KEY;
-if (!ETHERSCAN_API_KEY) {
-  logError('Etherscan API key not found in environment variables');
-}
-
-const CONTRACT_ADDRESS = '0xfAa0e99EF34Eae8b288CFEeAEa4BF4f5B5f2eaE7';
-const ETHERSCAN_V2_BASE = 'https://api.etherscan.io/v2/api';
-const OWNER_OF_SELECTOR = '6352211e';
-
-const buildEtherscanV2Url = (params) => {
-  const query = new URLSearchParams({
-    chainid: '1',
-    apikey: ETHERSCAN_API_KEY,
-    ...params,
-  });
-  return `${ETHERSCAN_V2_BASE}?${query.toString()}`;
+const chainProxyUrl = (path) => {
+  const base = (process.env.REACT_APP_CHAIN_PROXY_URL || '').replace(/\/$/, '');
+  return `${base}${path}`;
 };
 
 export const getMintedTokenIdsNewestFirst = (transactions) => {
@@ -42,29 +29,12 @@ export const getMintedTokenIdsNewestFirst = (transactions) => {
 
 export const getAllTransactions = async () => {
   try {
-    const url = buildEtherscanV2Url({
-      module: 'account',
-      action: 'tokennfttx',
-      contractaddress: CONTRACT_ADDRESS,
-      page: '1',
-      offset: '10000',
-      startblock: '0',
-      endblock: '999999999',
-      sort: 'asc',
-    });
-
-    debug('Fetching from URL', url);
-
-    const response = await fetch(url);
-    const data = await response.json();
-
-    debug('Etherscan response', data);
-
-    if (data.status === '0') {
-      throw new Error(data.result || data.message || 'Etherscan API error');
+    const response = await fetch(chainProxyUrl('/api/chain/transfers'));
+    if (!response.ok) {
+      throw new Error(`Chain proxy HTTP ${response.status}`);
     }
-
-    return data.result || [];
+    const data = await response.json();
+    return Array.isArray(data.result) ? data.result : [];
   } catch (error) {
     logError('Error fetching transactions:', error);
     return [];
@@ -76,9 +46,9 @@ export const processNFTStatuses = (transactions) => {
     logError('Transactions is not an array:', transactions);
     return new Map();
   }
-  
+
   const nftStatuses = new Map();
-  
+
   transactions.forEach(tx => {
     if (tx && tx.tokenID) {
       const tokenId = parseInt(tx.tokenID);
@@ -88,36 +58,26 @@ export const processNFTStatuses = (transactions) => {
       });
     }
   });
-  
+
   return nftStatuses;
 };
 
-// V1 tokennfttx was deprecated Aug 2025; use V2 eth_call ownerOf for per-token checks.
+// Mint status is checked through /api/chain/owner-of so the Etherscan key
+// stays on the server (Vercel function in production, Flask in local dev).
 export const checkTokenMintStatus = async (tokenId) => {
   try {
     const normalized = String(tokenId || '').replace(/[^0-9]/g, '');
     if (!normalized) return false;
 
-    const tokenHex = parseInt(normalized, 10).toString(16).padStart(64, '0');
-    const url = buildEtherscanV2Url({
-      module: 'proxy',
-      action: 'eth_call',
-      to: CONTRACT_ADDRESS,
-      data: `0x${OWNER_OF_SELECTOR}${tokenHex}`,
-      tag: 'latest',
-    });
-    const response = await fetch(url);
+    const response = await fetch(
+      chainProxyUrl(`/api/chain/owner-of?tokenId=${encodeURIComponent(normalized)}`)
+    );
+    if (!response.ok) return false;
+
     const data = await response.json();
-
-    if (data.status === '0') {
-      debug('Etherscan ownerOf check failed', { tokenId: normalized, data });
-      return false;
-    }
-
-    const ownerHex = String(data.result || '');
-    return ownerHex.length >= 42 && ownerHex !== '0x' && !/^0x0+$/i.test(ownerHex);
+    return Boolean(data && data.minted);
   } catch (error) {
     logError('Error checking token status:', error);
     return false;
   }
-}; 
+};
