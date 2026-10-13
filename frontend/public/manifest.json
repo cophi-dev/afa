@@ -1,6 +1,8 @@
 {
   "short_name": "AFA Editor",
   "name": "Ape Facing Apes Editor",
+  "description": "Change your perspective with Ape Facing Apes",
+  "lang": "en",
   "icons": [
     {
       "src": "favicon-16x16.png",

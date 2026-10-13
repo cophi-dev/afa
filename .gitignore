@@ -22,4 +22,6 @@ frontend/.env.production.local
 /backend/traits/**
 !/backend/traits/README.md
 
+# macOS folder metadata — ignore in every directory
 .DS_Store
+**/.DS_Store

@@ -24,7 +24,7 @@ function Banner() {
     return (
         <div className="banner">
             <a href={MINT_SITE_URL} target="_blank" rel="noopener noreferrer">
-                <img src="./logo.png" alt="Logo" className="banner-logo" />
+                <img src="./logo.png" alt="Ape Facing Apes" width="2000" height="2000" className="banner-logo" />
             </a>
         </div>
     );
@@ -82,7 +82,7 @@ function MintedGalleryItem({ id, imageUrl, isSelected, onSelect, onBecomeVisible
         >
             <div className="gallery-thumb">
                 {imageUrl ? (
-                    <img src={imageUrl} alt={`AFA #${id}`} loading="lazy" />
+                    <img src={imageUrl} alt={`AFA #${id}`} width="1000" height="1000" loading="lazy" decoding="async" />
                 ) : (
                     <div className="gallery-thumb-placeholder">#{id}</div>
                 )}
@@ -731,12 +731,13 @@ function App() {
   return (
     // Apply glamour class conditionally
     <div className={appClassName}>
+      <a className="skip-link" href="#editor-controls">Skip to editor</a>
       <Banner />
       <main className="studio">
         <section className={`studio-preview ${tokenId ? 'has-token' : ''}`} aria-label="Preview">
           <div className="preview-card">
             <div id="asset-display" className={`${fade || ''} ${showLoader ? 'is-loading' : ''}`}>
-              <img src={currentImageUrl} alt="Ape preview" />
+              <img src={currentImageUrl} alt="Ape preview" width="1200" height="1200" />
               {showLoader && (
                 <div className="loader" role="status" aria-live="polite">
                   {loaderMessage}
@@ -794,11 +795,12 @@ function App() {
             </div>
           )}
         </section>
-        <section className="studio-controls" aria-label="Editor controls">
+        <section id="editor-controls" className="studio-controls" aria-label="Editor controls">
           {tokenId && (
             <div className="action-dock" aria-label="Quick actions">
               <div className="button-container">
                 <button
+                  type="button"
                   onClick={handleReset}
                   className="action-button reset-button"
                   title="Reset all selections"
@@ -806,6 +808,7 @@ function App() {
                   Reset All
                 </button>
                 <button
+                  type="button"
                   onClick={handleRandomize}
                   className="action-button random-button"
                   title="Randomize traits"
@@ -813,6 +816,7 @@ function App() {
                   New Perspective 👀
                 </button>
                 <button
+                  type="button"
                   onClick={handleFrameIt}
                   className="action-button vegas-button"
                   title="Add Vintage Frame"
@@ -836,6 +840,9 @@ function App() {
                             <div className="token-input-row">
                                 <input
                                     type="text"
+                                    inputMode="numeric"
+                                    autoComplete="off"
+                                    spellCheck={false}
                                     value={tokenInput}
                                     onChange={handleTokenInput}
                                     onKeyDown={(event) => {
@@ -846,19 +853,21 @@ function App() {
                                     placeholder="Enter minted Token ID (0-9999)"
                                     className={`token-input ${isCheckingMint ? 'checking' : ''}`}
                                     disabled={isCheckingMint}
+                                    aria-label="Minted AFA token ID"
                                     aria-busy={isCheckingMint}
                                 />
                             </div>
                             {showSuggestions && (
-                                <div className="suggestions-container" ref={suggestionsRef}>
+                                <div className="suggestions-container" ref={suggestionsRef} aria-label="Matching token IDs">
                                     {suggestions.map((suggestion, index) => (
-                                        <div
+                                        <button
+                                            type="button"
                                             key={suggestion}
                                             className={`suggestion-item ${index === selectedSuggestionIndex ? 'selected' : ''}`}
                                             onClick={() => handleSuggestionClick(suggestion)}
                                         >
                                             {suggestion}
-                                        </div>
+                                        </button>
                                     ))}
                                 </div>
                             )}
@@ -878,9 +887,11 @@ function App() {
                         <h3 className="dropdown-header">Outfit</h3>
                         <div className="dropdown-with-arrows">
                             <button 
+                                type="button"
                                 className="dropdown-arrow" 
                                 onClick={() => navigateDropdown(outfitRef, 'prev')}
                                 disabled={!canNavigate(outfitRef, 'prev')}
+                                aria-label="Previous outfit"
                             >
                                 ◀
                             </button>
@@ -890,6 +901,7 @@ function App() {
                                 onChange={handleSecondAssetChange} 
                                 className="dropdown" 
                                 disabled={thirdAsset === 'selfie' || clubAsset}
+                                aria-label="Outfit"
                             >
                                 <option value="">Select</option>
                                 <option value="apefest_merch_2025">Apefest Merch 2025</option>
@@ -917,9 +929,11 @@ function App() {
                                 <option value="blazer">Blazer</option>
                             </select>
                             <button 
+                                type="button"
                                 className="dropdown-arrow" 
                                 onClick={() => navigateDropdown(outfitRef, 'next')}
                                 disabled={!canNavigate(outfitRef, 'next')}
+                                aria-label="Next outfit"
                             >
                                 ▶
                             </button>
@@ -937,9 +951,11 @@ function App() {
                         <h3 className="dropdown-header">Mouth</h3>
                         <div className="dropdown-with-arrows">
                             <button 
+                                type="button"
                                 className="dropdown-arrow" 
                                 onClick={() => navigateDropdown(mouthRef, 'prev')}
                                 disabled={!canNavigate(mouthRef, 'prev')}
+                                aria-label="Previous mouth"
                             >
                                 ◀
                             </button>
@@ -949,6 +965,7 @@ function App() {
                                 onChange={handleMouthAssetChange} 
                                 className="dropdown" 
                                 disabled={clubAsset === 'elite'}
+                                aria-label="Mouth"
                             >
                                 <option value="">Select</option>
                                 <option value="apechain_grin">Apechain Grin</option>
@@ -959,9 +976,11 @@ function App() {
                                 <option value="big_smile">Big Smile</option>
                             </select>
                             <button 
+                                type="button"
                                 className="dropdown-arrow" 
                                 onClick={() => navigateDropdown(mouthRef, 'next')}
                                 disabled={!canNavigate(mouthRef, 'next')}
+                                aria-label="Next mouth"
                             >
                                 ▶
                             </button>
@@ -971,9 +990,11 @@ function App() {
                         <h3 className="dropdown-header">Hat</h3>
                         <div className="dropdown-with-arrows">
                             <button 
+                                type="button"
                                 className="dropdown-arrow" 
                                 onClick={() => navigateDropdown(hatRef, 'prev')}
                                 disabled={!canNavigate(hatRef, 'prev')}
+                                aria-label="Previous hat"
                             >
                                 ◀
                             </button>
@@ -983,6 +1004,7 @@ function App() {
                                 onChange={handleHatAssetChange} 
                                 className="dropdown" 
                                 disabled={clubAsset || secondAsset === 'singe_hoodie_glow' || secondAsset === 'singe_hoodie'}
+                                aria-label="Hat"
                             >
                                 <option value="">Select</option>
                                 <option value="vegas">Vegas BAYC</option>
@@ -1000,9 +1022,11 @@ function App() {
                                 <option value="glitter_cowboy_hat">Glitter Cowboy Hat</option>
                             </select>
                             <button 
+                                type="button"
                                 className="dropdown-arrow" 
                                 onClick={() => navigateDropdown(hatRef, 'next')}
                                 disabled={!canNavigate(hatRef, 'next')}
+                                aria-label="Next hat"
                             >
                                 ▶
                             </button>
@@ -1012,9 +1036,11 @@ function App() {
                         <h3 className="dropdown-header">Eyes</h3>
                         <div className="dropdown-with-arrows">
                             <button 
+                                type="button"
                                 className="dropdown-arrow" 
                                 onClick={() => navigateDropdown(eyesRef, 'prev')}
                                 disabled={!canNavigate(eyesRef, 'prev')}
+                                aria-label="Previous eyes"
                             >
                                 ◀
                             </button>
@@ -1024,6 +1050,7 @@ function App() {
                                 onChange={handleEyesAssetChange} 
                                 className="dropdown" 
                                 disabled={clubAsset === 'elite'}
+                                aria-label="Eyes"
                             >
                                 <option value="">Select</option>
                                 <option value="vegas">Vegas BAYC</option>
@@ -1035,9 +1062,11 @@ function App() {
                                 <option value="star_glasses">Star Glasses</option>
                             </select>
                             <button 
+                                type="button"
                                 className="dropdown-arrow" 
                                 onClick={() => navigateDropdown(eyesRef, 'next')}
                                 disabled={!canNavigate(eyesRef, 'next')}
+                                aria-label="Next eyes"
                             >
                                 ▶
                             </button>
@@ -1047,9 +1076,11 @@ function App() {
                         <h3 className="dropdown-header">Hand</h3>
                         <div className="dropdown-with-arrows">
                             <button 
+                                type="button"
                                 className="dropdown-arrow" 
                                 onClick={() => navigateDropdown(handRef, 'prev')}
                                 disabled={!canNavigate(handRef, 'prev')}
+                                aria-label="Previous hand"
                             >
                                 ◀
                             </button>
@@ -1059,6 +1090,7 @@ function App() {
                                 onChange={handleAssetChange} 
                                 className="dropdown" 
                                 disabled={thirdAsset === 'selfie' || clubAsset === 'elite'}
+                                aria-label="Hand"
                             >
                                 <option value="">Select</option>
                                 <option value="dr_bombay_strawberry_cream">Dr. Bombay Strawberry Cream</option>
@@ -1096,9 +1128,11 @@ function App() {
                                 <option value="balloon_moon">2024 Balloon</option>
                             </select>
                             <button 
+                                type="button"
                                 className="dropdown-arrow" 
                                 onClick={() => navigateDropdown(handRef, 'next')}
                                 disabled={!canNavigate(handRef, 'next')}
+                                aria-label="Next hand"
                             >
                                 ▶
                             </button>
@@ -1159,9 +1193,11 @@ function App() {
                       <h3 className="dropdown-header">Extra</h3>
                       <div className="dropdown-with-arrows">
                         <button
+                          type="button"
                           className="dropdown-arrow"
                           onClick={() => navigateDropdown(extraRef, 'prev')}
                           disabled={!canNavigate(extraRef, 'prev')}
+                          aria-label="Previous extra"
                         >
                           ◀
                         </button>
@@ -1171,6 +1207,7 @@ function App() {
                           onChange={handleThirdAssetChange}
                           className="dropdown"
                           disabled={clubAsset === 'elite'}
+                          aria-label="Extra"
                         >
                           <option value="">Select</option>
                           <option value="top_trader">Top Trader</option>
@@ -1194,9 +1231,11 @@ function App() {
                           <option value="vintage_frame">Vintage Frame</option>
                         </select>
                         <button
+                          type="button"
                           className="dropdown-arrow"
                           onClick={() => navigateDropdown(extraRef, 'next')}
                           disabled={!canNavigate(extraRef, 'next')}
+                          aria-label="Next extra"
                         >
                           ▶
                         </button>

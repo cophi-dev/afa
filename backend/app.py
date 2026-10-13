@@ -10,9 +10,11 @@ import urllib.parse
 import urllib.request
 from io import BytesIO
 
-SITE_URL = os.environ.get('SITE_URL', 'https://www.afa-editor.app')
+SITE_URL = os.environ.get('SITE_URL', 'https://afa-editor.app')
 API_URL = os.environ.get('API_URL', 'https://afa-editor.ew.r.appspot.com')
-DEFAULT_OG_IMAGE = f'{SITE_URL}/og-preview.png'
+DEFAULT_OG_IMAGE = f'{SITE_URL}/og-image.png'
+DEFAULT_OG_IMAGE_WIDTH = '1200'
+DEFAULT_OG_IMAGE_HEIGHT = '630'
 
 app = Flask(__name__, static_folder='public', static_url_path='/')
 
@@ -443,6 +445,9 @@ minted_ids_order, minted_ids = init_minted_ids()
 _mint_sync_lock = threading.Lock()
 _last_chain_sync_at = time.time()
 CHAIN_SYNC_COOLDOWN_SECONDS = 60
+_owner_of_cache = {}
+_transfers_cache = {'expires': 0.0, 'result': None}
+_CHAIN_PROXY_CACHE_MAX = 4000
 
 
 def sync_minted_ids_from_chain(force=False):
@@ -563,6 +568,41 @@ def check_token_minted_via_eth_call(token_id):
     except Exception as error:
         print(f"Etherscan ownerOf check error for {token_id}: {error}")
         return check_token_minted_on_chain_via_rpc(normalized)
+
+
+def fetch_slim_token_transfers():
+    """Etherscan NFT transfers reduced to the fields the editor gallery uses."""
+    if not ETHERSCAN_API_KEY:
+        return None
+
+    params = urllib.parse.urlencode({
+        'module': 'account',
+        'action': 'tokennfttx',
+        'contractaddress': CONTRACT_ADDRESS,
+        'page': 1,
+        'offset': 10000,
+        'startblock': 0,
+        'endblock': 999999999,
+        'sort': 'asc',
+        'chainid': 1,
+        'apikey': ETHERSCAN_API_KEY,
+    })
+    url = f'{ETHERSCAN_V2_BASE}?{params}'
+
+    try:
+        with urllib.request.urlopen(url, timeout=30) as response:
+            data = json.load(response)
+        if data.get('status') != '1' or not isinstance(data.get('result'), list):
+            print(f"Etherscan transfer proxy failed: {data.get('message')}")
+            return []
+        return [
+            {'tokenID': tx.get('tokenID'), 'timeStamp': tx.get('timeStamp')}
+            for tx in data['result']
+            if isinstance(tx, dict)
+        ]
+    except Exception as error:
+        print(f"Etherscan transfer proxy error: {error}")
+        return None
 
 
 def remember_minted_token(token_id):
@@ -1091,8 +1131,8 @@ def og_preview():
     title = 'AFA Editor'
     description = 'Change your perspective with Ape Facing Apes'
     og_image = DEFAULT_OG_IMAGE
-    image_width = '580'
-    image_height = '498'
+    image_width = DEFAULT_OG_IMAGE_WIDTH
+    image_height = DEFAULT_OG_IMAGE_HEIGHT
 
     if token_id:
         if is_minted(token_id):
@@ -1111,6 +1151,7 @@ def og_preview():
   <meta charset="utf-8" />
   <title>{escape(title)}</title>
   <meta name="description" content="{escape(description)}" />
+  <link rel="canonical" href="{escape(canonical_url)}" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="AFA Editor" />
   <meta property="og:title" content="{escape(title)}" />
@@ -1119,14 +1160,62 @@ def og_preview():
   <meta property="og:image" content="{escape(og_image)}" />
   <meta property="og:image:width" content="{image_width}" />
   <meta property="og:image:height" content="{image_height}" />
+  <meta property="og:image:alt" content="{escape(title)}" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="{escape(title)}" />
   <meta name="twitter:description" content="{escape(description)}" />
   <meta name="twitter:image" content="{escape(og_image)}" />
+  <meta name="twitter:image:alt" content="{escape(title)}" />
 </head>
 <body></body>
 </html>'''
     return Response(html, mimetype='text/html; charset=utf-8')
+
+
+@app.route('/api/chain/owner-of', methods=['GET'])
+def chain_owner_of():
+    """Local/App Engine stand-in for the Vercel /api/chain/owner-of function."""
+    token_id = normalize_token_id(request.args.get('tokenId'))
+    if not token_id or len(token_id) > 5:
+        return jsonify({'error': 'tokenId required'}), 400
+
+    now = time.time()
+    cached = _owner_of_cache.get(token_id)
+    if cached and cached['expires'] > now:
+        minted = cached['minted']
+    else:
+        minted = bool(check_token_minted_via_eth_call(token_id))
+        if len(_owner_of_cache) >= _CHAIN_PROXY_CACHE_MAX:
+            _owner_of_cache.clear()
+        _owner_of_cache[token_id] = {
+            'minted': minted,
+            'expires': now + (600 if minted else 30),
+        }
+
+    response = jsonify({'tokenId': token_id, 'minted': minted})
+    if minted:
+        response.headers['Cache-Control'] = 'public, max-age=60, s-maxage=600, stale-while-revalidate=3600'
+    else:
+        response.headers['Cache-Control'] = 'public, max-age=15, s-maxage=30, stale-while-revalidate=120'
+    return response
+
+
+@app.route('/api/chain/transfers', methods=['GET'])
+def chain_transfers():
+    """Local/App Engine stand-in for the Vercel /api/chain/transfers function."""
+    now = time.time()
+    if _transfers_cache['result'] is not None and _transfers_cache['expires'] > now:
+        result = _transfers_cache['result']
+    else:
+        result = fetch_slim_token_transfers()
+        if result is None:
+            return jsonify({'error': 'Chain proxy is not configured'}), 500
+        _transfers_cache['result'] = result
+        _transfers_cache['expires'] = now + (60 if result else 15)
+
+    response = jsonify({'result': result})
+    response.headers['Cache-Control'] = 'public, max-age=30, s-maxage=60, stale-while-revalidate=300'
+    return response
 
 
 @app.route('/api/is-minted', methods=['GET'])
