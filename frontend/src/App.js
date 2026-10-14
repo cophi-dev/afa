@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import './App.css';
 import { getAllTransactions, getMintedTokenIdsNewestFirst, checkTokenMintStatus } from './services/etherscanService';
 import { debug, error as logError } from './utils/debug';
+import AssetStrip from './AssetStrip';
+import { buildShareText, buildXIntentUrl } from './utils/shareText';
+import { buildSharePageUrl } from './utils/look';
 
 const DEFAULT_API_URL = 'https://afa-editor.ew.r.appspot.com';
 const MINT_SITE_URL = 'https://www.apefacingapes.com';
@@ -27,7 +30,7 @@ const MINT_GALLERY_SORT = {
 function SiteBar() {
     return (
         <header className="site-bar">
-            <a href={MINT_SITE_URL} target="_blank" rel="noopener noreferrer" className="site-bar-brand">
+            <a href="/" className="site-bar-brand" aria-label="AFA Editor home">
                 <img src="./logo-mark.png" alt="Ape Facing Apes" width="240" height="207" className="site-bar-logo" />
                 <span className="site-bar-title">Editor</span>
             </a>
@@ -288,6 +291,8 @@ function App() {
     const extraRef = useRef(null);
     const [vegasButtonClicked, setVegasButtonClicked] = useState(false); // State for glamour effect
     const [shareNote, setShareNote] = useState('');
+    const [downloaded, setDownloaded] = useState(false);
+    useEffect(() => { setDownloaded(false); }, [tokenId]);
 
   useEffect(() => {
         if (thirdAsset === 'selfie') {
@@ -645,10 +650,20 @@ function App() {
         setTokenInput(value);
         
         if (value) {
-            const suggestions = Array.from(mintedTokens)
+            const minted = Array.from(mintedTokens)
+                .map(Number)
                 .filter(id => id.toString().startsWith(value))
-                .sort((a, b) => a - b)  // Simple numeric sort
-                .slice(0, 5);
+                .sort((a, b) => a - b);
+            const mintedSet = new Set(minted);
+            const rest = [];
+            const base = Number(value);
+            for (let mult = 1; mult <= 1000 && rest.length < 8; mult *= 10) {
+                for (let k = 0; k < mult && rest.length < 8; k += 1) {
+                    const id = base * mult + k;
+                    if (id <= 9999 && !mintedSet.has(id)) rest.push(id);
+                }
+            }
+            const suggestions = [...minted, ...rest].slice(0, 8);
             
             setSuggestions(suggestions);
             setShowSuggestions(suggestions.length > 0);
@@ -863,6 +878,46 @@ function App() {
         document.body.appendChild(link);
         link.click();
         link.remove();
+        setDownloaded(true);
+    };
+
+    const shareText = useMemo(() => buildShareText({
+        tokenId,
+        traits: {
+            outfit: secondAsset,
+            hand: selectedAsset,
+            extra: thirdAsset,
+            mouth: mouthAsset,
+            hat: hatAsset,
+            eyes: eyesAsset,
+        },
+        framed: vegasButtonClicked,
+        url: buildSharePageUrl(tokenId, {
+            assetType: selectedAsset,
+            secondAssetType: secondAsset,
+            thirdAssetType: thirdAsset,
+            mouthAssetType: mouthAsset,
+            hatAssetType: hatAsset,
+            eyesAssetType: eyesAsset,
+            clubAssetType: clubAsset,
+            frame: vegasButtonClicked ? '1' : '',
+        }),
+    }), [tokenId, secondAsset, selectedAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset, vegasButtonClicked]);
+    const xShareUrl = useMemo(() => buildXIntentUrl(shareText), [shareText]);
+
+    const handleShareOnX = async (event) => {
+        const isTouch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+        if (!isTouch || !navigator.canShare || !String(currentImageUrl).startsWith('blob:')) return;
+        event.preventDefault();
+        try {
+            const blob = await fetch(currentImageUrl).then((r) => r.blob());
+            const file = new File([blob], `afa-${tokenId}.png`, { type: 'image/png' });
+            if (!navigator.canShare({ files: [file] })) throw new Error('files not shareable');
+            await navigator.share({ files: [file], text: shareText });
+        } catch (error) {
+            if (error && error.name === 'AbortError') return;
+            window.open(xShareUrl, '_blank', 'noopener,noreferrer');
+        }
     };
 
     const handleShare = async () => {
@@ -956,11 +1011,25 @@ function App() {
               >
                 Download PNG
               </button>
-              <button type="button" className="preview-share" onClick={handleShare}>
-                {shareNote || 'Share'}
-              </button>
+              {downloaded ? (
+                <a
+                  className="preview-share preview-share--x"
+                  href={xShareUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={handleShareOnX}
+                >
+                  Share on X
+                </a>
+              ) : (
+                <button type="button" className="preview-share" onClick={handleShare}>
+                  {shareNote || 'Share'}
+                </button>
+              )}
             </div>
           )}
+
+
 
           {syncPendingTokenId && (
             <div className="claim-prompt" role="alert">
@@ -1031,7 +1100,7 @@ function App() {
                   title="Randomizes outfit, mouth, hat, eyes, hand, and extra."
                   data-tooltip="Randomizes outfit, mouth, hat, eyes, hand, and extra."
                 >
-                  Randomize 👀
+                  Randomize
                 </button>
                 <button
                   type="button"
@@ -1109,7 +1178,10 @@ function App() {
                               className={`suggestion-item ${index === selectedSuggestionIndex ? 'selected' : ''}`}
                               onClick={() => handleSuggestionClick(suggestion)}
                             >
-                              {suggestion}
+                              <span>{suggestion}</span>
+                              {(mintedTokens.has(suggestion) || mintedTokens.has(String(suggestion))) && (
+                                <span className="suggestion-tag">Minted</span>
+                              )}
                             </button>
                           ))}
                         </div>
@@ -1163,6 +1235,16 @@ function App() {
                                 <option value="jacket">Jacket</option>
                                 <option value="blazer">Blazer</option>
                             </select>
+                            <AssetStrip
+                              selectRef={outfitRef}
+                              param="secondAssetType"
+                              tokenId={tokenId}
+                              value={secondAsset}
+                              onPick={(v) => handleSecondAssetChange({ target: { value: secondAsset === v ? '' : v } })}
+                              disabled={thirdAsset === 'selfie' || Boolean(clubAsset)}
+                              fetchAssetBlob={(path) => fetchFromAnyBase(path, (r) => r.blob())}
+                              crop="outfit"
+                            />
                         </div>
                     </div>
                 </div>
@@ -1192,6 +1274,16 @@ function App() {
                                 <option value="doodles_rainbow">Doodles Rainbow</option>
                                 <option value="big_smile">Big Smile</option>
                             </select>
+                            <AssetStrip
+                              selectRef={mouthRef}
+                              param="mouthAssetType"
+                              tokenId={tokenId}
+                              value={mouthAsset}
+                              onPick={(v) => handleMouthAssetChange({ target: { value: mouthAsset === v ? '' : v } })}
+                              disabled={clubAsset === 'elite'}
+                              fetchAssetBlob={(path) => fetchFromAnyBase(path, (r) => r.blob())}
+                              crop="mouth"
+                            />
                         </div>
                     </div>
                     <div className="dropdown-section">
@@ -1220,6 +1312,16 @@ function App() {
                                 <option value="pudgy_hat2">Pudgy Penguins Hat 2</option>
                                 <option value="glitter_cowboy_hat">Glitter Cowboy Hat</option>
                             </select>
+                            <AssetStrip
+                              selectRef={hatRef}
+                              param="hatAssetType"
+                              tokenId={tokenId}
+                              value={hatAsset}
+                              onPick={(v) => handleHatAssetChange({ target: { value: hatAsset === v ? '' : v } })}
+                              disabled={Boolean(clubAsset) || secondAsset === 'singe_hoodie_glow' || secondAsset === 'singe_hoodie'}
+                              fetchAssetBlob={(path) => fetchFromAnyBase(path, (r) => r.blob())}
+                              crop="hat"
+                            />
                         </div>
                     </div>
                     <div className="dropdown-section">
@@ -1242,6 +1344,16 @@ function App() {
                                 <option value="btc_eyes">BTC Coin</option>
                                 <option value="star_glasses">Star Glasses</option>
                             </select>
+                            <AssetStrip
+                              selectRef={eyesRef}
+                              param="eyesAssetType"
+                              tokenId={tokenId}
+                              value={eyesAsset}
+                              onPick={(v) => handleEyesAssetChange({ target: { value: eyesAsset === v ? '' : v } })}
+                              disabled={clubAsset === 'elite'}
+                              fetchAssetBlob={(path) => fetchFromAnyBase(path, (r) => r.blob())}
+                              crop="eyes"
+                            />
                         </div>
                     </div>
                     <div className="dropdown-section">
@@ -1290,6 +1402,16 @@ function App() {
                                 <option value="matchstick">Matchstick</option>
                                 <option value="balloon_moon">2024 Balloon</option>
                             </select>
+                            <AssetStrip
+                              selectRef={handRef}
+                              param="assetType"
+                              tokenId={tokenId}
+                              value={selectedAsset}
+                              onPick={(v) => handleAssetChange({ target: { value: selectedAsset === v ? '' : v } })}
+                              disabled={thirdAsset === 'selfie' || clubAsset === 'elite'}
+                              fetchAssetBlob={(path) => fetchFromAnyBase(path, (r) => r.blob())}
+                              crop="hand"
+                            />
                         </div>
                     </div>
                 {/* <div className="dropdown-section">
@@ -1355,6 +1477,16 @@ function App() {
                           <option value="verified">Verified</option>
                           <option value="vintage_frame">Vintage Frame</option>
                         </select>
+                            <AssetStrip
+                              selectRef={extraRef}
+                              param="thirdAssetType"
+                              tokenId={tokenId}
+                              value={thirdAsset}
+                              onPick={(v) => handleThirdAssetChange({ target: { value: thirdAsset === v ? '' : v } })}
+                              disabled={clubAsset === 'elite'}
+                              fetchAssetBlob={(path) => fetchFromAnyBase(path, (r) => r.blob())}
+                              crop="extra"
+                            />
                       </div>
                     </div>
                   </div>
@@ -1381,7 +1513,7 @@ function App() {
             title="Randomize traits"
             disabled={!tokenId}
         >
-            New Perspective 👀
+            New Perspective
         </button>
         <button
             onClick={handleSelectVegas}

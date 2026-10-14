@@ -44,7 +44,7 @@ function buildOgHtml({ title, description, canonicalUrl, ogImage, imageWidth, im
 }
 
 export const config = {
-  matcher: ['/((?!api/|static/|favicon|logo|overview|manifest|robots|apple-touch|og-preview|og-image|.*\\..*).*)'],
+  matcher: ['/((?!api/|a/|static/|favicon|logo|overview|manifest|robots|apple-touch|og-preview|og-image|.*\\..*).*)'],
 };
 
 export default async function middleware(request) {
