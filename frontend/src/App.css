@@ -5634,3 +5634,6 @@ html, body { overflow-x: clip; overflow-y: visible; }
   .hero--try .hero-art { gap: 6px; margin-bottom: 8px; }
   .hero--try .hero-form { gap: 6px; }
 }
+
+/* Headline: 2 lines on desktop (Design) */
+.hero--try .hero-title { max-width: 14ch; text-wrap: balance; }
