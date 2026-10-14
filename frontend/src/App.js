@@ -14,7 +14,8 @@ const PREVIEW_RETRIES = 2;
 const PREVIEW_RETRY_COOLDOWN_MS = 15000;
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const SUGGESTION_LIMIT = 20;
-const MINT_URL = `${MINT_SITE_URL}/?utm_source=afa-editor&utm_medium=referral&utm_campaign=unminted-preview`;
+// Phillipp 14.10: all 'Mint to reveal' CTAs go to /claim (no id param; the site doesn't read it).
+const MINT_URL = 'https://www.apefacingapes.com/claim?utm_source=afa-editor&utm_medium=referral&utm_campaign=unminted-preview';
 const LOADER_MESSAGES = [
     'Brewing ape magic...',
     'Polishing pixels...',
@@ -42,27 +43,123 @@ function SiteBar() {
     );
 }
 
-function Hero({ heroImage, onPick }) {
+const HERO_MINT_URL = MINT_URL;
+const HERO_MINTED_PER_ROW = 9;
+const HERO_UNMINTED_PER_ROW = 2;
+const HERO_UNMINTED_AFTER = [2, 6]; // ~1 in 5 tiles, never adjacent
+const MAX_TOKEN_ID = 9999;
+
+// Deterministic sample of unminted IDs (stable across renders, no Math.random churn).
+function pickUnmintedIds(mintedSet, count, seed) {
+    const out = [];
+    let s = seed >>> 0 || 7;
+    let guard = 0;
+    while (out.length < count && guard < 500) {
+        s = (s * 1664525 + 1013904223) >>> 0;
+        const id = (s % MAX_TOKEN_ID) + 1;
+        if (!mintedSet.has(id) && !out.includes(id)) out.push(id);
+        guard += 1;
+    }
+    return out;
+}
+
+function HeroTile({ tile, apiBase }) {
+    if (tile.kind === 'minted') {
+        return (
+            <li className="hero-tile">
+                {tile.url
+                    ? <img src={tile.url} alt={`AFA #${tile.id}`} width="160" height="160" loading="lazy" decoding="async" />
+                    : <span className="hero-tile-ph" aria-hidden="true" />}
+                <span className="hero-tile-label">AFA #{tile.id}</span>
+            </li>
+        );
+    }
+    // Unminted: server-blurred image only (/api/get-asset-preview). Never the sharp endpoint.
     return (
-        <section className="hero" aria-labelledby="hero-title">
+        <li className="hero-tile hero-tile--unminted">
+            <img
+                src={`${apiBase}/api/get-asset-preview?tokenId=${tile.id}&assetType=AFA`}
+                alt={`Ape #${tile.id}, not minted yet`}
+                width="160" height="160" loading="lazy" decoding="async"
+            />
+            <span className="hero-tile-tag">Mint to reveal</span>
+            <span className="hero-tile-label">Ape #{tile.id}</span>
+        </li>
+    );
+}
+
+function HeroRow({ tiles, apiBase, reverse }) {
+    // Tiles are rendered twice so the CSS marquee can loop seamlessly.
+    return (
+        <div className={`hero-row ${reverse ? 'hero-row--reverse' : ''}`}>
+            <ul className="hero-track">
+                {tiles.map((t) => <HeroTile key={`a-${t.kind}-${t.id}`} tile={t} apiBase={apiBase} />)}
+            </ul>
+            <ul className="hero-track" aria-hidden="true">
+                {tiles.map((t) => <HeroTile key={`b-${t.kind}-${t.id}`} tile={t} apiBase={apiBase} />)}
+            </ul>
+        </div>
+    );
+}
+
+function Hero({ mintedIds, mintPreviewUrls, apiBase, onSubmitId, onPick }) {
+    const [value, setValue] = useState('');
+    // New unminted sample on every visit.
+    const [seed] = useState(() => Math.floor(Math.random() * 0xffffffff) + 1);
+    const rows = useMemo(() => {
+        const mintedSet = new Set(mintedIds);
+        const build = (offset, seed) => {
+            const minted = mintedIds.slice(offset, offset + HERO_MINTED_PER_ROW);
+            const unminted = pickUnmintedIds(mintedSet, HERO_UNMINTED_PER_ROW, seed);
+            const tiles = [];
+            minted.forEach((id, i) => {
+                tiles.push({ kind: 'minted', id });
+                if (HERO_UNMINTED_AFTER.includes(i) && unminted.length && i < minted.length - 1) {
+                    tiles.push({ kind: 'unminted', id: unminted.shift() });
+                }
+            });
+            return tiles;
+        };
+        if (mintedIds.length === 0) return [];
+        return [build(0, seed), build(HERO_MINTED_PER_ROW, seed * 7 + 3)];
+    }, [mintedIds, seed]);
+    const withUrls = (tiles) => tiles.map((t) => (t.kind === 'minted' ? { ...t, url: mintPreviewUrls[t.id] } : t));
+
+    const submit = (e) => {
+        e.preventDefault();
+        const id = value.replace(/[^0-9]/g, '').slice(0, 4);
+        if (id) onSubmitId(id); else onPick();
+    };
+
+    return (
+        <section className="hero hero--marquee" aria-labelledby="hero-title">
             <div className="hero-copy">
-                <h1 id="hero-title" className="hero-title">Dress up your Ape Facing Ape.</h1>
-                <p className="hero-lede">
-                    Ape Facing Apes are Bored Apes turned to face you. Pick a minted AFA, swap outfits, hats and effects, and download the result.
+                <h1 id="hero-title" className="hero-title">Same apes.<br />Facing you.</h1>
+                <p className="hero-lede">Pick any ape, try on hats, outfits and effects.</p>
+                <form className="hero-form" onSubmit={submit} role="search">
+                    <label htmlFor="hero-token-id" className="visually-hidden">Ape ID</label>
+                    <input
+                        id="hero-token-id"
+                        className="hero-input"
+                        inputMode="numeric"
+                        autoComplete="off"
+                        placeholder="Ape ID, e.g. 716"
+                        value={value}
+                        onChange={(e) => setValue(e.target.value.replace(/[^0-9]/g, '').slice(0, 4))}
+                    />
+                    <button type="submit" className="hero-cta">Open editor</button>
+                </form>
+                <p className="hero-secondary">
+                    Not minted yet?{' '}
+                    <a href={HERO_MINT_URL} target="_blank" rel="noopener noreferrer">Mint to reveal</a> →
                 </p>
-                <button type="button" className="hero-cta" onClick={onPick}>
-                    Pick your ape
-                </button>
             </div>
-            <div className="hero-art">
-                <img
-                    src={heroImage || './face.png'}
-                    alt=""
-                    width="1000"
-                    height="1000"
-                    className={`hero-ape ${heroImage ? '' : 'is-placeholder'}`}
-                />
-            </div>
+            {rows.length > 0 && (
+                <div className="hero-marquee" aria-label="Minted Ape Facing Apes">
+                    <HeroRow tiles={withUrls(rows[0])} apiBase={apiBase} />
+                    <HeroRow tiles={withUrls(rows[1])} apiBase={apiBase} reverse />
+                </div>
+            )}
         </section>
     );
 }
@@ -242,6 +339,7 @@ function App() {
     }, [apiBaseCandidates]);
 
     const [tokenId, setTokenId] = useState('');
+    const [selectNonce, setSelectNonce] = useState(0);
     const [selectedAsset, setSelectedAsset] = useState('');
     const [secondAsset, setSecondAsset] = useState('');
     const [thirdAsset, setThirdAsset] = useState('');
@@ -349,10 +447,16 @@ function App() {
             numericIds.push(id);
         }
         if (numericIds.length === 0) return;
-        // Never drop IDs the authoritative list (afa-progress) says are minted.
-        setMintedTokens(new Set([...numericIds, ...authoritativeMintsRef.current]));
-        const missing = [...authoritativeMintsRef.current].filter((id) => !seen.has(id)).sort((a, b) => b - a);
-        setMintedTokenIds(missing.length ? [...numericIds, ...missing] : numericIds);
+        // Merge, never replace: a later, incomplete source (e.g. a partial Etherscan
+        // tx scan) must not drop IDs an earlier source (backend list, afa-progress) had.
+        // Mints are permanent, so a union is always correct.
+        setMintedTokens((prev) => new Set([...numericIds, ...prev, ...authoritativeMintsRef.current]));
+        setMintedTokenIds((prev) => {
+            const extra = [...new Set([...prev, ...authoritativeMintsRef.current])]
+                .filter((id) => !seen.has(id))
+                .sort((a, b) => b - a);
+            return extra.length ? [...numericIds, ...extra] : numericIds;
+        });
     }, []);
 
     const verifyTokenMinted = useCallback(async (rawId) => {
@@ -523,7 +627,7 @@ function App() {
 
     useEffect(() => {
         if (mintedTokenIds.length === 0) return;
-        sortedMintGalleryIds.slice(0, 12).forEach((id) => {
+        sortedMintGalleryIds.slice(0, 2 * HERO_MINTED_PER_ROW).forEach((id) => {
             loadMintPreview(id);
         });
     }, [mintedTokenIds, sortedMintGalleryIds, loadMintPreview]);
@@ -751,6 +855,7 @@ function App() {
     const handleTokenSubmit = useCallback(async (rawValue) => {
         const value = String(rawValue || '').replace(/[^0-9]/g, '').slice(0, 4);
         if (!value) return false;
+        setSelectNonce((n) => n + 1);
 
         setIsCheckingMint(true);
         setUnmintedTokenId('');
@@ -1048,6 +1153,22 @@ function App() {
     }, 450);
   };
 
+  // Phillipp: selecting an ID (autofill, gallery tile, hero input) brings the preview
+  // to the top of the viewport, below the sticky site bar. Reduced motion = instant jump.
+  useEffect(() => {
+    if (!tokenId) return;
+    const raf = window.requestAnimationFrame(() => {
+      const target = document.querySelector('.studio-preview');
+      if (!target) return;
+      const bar = document.querySelector('.site-bar');
+      const offset = (bar ? bar.getBoundingClientRect().height : 0) + 12;
+      const top = Math.max(0, target.getBoundingClientRect().top + window.scrollY - offset);
+      const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollTo({ top, behavior: reduce ? 'auto' : 'smooth' });
+    });
+    return () => window.cancelAnimationFrame(raf);
+  }, [tokenId, selectNonce]);
+
   const appClassName = `App ${vegasButtonClicked ? 'vegas-glamour' : ''} ${tokenId ? 'has-token' : ''}`;
 
   return (
@@ -1057,7 +1178,10 @@ function App() {
       <SiteBar />
       {!tokenId && (
         <Hero
-          heroImage={sortedMintGalleryIds.length > 0 ? mintPreviewUrls[sortedMintGalleryIds[0]] : null}
+          mintedIds={sortedMintGalleryIds}
+          mintPreviewUrls={mintPreviewUrls}
+          apiBase={apiBaseCandidates[0]}
+          onSubmitId={handleTokenSubmit}
           onPick={handlePickYourApe}
         />
       )}
