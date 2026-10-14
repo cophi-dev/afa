@@ -18,10 +18,10 @@ export const APEFEST_JUMP = 1.0;
 // Share text while ApeFest mode is on (text + image, no link). Final copy from afa.
 // {id} = token id. Unminted apes get "Ape #N" instead of "AFA #N".
 export const APEFEST_SHARE_TEXT = 'Four days. One club.\nAFA #{id}, still here. @ApeFacingApes';
-export const buildApefestShareText = (tokenId, minted = true) => {
-  const text = APEFEST_SHARE_TEXT.replace(/\{id\}/g, String(tokenId ?? ''));
-  return minted ? text : text.replace(/\bAFA #/g, 'Ape #');
-};
+// Unminted apes (blurred preview): final copy from afa.
+export const APEFEST_SHARE_TEXT_UNMINTED = 'Four days. One club.\nApe #{id}, not here yet. @ApeFacingApes';
+export const buildApefestShareText = (tokenId, minted = true) =>
+  (minted ? APEFEST_SHARE_TEXT : APEFEST_SHARE_TEXT_UNMINTED).replace(/\{id\}/g, String(tokenId ?? ''));
 export const APEFEST_PAGE_SCAN = 1.2;
 
 // Text layout per format (Design). All values in output pixels.
