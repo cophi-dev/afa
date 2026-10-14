@@ -5719,7 +5719,26 @@ details.token-panel { overflow: visible !important; }
 .hero-caption.preview-caption { display: none; }
 .App.has-token .hero-caption.preview-caption {
   display: flex; flex-wrap: wrap; justify-content: flex-start; align-items: baseline;
-  column-gap: 4px; row-gap: 2px; width: 100%; margin: 10px 0 0;
+  column-gap: 12px; row-gap: 2px; width: 100%; margin: 10px 0 16px;
 }
-.preview-caption-traits { display: contents; color: rgba(255,255,255,.6); }
-.preview-caption .hero-caption-trait { white-space: nowrap; overflow: visible; color: rgba(255,255,255,.6); }
+.App.has-token .preview-caption + .preview-actions,
+.App.has-token .preview-caption + .preview-locked { margin-top: 0 !important; }
+/* Separators: a pseudo dot in the left gutter of each item; the container's negative
+   margin + overflow clip hides the dot of whichever item starts a line. */
+.preview-caption-traits {
+  display: flex; flex-wrap: wrap; align-items: baseline; row-gap: 2px;
+  min-width: 0; flex: 1 1 auto; overflow: hidden; margin-left: -18px;
+  clip-path: inset(0 0 0 18px);
+  color: rgba(255,255,255,.6);
+}
+.preview-caption-item { position: relative; white-space: nowrap; margin-left: 18px; }
+.preview-caption-item[hidden] { display: none; }
+.preview-caption-item::before {
+  content: '\00B7'; position: absolute; left: -12px; color: rgba(255,255,255,.4);
+}
+.preview-caption-more { font-family: 'Barlow', var(--font-body); font-size: 14px; }
+@media (max-width: 767px) {
+  .App.has-token .hero-caption.preview-caption { flex-direction: column; align-items: flex-start; }
+  .App.has-token .hero-caption.preview-caption .hero-caption-name { display: block; }
+  .preview-caption-traits { width: calc(100% + 18px); max-height: calc(2 * 1.5em + 2px); line-height: 1.5; }
+}

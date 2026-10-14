@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
 import './App.css';
 import { getAllTransactions, getMintedTokenIdsNewestFirst, checkTokenMintStatus } from './services/etherscanService';
 import { debug, error as logError } from './utils/debug';
@@ -1306,6 +1306,28 @@ function App() {
     return TRAIT_CATEGORIES.filter(([key]) => now[key]).map(([key, title]) => [key, title, now[key]]);
   }, [secondAsset, mouthAsset, hatAsset, eyesAsset, selectedAsset, thirdAsset]);
 
+  // Mobile: assets max 2 lines; overflow collapses into "+N" (Design #22).
+  const captionTraitsRef = useRef(null);
+  const [captionHidden, setCaptionHidden] = useState(0);
+  useEffect(() => { setCaptionHidden(0); }, [selectedTraits]);
+  useLayoutEffect(() => {
+    const el = captionTraitsRef.current;
+    if (!el || !window.matchMedia('(max-width: 767px)').matches) return;
+    const items = [...el.children];
+    if (!items.length) return;
+    const tops = [];
+    items.filter((n) => !n.hidden).forEach((n) => {
+      const t = n.getBoundingClientRect().top;
+      if (!tops.some((x) => Math.abs(x - t) < 8)) tops.push(t);
+    });
+    if (tops.length > 2 && captionHidden < selectedTraits.length) setCaptionHidden((n) => n + 1);
+  });
+  useEffect(() => {
+    const onResize = () => setCaptionHidden(0);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   // Last changed trait for the mini bar ("Hat · Party Hat").
   const [lastTrait, setLastTrait] = useState('');
   const prevTraitsRef = useRef(null);
@@ -1401,18 +1423,19 @@ function App() {
           </div>
 
           {tokenId && (
-            <p className="hero-caption preview-caption" aria-live="polite">
+            <div className="hero-caption preview-caption" aria-live="polite">
               <span className="hero-caption-name">{previewOnly ? `Ape #${tokenId}` : `AFA #${tokenId}`}</span>
-              <span className="preview-caption-traits">
+              <div className="preview-caption-traits" ref={captionTraitsRef}>
                 {selectedTraits.length === 0 ? (
-                  <span className="hero-caption-trait"> · <span className="hero-caption-val">Original</span></span>
-                ) : selectedTraits.map(([key, title, v]) => (
-                  <span className="hero-caption-trait" key={`${key}-${v}`}>
-                    {' · '}<span className="hero-caption-cat">{title}</span>{' · '}<span className="hero-caption-val">{assetLabel(key, v) || v}</span>
+                  <span className="preview-caption-item"><span className="hero-caption-val">Original</span></span>
+                ) : selectedTraits.map(([key, title, v], i) => (
+                  <span className="preview-caption-item" key={`${key}-${v}`} hidden={captionHidden > 0 && i >= selectedTraits.length - captionHidden}>
+                    <span className="hero-caption-cat">{title}</span>{' '}<span className="hero-caption-val">{assetLabel(key, v) || v}</span>
                   </span>
                 ))}
-              </span>
-            </p>
+                {captionHidden > 0 && <span className="preview-caption-item preview-caption-more">+{captionHidden}</span>}
+              </div>
+            </div>
           )}
           {tokenId && (previewOnly ? (
             <div className="preview-locked" role="note">
