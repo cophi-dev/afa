@@ -5985,3 +5985,22 @@ body.apefest-body .mini-bar { background-color: #000 !important; }
   align-self: flex-start;
   margin-top: 2px;
 }
+
+/* Fallback text picker in ApeFest mode: dark surface, red hairline, Saira, red focus. */
+.App.apefest-mode .dropdown-container .dropdown {
+  background-color: #111113;
+  color: #f2f2f2;
+  border: 1px solid rgba(225, 20, 30, 0.45);
+  box-shadow: 0 0 10px rgba(225, 20, 30, 0.18);
+  font-family: "Saira", "Barlow", sans-serif;
+}
+.App.apefest-mode .dropdown-container .dropdown:focus-visible {
+  outline: 2px solid #e1141e;
+  outline-offset: 2px;
+}
+.App.apefest-mode .dropdown-container .dropdown:disabled { opacity: 0.4; }
+.App.apefest-mode .dropdown-with-arrows button {
+  color: #e1141e;
+  border-color: rgba(225, 20, 30, 0.45);
+  background-color: #111113;
+}

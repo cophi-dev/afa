@@ -2,6 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { backgroundHeld, onBackgroundRelease } from './utils/apiLane';
 
 // Shared, small-concurrency queue + cache for asset preview renders.
+// Fallback switch (Phillipp): false = the previous text list (<select> + arrows) instead of image tiles.
+// With no tiles, no thumbnail renders are requested at all.
+export const ASSET_PICKER_TILES = false;
+
 const cache = new Map();
 const pending = new Map();
 const queue = [];
@@ -217,7 +221,7 @@ export default function AssetStrip({ selectRef, param, tokenId, value, onPick, d
     };
     const selected = options.find((o) => o.value === value);
 
-    if (!tokenId || options.length === 0) return null;
+    if (!ASSET_PICKER_TILES || !tokenId || options.length === 0) return null;
 
     return (
         <div className="asset-picker">
