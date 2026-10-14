@@ -45,7 +45,8 @@ function SiteBar() {
 
 const HERO_MINT_URL = MINT_URL;
 const HERO_MINTED_PER_ROW = 9;
-const HERO_UNMINTED_PER_ROW = 3;
+const HERO_UNMINTED_PER_ROW = 2;
+const HERO_UNMINTED_AFTER = [2, 6]; // ~1 in 5 tiles, never adjacent
 const MAX_TOKEN_ID = 9999;
 
 // Deterministic sample of unminted IDs (stable across renders, no Math.random churn).
@@ -103,6 +104,8 @@ function HeroRow({ tiles, apiBase, reverse }) {
 
 function Hero({ mintedIds, mintPreviewUrls, apiBase, onSubmitId, onPick }) {
     const [value, setValue] = useState('');
+    // New unminted sample on every visit.
+    const [seed] = useState(() => Math.floor(Math.random() * 0xffffffff) + 1);
     const rows = useMemo(() => {
         const mintedSet = new Set(mintedIds);
         const build = (offset, seed) => {
@@ -111,14 +114,15 @@ function Hero({ mintedIds, mintPreviewUrls, apiBase, onSubmitId, onPick }) {
             const tiles = [];
             minted.forEach((id, i) => {
                 tiles.push({ kind: 'minted', id });
-                if (i % 3 === 1 && unminted.length) tiles.push({ kind: 'unminted', id: unminted.shift() });
+                if (HERO_UNMINTED_AFTER.includes(i) && unminted.length && i < minted.length - 1) {
+                    tiles.push({ kind: 'unminted', id: unminted.shift() });
+                }
             });
-            unminted.forEach((id) => tiles.push({ kind: 'unminted', id }));
             return tiles;
         };
         if (mintedIds.length === 0) return [];
-        return [build(0, 11), build(HERO_MINTED_PER_ROW, 29)];
-    }, [mintedIds]);
+        return [build(0, seed), build(HERO_MINTED_PER_ROW, seed * 7 + 3)];
+    }, [mintedIds, seed]);
     const withUrls = (tiles) => tiles.map((t) => (t.kind === 'minted' ? { ...t, url: mintPreviewUrls[t.id] } : t));
 
     const submit = (e) => {
@@ -130,7 +134,7 @@ function Hero({ mintedIds, mintPreviewUrls, apiBase, onSubmitId, onPick }) {
     return (
         <section className="hero hero--marquee" aria-labelledby="hero-title">
             <div className="hero-copy">
-                <h1 id="hero-title" className="hero-title">Same apes. Facing you.</h1>
+                <h1 id="hero-title" className="hero-title">Same apes.<br />Facing you.</h1>
                 <p className="hero-lede">Pick any ape, try on hats, outfits and effects.</p>
                 <form className="hero-form" onSubmit={submit} role="search">
                     <label htmlFor="hero-token-id" className="visually-hidden">Ape ID</label>
@@ -145,9 +149,10 @@ function Hero({ mintedIds, mintPreviewUrls, apiBase, onSubmitId, onPick }) {
                     />
                     <button type="submit" className="hero-cta">Open editor</button>
                 </form>
-                <a className="hero-secondary" href={HERO_MINT_URL} target="_blank" rel="noopener noreferrer">
-                    Mint to reveal
-                </a>
+                <p className="hero-secondary">
+                    Not minted yet?{' '}
+                    <a href={HERO_MINT_URL} target="_blank" rel="noopener noreferrer">Mint to reveal</a> →
+                </p>
             </div>
             {rows.length > 0 && (
                 <div className="hero-marquee" aria-label="Minted Ape Facing Apes">
@@ -334,6 +339,7 @@ function App() {
     }, [apiBaseCandidates]);
 
     const [tokenId, setTokenId] = useState('');
+    const [selectNonce, setSelectNonce] = useState(0);
     const [selectedAsset, setSelectedAsset] = useState('');
     const [secondAsset, setSecondAsset] = useState('');
     const [thirdAsset, setThirdAsset] = useState('');
@@ -441,10 +447,16 @@ function App() {
             numericIds.push(id);
         }
         if (numericIds.length === 0) return;
-        // Never drop IDs the authoritative list (afa-progress) says are minted.
-        setMintedTokens(new Set([...numericIds, ...authoritativeMintsRef.current]));
-        const missing = [...authoritativeMintsRef.current].filter((id) => !seen.has(id)).sort((a, b) => b - a);
-        setMintedTokenIds(missing.length ? [...numericIds, ...missing] : numericIds);
+        // Merge, never replace: a later, incomplete source (e.g. a partial Etherscan
+        // tx scan) must not drop IDs an earlier source (backend list, afa-progress) had.
+        // Mints are permanent, so a union is always correct.
+        setMintedTokens((prev) => new Set([...numericIds, ...prev, ...authoritativeMintsRef.current]));
+        setMintedTokenIds((prev) => {
+            const extra = [...new Set([...prev, ...authoritativeMintsRef.current])]
+                .filter((id) => !seen.has(id))
+                .sort((a, b) => b - a);
+            return extra.length ? [...numericIds, ...extra] : numericIds;
+        });
     }, []);
 
     const verifyTokenMinted = useCallback(async (rawId) => {
@@ -843,6 +855,7 @@ function App() {
     const handleTokenSubmit = useCallback(async (rawValue) => {
         const value = String(rawValue || '').replace(/[^0-9]/g, '').slice(0, 4);
         if (!value) return false;
+        setSelectNonce((n) => n + 1);
 
         setIsCheckingMint(true);
         setUnmintedTokenId('');
@@ -1154,7 +1167,7 @@ function App() {
       window.scrollTo({ top, behavior: reduce ? 'auto' : 'smooth' });
     });
     return () => window.cancelAnimationFrame(raf);
-  }, [tokenId]);
+  }, [tokenId, selectNonce]);
 
   const appClassName = `App ${vegasButtonClicked ? 'vegas-glamour' : ''} ${tokenId ? 'has-token' : ''}`;
 
