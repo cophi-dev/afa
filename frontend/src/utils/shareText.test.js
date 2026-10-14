@@ -1,10 +1,10 @@
 import { buildShareText, buildXIntentUrl } from './shareText';
 
-test('always tags @ApeFacingApes, links with UTM, no hashtags', () => {
+test('always tags @ApeFacingApes, no link, no hashtags', () => {
   for (let i = 0; i < 50; i += 1) {
     const text = buildShareText({ tokenId: 42, traits: { hat: 'Party_Hat.png', eyes: '' }, framed: i % 2 === 0 });
     expect(text).toContain('@ApeFacingApes');
-    expect(text).toContain('utm_source=x&utm_medium=social&utm_campaign=editor-share');
+    expect(text).not.toMatch(/https?:\/\//);
     expect(text).not.toContain('#A');
     expect(text).not.toMatch(/#[a-z]/i);
   }
@@ -36,4 +36,9 @@ test('every category resolves every key to its label', () => {
     if (cat === 'outfit' && key && name === 'No Clothes') return;
     expect(lineFor({ [cat]: key })).toContain(name);
   }));
+});
+
+test('unminted is labelled Ape #N', () => {
+  expect(buildShareText({ tokenId: 9, minted: false }, () => 0)).toContain(' Ape #9 @ApeFacingApes');
+  expect(buildShareText({ tokenId: 9 }, () => 0)).toContain(' AFA #9 @ApeFacingApes');
 });

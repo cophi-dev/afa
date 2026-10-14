@@ -4,7 +4,6 @@ import { getAllTransactions, getMintedTokenIdsNewestFirst, checkTokenMintStatus 
 import { debug, error as logError } from './utils/debug';
 import AssetStrip from './AssetStrip';
 import { buildShareText, buildXIntentUrl } from './utils/shareText';
-import { buildSharePageUrl, LINK_UTM } from './utils/look';
 import { assetLabel } from './utils/assetLabels';
 
 const DEFAULT_API_URL = 'https://afa-editor.ew.r.appspot.com';
@@ -1192,16 +1191,6 @@ function App() {
         setDownloaded(true);
     };
 
-    const lookTraits = useMemo(() => ({
-        assetType: selectedAsset,
-        secondAssetType: secondAsset,
-        thirdAssetType: thirdAsset,
-        mouthAssetType: mouthAsset,
-        hatAssetType: hatAsset,
-        eyesAssetType: eyesAsset,
-        clubAssetType: clubAsset,
-        frame: vegasButtonClicked ? '1' : '',
-    }), [selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset, vegasButtonClicked]);
     // Unminted IDs: thumbnails come from the server already blurred
     // (/api/get-asset-preview), so no sharp ape or asset layer reaches the client.
     const stripTokenId = tokenId;
@@ -1218,19 +1207,40 @@ function App() {
             eyes: eyesAsset,
         },
         framed: vegasButtonClicked,
-        url: buildSharePageUrl(tokenId, lookTraits),
-    }), [tokenId, secondAsset, selectedAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, vegasButtonClicked, lookTraits]);
+        minted: !previewOnly,
+    }), [tokenId, secondAsset, selectedAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, vegasButtonClicked, previewOnly]);
     const xShareUrl = useMemo(() => buildXIntentUrl(shareText), [shareText]);
+
+    // Share = text + image, no URL (Phillipp). iOS share targets (incl. X) often drop
+    // `text` when `files` is present, so the text is ALWAYS copied to the clipboard first
+    // (inside the user gesture) and a paste hint is shown.
+    const copyShareText = async () => {
+        try { await navigator.clipboard.writeText(shareText); return true; } catch (e) { return false; }
+    };
+    const shareImageWithText = async () => {
+        const copied = await copyShareText();
+        if (navigator.share && typeof navigator.canShare === 'function' && String(currentImageUrl).startsWith('blob:')) {
+            const blob = await fetch(currentImageUrl).then((r) => r.blob());
+            const file = new File([blob], `afa-${tokenId}.png`, { type: blob.type || 'image/png' });
+            if (navigator.canShare({ files: [file], text: shareText })) {
+                if (copied) setShareNote('Text copied, paste it into your post');
+                await navigator.share({ files: [file], text: shareText });
+                return true;
+            }
+        }
+        if (navigator.share) {
+            await navigator.share({ text: shareText });
+            return true;
+        }
+        return false;
+    };
 
     const handleShareOnX = async (event) => {
         const isTouch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-        if (!isTouch || !navigator.canShare || !String(currentImageUrl).startsWith('blob:')) return;
+        if (!isTouch || !navigator.share) return; // desktop: plain X intent link (text only)
         event.preventDefault();
         try {
-            const blob = await fetch(currentImageUrl).then((r) => r.blob());
-            const file = new File([blob], `afa-${tokenId}.png`, { type: 'image/png' });
-            if (!navigator.canShare({ files: [file] })) throw new Error('files not shareable');
-            await navigator.share({ files: [file], text: shareText });
+            if (!(await shareImageWithText())) window.open(xShareUrl, '_blank', 'noopener,noreferrer');
         } catch (error) {
             if (error && error.name === 'AbortError') return;
             window.open(xShareUrl, '_blank', 'noopener,noreferrer');
@@ -1238,36 +1248,14 @@ function App() {
     };
 
     const handleShare = async () => {
-        const url = buildSharePageUrl(tokenId, lookTraits, LINK_UTM);
-        const shareData = {
-            title: `AFA #${tokenId}`,
-            text: `Ape Facing Apes #${tokenId}`,
-            url,
-        };
         try {
-            if (navigator.share) {
-                if (currentImageUrl.startsWith('blob:') && typeof navigator.canShare === 'function') {
-                    const blob = await fetch(currentImageUrl).then((response) => response.blob());
-                    const file = new File([blob], `afa-${tokenId}.png`, { type: blob.type || 'image/png' });
-                    if (navigator.canShare({ files: [file] })) {
-                        await navigator.share({ ...shareData, files: [file] });
-                        return;
-                    }
-                }
-                await navigator.share(shareData);
-                return;
-            }
-            await navigator.clipboard.writeText(url);
-            setShareNote('Link copied');
+            if (await shareImageWithText()) return;
+            if (await copyShareText()) setShareNote('Text copied, paste it into your post');
+            window.open(xShareUrl, '_blank', 'noopener,noreferrer');
         } catch (error) {
             if (error && error.name === 'AbortError') return;
-            try {
-                await navigator.clipboard.writeText(url);
-                setShareNote('Link copied');
-            } catch (copyError) {
-                debug('Share failed', copyError);
-                setShareNote('Copy the page link');
-            }
+            debug('Share failed', error);
+            if (await copyShareText()) setShareNote('Text copied, paste it into your post');
         }
     };
 
