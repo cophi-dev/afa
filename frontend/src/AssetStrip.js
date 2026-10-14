@@ -23,6 +23,7 @@ function pump() {
 }
 
 onBackgroundRelease(() => pump());
+const EAGER_IN_ROW = 6;
 
 // Consistent short names for tiles (full name stays in the tooltip/header).
 const SHORT_NAMES = {
@@ -172,7 +173,9 @@ function AssetThumb({ option, index, active, disabled, onPick, fetchPreview, cac
             observer.disconnect();
             loadPreview(cacheKey, fetchPreview, true).then(apply);
         }, { root: null, rootMargin: '200px 120px' });
-        observer.observe(node);
+        // The first tiles of a row (incl. the half-visible one at the strip edge, which the viewport
+        // observer can't see through the strip's clipping) load as soon as the row itself is near view.
+        observer.observe(index < EAGER_IN_ROW && rootRef.current ? rootRef.current : node);
         return () => { cancelled = true; observer.disconnect(); };
     }, [cacheKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
