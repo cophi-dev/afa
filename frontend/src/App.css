@@ -5922,7 +5922,7 @@ body.apefest-body .mini-bar { background-color: #000 !important; }
   box-shadow: 0 0 10px rgba(225, 20, 30, 0.25), inset 0 0 0 1px rgba(225, 20, 30, 0.35);
 }
 .App.apefest-mode .asset-thumb-img img { filter: url(#apefest-duo-pick); }
-.App.apefest-mode .gallery-item.has-image .gallery-thumb img { filter: url(#apefest-duo); }
+.App.apefest-mode .gallery-item.has-image .gallery-thumb img { filter: url(#apefest-duo-pick); }
 /* Scanlines only on tiles >= 80px edge (picker thumbs are 72px: none, avoids mobile moire) */
 .App.apefest-mode .gallery-item.has-image .gallery-thumb::after {
   content: "";
@@ -5932,15 +5932,7 @@ body.apefest-body .mini-bar { background-color: #000 !important; }
   opacity: 0.6;
   background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.35) 0 1px, transparent 1px 3px);
 }
-/* Selected / hovered / focused: real colours immediately + red ring */
-.App.apefest-mode .asset-thumb.is-active .asset-thumb-img img,
-.App.apefest-mode .asset-thumb:not(:disabled):hover .asset-thumb-img img,
-.App.apefest-mode .asset-thumb:not(:disabled):focus-visible .asset-thumb-img img,
-.App.apefest-mode button.gallery-item.is-selected .gallery-thumb img,
-.App.apefest-mode button.gallery-item:hover .gallery-thumb img,
-.App.apefest-mode button.gallery-item:focus-visible .gallery-thumb img {
-  filter: none;
-}
+/* Selection = red glowing ring only; every tile always stays filtered (minted, traits, unminted). */
 .App.apefest-mode .asset-thumb.is-active .asset-thumb-img,
 .App.apefest-mode button.gallery-item.is-selected .gallery-thumb {
   outline: 2px solid #ff2a36;
@@ -5948,11 +5940,3 @@ body.apefest-body .mini-bar { background-color: #000 !important; }
   box-shadow: 0 0 16px rgba(255, 42, 54, 0.55);
 }
 .App.apefest-mode button.gallery-item.is-selected .gallery-thumb::after { opacity: 0.25; }
-/* Unminted ape: tiles are the server-blurred assets; they keep the ApeFest filter on hover/focus/selected
-   (real colours only for minted apes and traits). */
-.App.apefest-mode.is-unminted .asset-thumb .asset-thumb-img img,
-.App.apefest-mode.is-unminted .asset-thumb.is-active .asset-thumb-img img,
-.App.apefest-mode.is-unminted .asset-thumb:not(:disabled):hover .asset-thumb-img img,
-.App.apefest-mode.is-unminted .asset-thumb:not(:disabled):focus-visible .asset-thumb-img img {
-  filter: url(#apefest-duo-pick);
-}
