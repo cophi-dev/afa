@@ -14,6 +14,8 @@ const BG = [4 / 255, 2 / 255, 3 / 255];
 export const APEFEST_CRT = 1.8;
 export const APEFEST_SCAN = 2.5;
 export const APEFEST_JUMP = 1.0;
+// Page overlay scanline strength (Design: lighter than the image so the UI stays readable).
+export const APEFEST_PAGE_SCAN = 1.2;
 
 // Text layout per format (Design). All values in output pixels.
 // square: claim centred, cap height 40, top edge y=72; date centred, 22px mono, baseline 950, 70% opacity.
