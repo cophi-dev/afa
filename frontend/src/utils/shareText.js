@@ -13,8 +13,17 @@ const pretty = (value) => String(value || '')
 // Display name for a trait value; falls back to a cleaned-up key.
 const label = (category, value) => assetLabel(category, value) || pretty(value);
 
-// Hand items that are gestures or plurals: no "a/an".
-const NO_ARTICLE = /^(pray|peace|thumbs up|gm|fireworks|balloon & fireworks|lisbon sardines|magic eden|moon coffee company|apecoin hands( \d+)?|banana hand|ape solar sun hand)$/i;
+// Hand gestures: own dry lines instead of "handed my ape a ...".
+const GESTURE_LINES = {
+  pray: 'Hands folded in Pray. The ape seems at peace.',
+  peace: 'Peace sign up. The ape means it.',
+  'thumbs up': 'Thumbs Up from my ape. High praise, by its standards.',
+  gm: 'My ape says GM. That is all it says.',
+  cheers: 'Cheers from my ape. The next round is on you.',
+};
+const GESTURE = /^(pray|peace|thumbs up|gm|cheers|apecoin hands( \d+)?|banana hand|ape solar sun hand)$/i;
+// Plurals and brand names: no "a/an".
+const NO_ARTICLE = /^(fireworks|balloon & fireworks|lisbon sardines|magic eden|moon coffee company)$/i;
 const article = (t) => (/^[aeiou]/i.test(t) ? 'an' : 'a');
 
 const POOLS = {
@@ -34,12 +43,18 @@ const POOLS = {
     (t) => (/^no clothes$/i.test(t) ? 'No clothes. Business up front, ape all over.' : `${t}: business up front, ape all over.`),
   ],
   hand: [
-    (t) => (NO_ARTICLE.test(t)
-      ? `New in hand: ${t}. Questionable decision, great result.`
-      : `Handed my ape ${article(t)} ${t}. Questionable decision, great result.`),
+    (t) => {
+      if (GESTURE.test(t)) return GESTURE_LINES[t.toLowerCase()] || `Went with ${t}. The ape seems at peace.`;
+      if (NO_ARTICLE.test(t)) return `Handed my ape ${t}. Questionable decision, great result.`;
+      return `Handed my ape ${article(t)} ${t}. Questionable decision, great result.`;
+    },
   ],
   extra: [
-    (t) => `Added ${t}. Subtle, if you ignore all of it.`,
+    (t) => `Final touch: ${t}.`,
+    (t) => `Added ${t}. Now it's complete.`,
+    (t) => `One more detail: ${t}.`,
+    (t) => `Small thing, big difference: ${t}.`,
+    (t) => `${t} added. Same ape. Different energy.`,
   ],
   frame: [
     () => 'Framed my ape. Museums, you know where to find me.',
