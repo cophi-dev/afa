@@ -5386,3 +5386,15 @@ button.gallery-item.is-selected .gallery-meta {
   .asset-thumb-img.is-loading::after { animation: none; transform: none; }
   .asset-thumb-img img { animation: none; }
 }
+
+/* v4: keep the preview + actions in view while editing on desktop */
+@media (min-width: 980px) {
+  /* overflow-x: hidden on body would make it the (non-scrolling) sticky container */
+  html, body { overflow-x: clip; overflow-y: visible; }
+  .studio--editing { align-items: start; }
+  .studio--editing .studio-preview {
+    position: sticky;
+    top: 84px;
+    align-self: start;
+  }
+}

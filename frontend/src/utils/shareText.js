@@ -25,7 +25,7 @@ const POOLS = {
     (t) => `${t}: business up front, ape all over.`,
   ],
   hand: [
-    (t) => `Handed my ape a ${t}. Questionable decision, great result.`,
+    (t) => `Handed my ape ${/^[aeiou]/i.test(t) ? 'an' : 'a'} ${t}. Questionable decision, great result.`,
   ],
   extra: [
     (t) => `Added ${t}. Subtle, if you ignore all of it.`,
