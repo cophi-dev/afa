@@ -5627,3 +5627,10 @@ html, body { overflow-x: clip; overflow-y: visible; }
   .hero--try .hero-art { display: flex; flex-direction: column; align-items: center; }
   .hero--try .hero-stage, .hero--try .hero-caption { width: min(calc(100vw - 32px), 46svh); }
 }
+/* 375x667: keep "Open your ape" fully above the fold */
+@media (max-width: 767px) and (max-height: 700px) {
+  .hero.hero--try { padding-top: 6px; }
+  .hero--try .hero-lede { margin: 4px 0 8px; }
+  .hero--try .hero-art { gap: 6px; margin-bottom: 8px; }
+  .hero--try .hero-form { gap: 6px; }
+}

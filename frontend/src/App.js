@@ -108,19 +108,29 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook }) {
     const inViewRef = useRef(true);
     const stageRef = useRef(null);
 
-    // New cycle: build + preload everything first.
-    const startCycle = useCallback(async () => {
+    // Cycles: build + preload all 6 looks first. The next cycle preloads during the
+    // current one, so the reset to the original ape is short.
+    const nextCycleRef = useRef(null);
+    const prepareCycle = useCallback(() => {
         const next = buildHeroSteps();
-        setReady(false);
-        setSteps(next);
-        await Promise.all(next.map((st) => preloadImage(urlFor(st.look))));
-        setReady(true);
+        const done = Promise.all(next.map((st) => preloadImage(urlFor(st.look)))).then(() => next);
+        nextCycleRef.current = done;
+        return done;
     }, [urlFor]);
+    const startCycle = useCallback(async () => {
+        const pending = nextCycleRef.current || prepareCycle();
+        nextCycleRef.current = null;
+        setReady(false);
+        const next = await pending;
+        setSteps(next);
+        setReady(true);
+    }, [prepareCycle]);
 
     useEffect(() => {
         if (heroId == null) return;
         setStepIdx(-1);
         setLayers({ a: urlFor(null), b: null, front: 'a' });
+        nextCycleRef.current = null;
         startCycle();
     }, [heroId, urlFor, startCycle]);
 
@@ -157,11 +167,12 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook }) {
             } else {
                 show(urlFor(steps[stepIdx + 1].look));
                 setStepIdx(stepIdx + 1);
+                if (stepIdx + 1 === 2 && !nextCycleRef.current) prepareCycle();
             }
         };
         timer = window.setTimeout(tick, delay);
         return () => window.clearTimeout(timer);
-    }, [reduceMotion, stopped, ready, steps, stepIdx, urlFor, startCycle]);
+    }, [reduceMotion, stopped, ready, steps, stepIdx, urlFor, startCycle, prepareCycle]);
 
     const current = steps && stepIdx >= 0 ? steps[stepIdx] : null;
     const currentLook = current ? current.look : {};
