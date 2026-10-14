@@ -111,10 +111,9 @@ function MintedGalleryItem({ id, imageUrl, isFailed, isSelected, onSelect, onBec
             <span className="visually-hidden">Select AFA </span>
             <div className="gallery-thumb" aria-hidden={imageUrl ? undefined : true}>
                 {imageUrl ? (
-                    <img src={imageUrl} alt="" width="1000" height="1000" decoding="async" />
+                    <img src={imageUrl} alt={`AFA #${id}`} width="1000" height="1000" decoding="async" />
                 ) : (
                     <div className={`gallery-skeleton ${isFailed ? 'is-failed' : ''}`}>
-                        <img src="./face.png" alt="" width="128" height="128" className="gallery-silhouette" />
                     </div>
                 )}
             </div>
