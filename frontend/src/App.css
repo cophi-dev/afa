@@ -5177,3 +5177,22 @@ button.gallery-item.is-selected .gallery-meta {
   .hero-ape { max-width: 480px !important; }
   .hero-art { justify-content: flex-start; }
 }
+
+/* v2 tweaks */
+.site-bar-title { color: rgba(255, 255, 255, 0.6); }
+
+@media (min-width: 900px) {
+  .hero {
+    max-height: 80vh;
+    padding: 48px 0 56px;
+    align-items: center;
+  }
+
+  .hero-ape {
+    width: 520px;
+    max-width: 100%;
+    max-height: calc(80vh - 104px);
+  }
+
+  .hero-art { justify-content: flex-end; }
+}
