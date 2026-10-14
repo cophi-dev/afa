@@ -1468,7 +1468,7 @@ function App() {
                                 <option value="vegas">Vegas BAYC</option>
                                 <option value="ape_solar_sun_hand">Ape Solar Sun Hand</option>
                                 <option value="blever_pass">Blever Pass</option>
-                                <option value="gordon">Gordon ❤️</option>
+                                <option value="gordon">Gordon</option>
                                 <option value="dookie_dash">Dookie Dash</option>
                                 <option value="smartphone_gm">Smartphone GM</option>
                                 <option value="sardines">Lisbon Sardines</option>

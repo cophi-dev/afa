@@ -65,7 +65,7 @@ export const ASSET_LABELS = {
     "vegas": "Vegas BAYC",
     "ape_solar_sun_hand": "Ape Solar Sun Hand",
     "blever_pass": "Blever Pass",
-    "gordon": "Gordon ❤️",
+    "gordon": "Gordon",
     "dookie_dash": "Dookie Dash",
     "smartphone_gm": "Smartphone GM",
     "sardines": "Lisbon Sardines",
