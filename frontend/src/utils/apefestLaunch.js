@@ -1,12 +1,23 @@
-import { decodePng, renderSceneRGB, pilAlphaComposite } from './apefestScene';
+import { runJob } from './apefestJob';
+import { LAUNCH_UNMINTED } from './apefestScene';
 
 // ---------- editor entry point ----------
-// square = the launch post frame (text baked from afa's PIL layers, so it matches 1:1);
-// wide   = same scene maths at 1600x900 (scene script: ape_scale .95, ape_x .69), text drawn by the editor.
-export const LAUNCH_FORMATS = {
-    square: { W: 1000, H: 1000, opts: {}, layers: ['/apefest/text_minted_1000_glow.png', '/apefest/text_minted_1000.png'] },
-    wide: { W: 1600, H: 900, opts: { apeScale: 0.95, apeX: 0.69 }, layers: [] },
+// Minted:   launch post frame; square text = afa's PIL layers (1:1 pixel-identical).
+// Unminted: afa reply pipeline (key_reply on the server blur + scene with soft glow), top text from
+//           afa's layer, bottom 'APE #N' + 'NOT YET MINTED' drawn here (DejaVu Sans Mono Bold, as afa).
+// Wide:     same scene maths at 1600x900, text drawn by the editor.
+const MINTED = {
+    square: { W: 1000, H: 1000, opts: {}, glowLayers: ['/apefest/text_minted_1000_glow.png'], layers: ['/apefest/text_minted_1000.png'] },
+    wide: { W: 1600, H: 900, opts: { apeScale: 0.95, apeX: 0.69 }, glowLayers: [], layers: [] },
 };
+const UNMINTED = {
+    square: { W: 1000, H: 1000, opts: { ...LAUNCH_UNMINTED }, glowLayers: ['/apefest/text_top_1000_glow.png'], layers: ['/apefest/text_top_1000.png'] },
+    wide: { W: 1600, H: 900, opts: { ...LAUNCH_UNMINTED, apeScale: 0.87, apeX: 0.69 }, glowLayers: [], layers: [] },
+};
+export const LAUNCH_FORMATS = MINTED;
+const RED = [225, 20, 30];
+const MONO = '"AFA DejaVu Mono Bold", "DejaVu Sans Mono", Menlo, monospace';
+
 const layerCache = new Map();
 const fetchLayer = (url) => {
     if (!layerCache.has(url)) layerCache.set(url, fetch(url).then((r) => { if (!r.ok) throw new Error(`layer ${r.status}`); return r.arrayBuffer(); }).catch((e) => { layerCache.delete(url); throw e; }));
@@ -22,27 +33,69 @@ function getWorker() {
     } catch (e) { worker = false; }
     return worker;
 }
-async function renderPixels(src, W, H, opts, layers) {
+async function runAnywhere(job, transfer) {
     const w = typeof Worker !== 'undefined' ? getWorker() : false;
     if (w) {
         try {
             return await new Promise((resolve, reject) => {
                 seq += 1; const id = seq; pending.set(id, { resolve, reject });
-                const s = src.slice(0); const ls = layers.map((b) => b.slice(0));
-                w.postMessage({ id, src: s, W, H, opts, layers: ls }, [s, ...ls]);
+                w.postMessage({ ...job, id }, transfer);
             });
-        } catch (e) { /* fall through to the main thread */ }
+        } catch (e) { /* main-thread fallback below */ }
     }
-    const ape = await decodePng(src);
-    const out = renderSceneRGB(ape, W, H, opts);
-    for (const buf of layers) pilAlphaComposite(out, (await decodePng(buf)).data);
-    return out;
+    return runJob(job);
 }
-// blob: server PNG (get-asset, thirdAssetType=transparent). Returns a canvas.
-export async function renderApefestLaunch(blob, format = 'square') {
-    const F = LAUNCH_FORMATS[format];
-    const [src, ...layers] = await Promise.all([blob.arrayBuffer(), ...F.layers.map(fetchLayer)]);
-    const px = await renderPixels(src, F.W, F.H, F.opts, layers);
+let fontPromise = null;
+function loadMonoFont() {
+    if (!fontPromise) {
+        fontPromise = (async () => {
+            if (typeof FontFace === 'undefined') return;
+            const f = new FontFace('AFA DejaVu Mono Bold', 'url(/fonts/dejavu-sans-mono-bold-sub.woff2)');
+            document.fonts.add(await f.load());
+        })().catch(() => {});
+    }
+    return fontPromise;
+}
+// afa text(): bottom 22px mono centred, baseline 950, alpha 0.8; small 13px, tracking 0.08em,
+// 50% alpha, cap top 10px below the bottom baseline.
+async function bottomTextLayer(W, H, bottom, small) {
+    await loadMonoFont();
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const ctx = c.getContext('2d');
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = `rgba(${RED.join(',')},${Math.trunc(255 * 0.8) / 255})`;
+    ctx.font = `22px ${MONO}`; ctx.textAlign = 'center';
+    ctx.fillText(bottom, W / 2, 950);
+    if (small) {
+        ctx.font = `13px ${MONO}`; ctx.textAlign = 'left';
+        ctx.fillStyle = `rgba(${RED.join(',')},${128 / 255})`;
+        const tr = 13 * 0.08; const chars = [...small]; const ws = chars.map((ch) => ctx.measureText(ch).width);
+        let x = (W - (ws.reduce((a, b) => a + b, 0) + tr * (chars.length - 1))) / 2;
+        const cap = 9; // PIL: -bbox('N', anchor='ls')[1] at 13px
+        chars.forEach((ch, k) => { ctx.fillText(ch, x, 950 + 10 + cap); x += ws[k] + tr; });
+    }
+    const d = ctx.getImageData(0, 0, W, H).data;
+    return { w: W, h: H, data: new Uint8Array(d.buffer.slice(0)), glowRadius: 8 };
+}
+async function decodeAny(blob) {
+    const bmp = await createImageBitmap(blob, { premultiplyAlpha: 'none', colorSpaceConversion: 'none' });
+    const c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height;
+    const ctx = c.getContext('2d', { willReadFrequently: true }); ctx.drawImage(bmp, 0, 0);
+    return { w: bmp.width, h: bmp.height, data: new Uint8Array(ctx.getImageData(0, 0, bmp.width, bmp.height).data.buffer) };
+}
+// blob: server image (minted: get-asset transparent PNG; unminted: get-asset-preview blur). Returns a canvas.
+export async function renderApefestLaunch(blob, format = 'square', { unminted = false, tokenId = '' } = {}) {
+    const F = (unminted ? UNMINTED : MINTED)[format];
+    const [layers, glowLayers] = await Promise.all([Promise.all(F.layers.map(fetchLayer)), Promise.all(F.glowLayers.map(fetchLayer))]);
+    const job = { W: F.W, H: F.H, opts: F.opts, unminted, layers: layers.map((b) => b.slice(0)), glowLayers: glowLayers.map((b) => b.slice(0)) };
+    const transfer = [...job.layers, ...job.glowLayers];
+    if (unminted) {
+        job.raw = await decodeAny(blob); transfer.push(job.raw.data.buffer);
+        if (format === 'square') { job.rawLayer = await bottomTextLayer(F.W, F.H, `APE #${tokenId}`, 'NOT YET MINTED'); transfer.push(job.rawLayer.data.buffer); }
+    } else {
+        job.src = await blob.arrayBuffer(); transfer.push(job.src);
+    }
+    const px = await runAnywhere(job, transfer);
     const canvas = document.createElement('canvas');
     canvas.width = F.W; canvas.height = F.H;
     canvas.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(px.buffer, px.byteOffset, px.length), F.W, F.H), 0, 0);
