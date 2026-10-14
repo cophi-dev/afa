@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
 import './App.css';
 import { getAllTransactions, getMintedTokenIdsNewestFirst, checkTokenMintStatus } from './services/etherscanService';
 import { debug, error as logError } from './utils/debug';
@@ -324,6 +324,17 @@ function MintedGalleryItem({ id, imageUrl, isFailed, isSelected, onSelect, onBec
         observer.observe(node);
         return () => observer.disconnect();
     }, [id, onBecomeVisible]);
+
+    // A failed tile used to stay dark forever: the observer only fires on entering the
+    // viewport, so nothing re-requested it after the cooldown. Retry while it is on screen.
+    useEffect(() => {
+        if (!isFailed) return undefined;
+        const t = setTimeout(() => {
+            const r = ref.current && ref.current.getBoundingClientRect();
+            if (r && r.bottom > -300 && r.top < window.innerHeight + 300) onBecomeVisible(id);
+        }, PREVIEW_RETRY_COOLDOWN_MS + 500);
+        return () => clearTimeout(t);
+    }, [isFailed, id, onBecomeVisible]);
 
     return (
         <button
@@ -1263,14 +1274,6 @@ function App() {
         }
     };
 
-    const traitChips = [
-        { key: 'outfit', label: 'Outfit', value: secondAsset, clear: () => setSecondAsset('') },
-        { key: 'mouth', label: 'Mouth', value: mouthAsset, clear: () => setMouthAsset('') },
-        { key: 'hat', label: 'Hat', value: hatAsset, clear: () => setHatAsset('') },
-        { key: 'eyes', label: 'Eyes', value: eyesAsset, clear: () => setEyesAsset('') },
-        { key: 'hand', label: 'Hand', value: selectedAsset, clear: () => setSelectedAsset('') },
-        { key: 'extra', label: 'Extra', value: thirdAsset, clear: () => setThirdAsset('') }
-    ].filter((t) => Boolean(t.value));
 
 
   // Phillipp: selecting an ID (autofill, gallery tile, hero input) brings the preview
@@ -1288,6 +1291,34 @@ function App() {
     });
     return () => window.cancelAnimationFrame(raf);
   }, [tokenId, selectNonce]);
+
+  // Caption under the main preview: all currently selected assets (empty = Original).
+  const selectedTraits = useMemo(() => {
+    const now = { outfit: secondAsset, mouth: mouthAsset, hat: hatAsset, eyes: eyesAsset, hand: selectedAsset, extra: thirdAsset };
+    return TRAIT_CATEGORIES.filter(([key]) => now[key]).map(([key, title]) => [key, title, now[key]]);
+  }, [secondAsset, mouthAsset, hatAsset, eyesAsset, selectedAsset, thirdAsset]);
+
+  // Mobile: assets max 2 lines; overflow collapses into "+N" (Design #22).
+  const captionTraitsRef = useRef(null);
+  const [captionHidden, setCaptionHidden] = useState(0);
+  useEffect(() => { setCaptionHidden(0); }, [selectedTraits]);
+  useLayoutEffect(() => {
+    const el = captionTraitsRef.current;
+    if (!el || !window.matchMedia('(max-width: 767px)').matches) return;
+    const items = [...el.children];
+    if (!items.length) return;
+    const tops = [];
+    items.filter((n) => !n.hidden).forEach((n) => {
+      const t = n.getBoundingClientRect().top;
+      if (!tops.some((x) => Math.abs(x - t) < 8)) tops.push(t);
+    });
+    if (tops.length > 2 && captionHidden < selectedTraits.length) setCaptionHidden((n) => n + 1);
+  });
+  useEffect(() => {
+    const onResize = () => setCaptionHidden(0);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   // Last changed trait for the mini bar ("Hat · Party Hat").
   const [lastTrait, setLastTrait] = useState('');
@@ -1384,7 +1415,19 @@ function App() {
           </div>
 
           {tokenId && (
-            <p className="preview-label">{previewOnly ? `Ape #${tokenId}` : `AFA #${tokenId}`}</p>
+            <div className="hero-caption preview-caption" aria-live="polite">
+              <span className="hero-caption-name">{previewOnly ? `Ape #${tokenId}` : `AFA #${tokenId}`}</span>
+              <div className="preview-caption-traits" ref={captionTraitsRef}>
+                {selectedTraits.length === 0 ? (
+                  <span className="preview-caption-item"><span className="hero-caption-val">Original</span></span>
+                ) : selectedTraits.map(([key, title, v], i) => (
+                  <span className="preview-caption-item" key={`${key}-${v}`} hidden={captionHidden > 0 && i >= selectedTraits.length - captionHidden}>
+                    <span className="hero-caption-cat">{title}</span>{' '}<span className="hero-caption-val">{assetLabel(key, v) || v}</span>
+                  </span>
+                ))}
+                {captionHidden > 0 && <span className="preview-caption-item preview-caption-more">+{captionHidden}</span>}
+              </div>
+            </div>
           )}
           {tokenId && (previewOnly ? (
             <div className="preview-locked" role="note">
@@ -1468,24 +1511,6 @@ function App() {
             </div>
           )}
 
-          {tokenId && traitChips.length > 0 && (
-            <div className="trait-chips" aria-label="Selected traits">
-              {traitChips.map((chip) => (
-                <button
-                  key={chip.key}
-                  type="button"
-                  className="trait-chip"
-                  onClick={chip.clear}
-                  title={`Clear ${chip.label}`}
-                >
-                  <span className="trait-chip-label">{chip.label}</span>
-                  <span className="trait-chip-x" aria-hidden="true">
-                    ×
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
         </section>
         <section id="editor-controls" className="studio-controls" aria-label="Editor controls">
           {tokenId && (
