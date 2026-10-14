@@ -235,6 +235,8 @@ export default function AssetStrip({ selectRef, param, tokenId, value, onPick, d
             {options.map((option, index) => {
                 const query = new URLSearchParams({ tokenId, assetType: 'AFA' });
                 query.set(param, option.value);
+                // Server-side small WebP (384px covers the 3.5x tile crops on 2x screens); ~20 KB instead of ~450 KB PNG.
+                query.set('size', '384');
                 const cacheKey = `${endpoint}|${tokenId}|${param}|${option.value}`;
                 return (
                     <AssetThumb
