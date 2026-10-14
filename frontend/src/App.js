@@ -1434,7 +1434,7 @@ function App() {
     window.scrollTo({ top, behavior: reduce ? 'auto' : 'smooth' });
   }, []);
 
-  const appClassName = `App ${vegasButtonClicked ? 'vegas-glamour' : ''} ${tokenId ? 'has-token' : ''} ${apefestActive ? 'apefest-mode' : ''}`;
+  const appClassName = `App ${vegasButtonClicked ? 'vegas-glamour' : ''} ${tokenId ? 'has-token' : ''} ${apefestActive ? 'apefest-mode' : ''} ${previewOnly ? 'is-unminted' : ''}`;
 
   return (
     // Apply glamour class conditionally
