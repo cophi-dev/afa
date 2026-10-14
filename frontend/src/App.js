@@ -1313,7 +1313,7 @@ function App() {
       if (!tops.some((x) => Math.abs(x - t) < 8)) tops.push(t);
     });
     if (tops.length > 2 && captionHidden < selectedTraits.length) setCaptionHidden((n) => n + 1);
-  });
+  }, [captionHidden, selectedTraits, tokenId, previewOnly]);
   useEffect(() => {
     const onResize = () => setCaptionHidden(0);
     window.addEventListener('resize', onResize);
