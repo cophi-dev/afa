@@ -749,7 +749,8 @@ function App() {
     const fetchMintPreview = useCallback(async (id) => {
         const previewQuery = new URLSearchParams({
             tokenId: id,
-            assetType: 'AFA'
+            assetType: 'AFA',
+            size: '256' // list tiles: small WebP from the server
         });
         const fetchPreviewBlob = () => fetchFromAnyBase(
             `/api/get-asset?${previewQuery.toString()}`,
