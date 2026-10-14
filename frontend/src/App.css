@@ -5921,7 +5921,7 @@ body.apefest-body .mini-bar { background-color: #000 !important; }
   background: #0b0b0c;
   box-shadow: 0 0 10px rgba(225, 20, 30, 0.25), inset 0 0 0 1px rgba(225, 20, 30, 0.35);
 }
-.App.apefest-mode .asset-thumb-img img { filter: url(#apefest-duo-pick); }
+.App.apefest-mode .asset-thumb-img img { filter: url(#apefest-duo-asset); }
 .App.apefest-mode .gallery-item.has-image .gallery-thumb img { filter: url(#apefest-duo-pick); }
 /* Scanlines only on tiles >= 80px edge (picker thumbs are 72px: none, avoids mobile moire) */
 .App.apefest-mode .gallery-item.has-image .gallery-thumb::after {

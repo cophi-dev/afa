@@ -1465,6 +1465,20 @@ function App() {
               <feFuncB type="table" tableValues="0.047 0.032 0.03 0.032 0.036 0.04 0.044 0.05 0.056 0.08 0.29" />
             </feComponentTransfer>
           </filter>
+          <filter id="apefest-duo-asset" colorInterpolationFilters="sRGB">
+            {/* Asset picker: brighter mids (~+25%) + stronger local contrast so patterns and the Eyes variants separate; still dark red. */}
+            <feColorMatrix type="matrix" values="0.2126 0.7152 0.0722 0 0  0.2126 0.7152 0.0722 0 0  0.2126 0.7152 0.0722 0 0  0 0 0 1 0" />
+            <feComponentTransfer>
+              <feFuncR type="linear" slope="1.35" intercept="-0.17" />
+              <feFuncG type="linear" slope="1.35" intercept="-0.17" />
+              <feFuncB type="linear" slope="1.35" intercept="-0.17" />
+            </feComponentTransfer>
+            <feComponentTransfer>
+              <feFuncR type="table" tableValues="0.043 0.1 0.16 0.23 0.3 0.37 0.45 0.55 0.7 0.88 1" />
+              <feFuncG type="table" tableValues="0.043 0.03 0.028 0.03 0.034 0.04 0.048 0.058 0.075 0.1 0.33" />
+              <feFuncB type="table" tableValues="0.047 0.034 0.032 0.035 0.04 0.045 0.054 0.064 0.085 0.12 0.29" />
+            </feComponentTransfer>
+          </filter>
         </svg>
       )}
       {apefestActive && (
