@@ -5,7 +5,11 @@ import { debug, error as logError } from './utils/debug';
 
 const DEFAULT_API_URL = 'https://afa-editor.ew.r.appspot.com';
 const MINT_SITE_URL = 'https://www.apefacingapes.com';
-const GRID_VIEW_URL = 'https://afa-mint-progress.vercel.app';
+const GRID_VIEW_URL = 'https://afa-progress.com';
+const PREVIEW_CONCURRENCY = 4;
+const PREVIEW_RETRIES = 2;
+const PREVIEW_RETRY_COOLDOWN_MS = 15000;
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const CLAIM_URL = `${MINT_SITE_URL}/claim`;
 const LOADER_MESSAGES = [
     'Brewing ape magic...',
@@ -30,24 +34,53 @@ function Banner() {
     );
 }
 
+function Hero({ heroImage, onPick }) {
+    return (
+        <section className="hero" aria-labelledby="hero-title">
+            <div className="hero-copy">
+                <a href={MINT_SITE_URL} target="_blank" rel="noopener noreferrer" className="hero-logo-link">
+                    <img src="./logo.png" alt="Ape Facing Apes" width="2000" height="2000" className="hero-logo" />
+                </a>
+                <h1 id="hero-title" className="hero-title">Dress up your Ape Facing Ape.</h1>
+                <p className="hero-lede">
+                    Ape Facing Apes are Bored Apes turned to face you. Pick a minted AFA, swap outfits, hats and effects, and download the result.
+                </p>
+                <button type="button" className="hero-cta" onClick={onPick}>
+                    Pick your ape
+                </button>
+            </div>
+            <div className="hero-art">
+                <img
+                    src={heroImage || './face.png'}
+                    alt=""
+                    width="1000"
+                    height="1000"
+                    className={`hero-ape ${heroImage ? '' : 'is-placeholder'}`}
+                />
+            </div>
+        </section>
+    );
+}
+
 function Footer() {
     return (
         <footer className="footer">
             <nav className="footer-nav" aria-label="AFA sites">
-                <a href={MINT_SITE_URL} target="_blank" rel="noopener noreferrer">
+                <a href={GRID_VIEW_URL} target="_blank" rel="noopener noreferrer">
+                    Mint progress: afa-progress.com
+                </a>
+                <a href={CLAIM_URL} target="_blank" rel="noopener noreferrer">
                     Mint on apefacingapes.com
                 </a>
-                <a href={GRID_VIEW_URL} target="_blank" rel="noopener noreferrer">
-                    Immersive grid on afa-mint-progress.vercel.app
-                </a>
             </nav>
-            <p>© 2024 Ape Facing Apes. All rights reserved.</p>
-            <p>© 2024 Yuga Labs, Inc. All marks and assets available are licensed from Yuga Labs, Inc.</p>
+            <p className="footer-legal">
+                © Ape Facing Apes. BAYC marks and assets licensed from Yuga Labs, Inc.
+            </p>
         </footer>
     );
 }
 
-function MintedGalleryItem({ id, imageUrl, isSelected, onSelect, onBecomeVisible }) {
+function MintedGalleryItem({ id, imageUrl, isFailed, isSelected, onSelect, onBecomeVisible }) {
     const ref = useRef(null);
 
     useEffect(() => {
@@ -60,7 +93,7 @@ function MintedGalleryItem({ id, imageUrl, isSelected, onSelect, onBecomeVisible
                     onBecomeVisible(id);
                 }
             },
-            { rootMargin: '120px' }
+            { rootMargin: '300px' }
         );
         observer.observe(node);
         return () => observer.disconnect();
@@ -70,16 +103,18 @@ function MintedGalleryItem({ id, imageUrl, isSelected, onSelect, onBecomeVisible
         <button
             ref={ref}
             type="button"
-            className={`gallery-item ${imageUrl ? 'has-image' : 'is-pending'} ${isSelected ? 'is-selected' : ''}`}
+            className={`gallery-item ${imageUrl ? 'has-image' : 'is-pending'} ${isFailed ? 'is-failed' : ''} ${isSelected ? 'is-selected' : ''}`}
             onClick={() => onSelect(id)}
             aria-pressed={isSelected}
         >
             <span className="visually-hidden">Select AFA </span>
             <div className="gallery-thumb" aria-hidden={imageUrl ? undefined : true}>
                 {imageUrl ? (
-                    <img src={imageUrl} alt="" width="1000" height="1000" loading="lazy" decoding="async" />
+                    <img src={imageUrl} alt="" width="1000" height="1000" decoding="async" />
                 ) : (
-                    <div className="gallery-skeleton" />
+                    <div className={`gallery-skeleton ${isFailed ? 'is-failed' : ''}`}>
+                        <img src="./face.png" alt="" width="128" height="128" className="gallery-silhouette" />
+                    </div>
                 )}
             </div>
             <div className="gallery-meta">
@@ -94,6 +129,7 @@ function MintedGallery({
     isLoading,
     sortedIds,
     mintPreviewUrls,
+    mintPreviewFailed = {},
     tokenId,
     onSelect,
     onBecomeVisible,
@@ -144,6 +180,7 @@ function MintedGallery({
                                 key={id}
                                 id={id}
                                 imageUrl={mintPreviewUrls[id]}
+                                isFailed={Boolean(mintPreviewFailed[id])}
                                 isSelected={String(tokenId) === String(id)}
                                 onSelect={onSelect}
                                 onBecomeVisible={onBecomeVisible}
@@ -200,6 +237,10 @@ function App() {
     const [mintedTokenIds, setMintedTokenIds] = useState([]);
     const [mintGallerySort, setMintGallerySort] = useState(MINT_GALLERY_SORT.MINT_DATE);
     const [mintPreviewUrls, setMintPreviewUrls] = useState({});
+    const [mintPreviewFailed, setMintPreviewFailed] = useState({});
+    const previewQueueRef = useRef([]);
+    const previewActiveRef = useRef(0);
+    const previewFailedAtRef = useRef({});
     const [isCheckingMint, setIsCheckingMint] = useState(false);
     const [unmintedTokenId, setUnmintedTokenId] = useState('');
     const [syncPendingTokenId, setSyncPendingTokenId] = useState('');
@@ -333,10 +374,7 @@ function App() {
         fetchMintedTokens();
     }, [fetchMintedTokens]);
 
-    const loadMintPreview = useCallback(async (id) => {
-        if (mintPreviewUrlsRef.current[id] || mintPreviewLoadingRef.current.has(id)) return;
-
-        mintPreviewLoadingRef.current.add(id);
+    const fetchMintPreview = useCallback(async (id) => {
         const previewQuery = new URLSearchParams({
             tokenId: id,
             assetType: 'AFA'
@@ -346,26 +384,62 @@ function App() {
             (response) => response.blob()
         );
 
-        try {
-            let blob;
+        for (let attempt = 0; attempt <= PREVIEW_RETRIES; attempt += 1) {
             try {
-                blob = await fetchPreviewBlob();
+                if (attempt === 1) {
+                    await fetchFromAnyBase(
+                        '/api/minted-token-ids?refresh=1',
+                        (response) => response.json()
+                    ).catch(() => null);
+                }
+                const blob = await fetchPreviewBlob();
+                if (!blob || blob.size === 0) throw new Error('empty preview');
+                return URL.createObjectURL(blob);
             } catch (error) {
-                await fetchFromAnyBase(
-                    '/api/minted-token-ids?refresh=1',
-                    (response) => response.json()
-                );
-                blob = await fetchPreviewBlob();
+                debug('Mint preview attempt failed', { id, attempt, error });
+                if (attempt < PREVIEW_RETRIES) await wait(600 * (attempt + 1));
             }
-            const url = URL.createObjectURL(blob);
-            mintPreviewUrlsRef.current[id] = url;
-            setMintPreviewUrls((prev) => ({ ...prev, [id]: url }));
-        } catch (error) {
-            debug('Mint preview failed', { id, error });
-        } finally {
-            mintPreviewLoadingRef.current.delete(id);
         }
+        return null;
     }, [fetchFromAnyBase]);
+
+    const pumpPreviewQueue = useCallback(() => {
+        while (previewActiveRef.current < PREVIEW_CONCURRENCY && previewQueueRef.current.length > 0) {
+            const id = previewQueueRef.current.shift();
+            previewActiveRef.current += 1;
+            fetchMintPreview(id)
+                .then((url) => {
+                    if (url) {
+                        mintPreviewUrlsRef.current[id] = url;
+                        setMintPreviewUrls((prev) => ({ ...prev, [id]: url }));
+                        setMintPreviewFailed((prev) => {
+                            if (!prev[id]) return prev;
+                            const next = { ...prev };
+                            delete next[id];
+                            return next;
+                        });
+                    } else {
+                        previewFailedAtRef.current[id] = Date.now();
+                        setMintPreviewFailed((prev) => ({ ...prev, [id]: true }));
+                    }
+                })
+                .finally(() => {
+                    previewActiveRef.current -= 1;
+                    mintPreviewLoadingRef.current.delete(id);
+                    pumpPreviewQueue();
+                });
+        }
+    }, [fetchMintPreview]);
+
+    const loadMintPreview = useCallback((id) => {
+        if (mintPreviewUrlsRef.current[id] || mintPreviewLoadingRef.current.has(id)) return;
+        const failedAt = previewFailedAtRef.current[id];
+        if (failedAt && Date.now() - failedAt < PREVIEW_RETRY_COOLDOWN_MS) return;
+
+        mintPreviewLoadingRef.current.add(id);
+        previewQueueRef.current.push(id);
+        pumpPreviewQueue();
+    }, [pumpPreviewQueue]);
 
     const handleMintPreviewVisible = useCallback((id) => {
         loadMintPreview(id);
@@ -803,13 +877,29 @@ function App() {
         { key: 'extra', label: 'Extra', value: thirdAsset, clear: () => setThirdAsset('') }
     ].filter((t) => Boolean(t.value));
 
+  const handlePickYourApe = () => {
+    const target = document.getElementById('editor-controls');
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.setTimeout(() => {
+      const input = document.getElementById('afa-token-id');
+      if (input) input.focus({ preventScroll: true });
+    }, 450);
+  };
+
   const appClassName = `App ${vegasButtonClicked ? 'vegas-glamour' : ''} ${tokenId ? 'has-token' : ''}`;
 
   return (
     // Apply glamour class conditionally
     <div className={appClassName}>
       <a className="skip-link" href="#editor-controls">Skip to editor</a>
-      <Banner />
+      {tokenId ? (
+        <Banner />
+      ) : (
+        <Hero
+          heroImage={sortedMintGalleryIds.length > 0 ? mintPreviewUrls[sortedMintGalleryIds[0]] : null}
+          onPick={handlePickYourApe}
+        />
+      )}
       <main className="studio">
         <section className={`studio-preview ${tokenId ? 'has-token' : ''}`} aria-label="Preview">
           <div className="preview-card">
@@ -943,6 +1033,7 @@ function App() {
                 isLoading={mintedTokenIds.length === 0}
                 sortedIds={sortedMintGalleryIds}
                 mintPreviewUrls={mintPreviewUrls}
+                mintPreviewFailed={mintPreviewFailed}
                 tokenId={tokenId}
                 onSelect={handleTokenSubmit}
                 onBecomeVisible={handleMintPreviewVisible}
