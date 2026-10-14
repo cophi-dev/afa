@@ -1499,9 +1499,9 @@ function App() {
           <filter id="apefest-duo-blur" colorInterpolationFilters="sRGB">
             <feColorMatrix type="matrix" values="0.2126 0.7152 0.0722 0 0  0.2126 0.7152 0.0722 0 0  0.2126 0.7152 0.0722 0 0  0 0 0 1 0" />
             <feComponentTransfer>
-              <feFuncR type="table" tableValues="0.06 0.22 0.4 0.58 0.74 0.86 0.93 0.97 1" />
-              <feFuncG type="table" tableValues="0.045 0.04 0.05 0.06 0.07 0.08 0.1 0.15 0.3" />
-              <feFuncB type="table" tableValues="0.05 0.045 0.055 0.065 0.075 0.085 0.1 0.14 0.27" />
+              <feFuncR type="table" tableValues="0.05 0.14 0.24 0.34 0.43 0.52 0.6 0.68 0.76" />
+              <feFuncG type="table" tableValues="0.045 0.035 0.035 0.04 0.045 0.05 0.06 0.075 0.12" />
+              <feFuncB type="table" tableValues="0.05 0.04 0.04 0.045 0.05 0.055 0.065 0.08 0.11" />
             </feComponentTransfer>
           </filter>
         </svg>
