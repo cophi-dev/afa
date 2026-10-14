@@ -50,32 +50,88 @@ const CROPS = {
 };
 
 // Per-asset overrides where the generic category crop misses the object.
-// Measured from each asset's render diff against the bare ape (1000px canvas).
+// Rule: the object fills >=60% of the tile and is not cut off; otherwise crop to its
+// bounding box + ~10% margin. Boxes measured from each asset's render diff (1000px canvas)
+// against the bare ape (hand) or the category median (others). Face items stay centred.
 // Full-frame scenes (Dookie Dash, Clubhouse Sketch, ...) use zoom 1.
 const ASSET_CROPS = {
+  outfit: {
+    'apefest_merch_2025': { zoom: 1.41, origin: '50% 100%' },
+    'vegas': { zoom: 1.43, origin: '50% 100%' },
+    'german_ape_club_clothes': { zoom: 1.43, origin: '50% 100%' },
+    'mindfully_bored_hoodie': { zoom: 1.49, origin: '50% 100%' },
+    'ape_solar_hoodie_black': { zoom: 1.43, origin: '50% 100%' },
+    'ape_solar_hoodie_blue': { zoom: 1.57, origin: '50% 100%' },
+    'apefest_merch': { zoom: 1.43, origin: '50% 100%' },
+    'tt_hoodie': { zoom: 1.41, origin: '50% 100%' },
+    'bimmer_jacket': { zoom: 1.43, origin: '50% 100%' },
+    'apechain_hoodie_black': { zoom: 1.4, origin: '50% 100%' },
+    'apechain_hoodie_orange': { zoom: 1.53, origin: '50% 100%' },
+    'apechain_hoodie_blue': { zoom: 1.49, origin: '50% 100%' },
+    'apefest_jacket': { zoom: 1.46, origin: '50% 100%' },
+    'cheetah_hoodie': { zoom: 1.54, origin: '50% 100%' },
+    'naked': { zoom: 1.45, origin: '50% 100%' },
+    'french_stripes': { zoom: 1.48, origin: '50% 100%' },
+    'cats_shirt': { zoom: 1.5, origin: '50% 100%' },
+    'singe_hoodie': { zoom: 1.05, origin: '50% 100%' },
+    'singe_hoodie_glow': { zoom: 1, origin: '50% 50%' },
+    'applied_primate_coat': { zoom: 1.5, origin: '50% 100%' },
+    'btc_hoodie': { zoom: 1.4, origin: '50% 100%' },
+    'jacket': { zoom: 1.5, origin: '50% 100%' },
+    'blazer': { zoom: 1.45, origin: '50% 100%' },
+  },
+  hat: {
+    'vegas': { zoom: 1.62, origin: '50% 0%' },
+    'mindfully_bored_cap': { zoom: 1.19, origin: '50% 0%' },
+    'apechain_cap': { zoom: 2.76, origin: '50% 8%' },
+    'apechain_hat_blue': { zoom: 2.76, origin: '50% 8%' },
+    'apechain_hat_orange': { zoom: 2.74, origin: '50% 8%' },
+    'designer_toshiro_hat': { zoom: 2.74, origin: '50% 1%' },
+    'plunger': { zoom: 1, origin: '50% 50%' },
+    'pudgy_hat': { zoom: 1.85, origin: '50% 0%' },
+    'pudgy_hat2': { zoom: 1.78, origin: '50% 0%' },
+    'glitter_cowboy_hat': { zoom: 1.8, origin: '50% 0%' },
+  },
+  eyes: {
+    'btc_eyes': { zoom: 3.56, origin: '50% 30%' },
+  },
+  mouth: {
+    'apechain_grin': { zoom: 1.06, origin: '50% 100%' },
+    'lollipop': { zoom: 2.47, origin: '50% 65%' },
+    'banana_punch_gm': { zoom: 1.08, origin: '50% 100%' },
+    'banana_smile': { zoom: 2.01, origin: '50% 69%' },
+    'doodles_rainbow': { zoom: 1.53, origin: '50% 100%' },
+    'big_smile': { zoom: 1.06, origin: '50% 100%' },
+  },
   hand: {
-    'vegas': { zoom: 1.53, origin: '100% 92%' },
-    'ape_solar_sun_hand': { zoom: 1.35, origin: '100% 87%' },
+    'vegas': { zoom: 2.6, origin: '100% 100%' },
+    'ape_solar_sun_hand': { zoom: 2.31, origin: '100% 100%' },
+    'gordon': { zoom: 2.05, origin: '0% 100%' },
     'dookie_dash': { zoom: 1, origin: '50% 50%' },
     'smartphone_gm': { zoom: 1, origin: '50% 50%' },
+    'sardines': { zoom: 2.3, origin: '0% 100%' },
     'ramen': { zoom: 1, origin: '50% 50%' },
-    'pray': { zoom: 2.4, origin: '50% 100%' },
+    'pray': { zoom: 2.53, origin: '50% 100%' },
     'basketball': { zoom: 1, origin: '50% 50%' },
-    'shiny-gm': { zoom: 1.38, origin: '52% 100%' },
-    'pipe': { zoom: 1.55, origin: '100% 92%' },
-    'magic_eden': { zoom: 1.34, origin: '0% 92%' },
-    'gm_espresso': { zoom: 1.82, origin: '15% 100%' },
-    'banana': { zoom: 2.28, origin: '80% 94%' },
-    'otherside': { zoom: 1.87, origin: '0% 94%' },
-    'apecoin_hands1': { zoom: 1.1, origin: '53% 100%' },
+    'shiny-gm': { zoom: 1.31, origin: '52% 100%' },
+    'pipe': { zoom: 1, origin: '50% 50%' },
+    'magic_eden': { zoom: 1.16, origin: '0% 100%' },
+    'gm_espresso': { zoom: 1.74, origin: '13% 100%' },
+    'cheers': { zoom: 2.35, origin: '12% 100%' },
+    'banana': { zoom: 1.7, origin: '91% 100%' },
+    'otherside': { zoom: 1.17, origin: '0% 100%' },
+    'apecoin_hands1': { zoom: 1.05, origin: '57% 100%' },
     'apecoin_hands2': { zoom: 1, origin: '50% 50%' },
-    'candle': { zoom: 2.4, origin: '86% 96%' },
+    'candle': { zoom: 1.6, origin: '100% 100%' },
     'balloon_fireworks': { zoom: 1, origin: '50% 50%' },
-    'fireworks': { zoom: 2.4, origin: '100% 91%' },
-    'baguette': { zoom: 1.51, origin: '100% 89%' },
-    'clubhouse': { zoom: 1, origin: '50% 50%' },
-    'matchstick': { zoom: 2.4, origin: '10% 97%' },
-    'balloon_moon': { zoom: 1.36, origin: '0% 86%' },
+    'fireworks': { zoom: 1.69, origin: '100% 100%' },
+    'baguette': { zoom: 1, origin: '50% 50%' },
+    'clubhouse': { zoom: 1.34, origin: '0% 100%' },
+    'matchstick': { zoom: 1.56, origin: '0% 100%' },
+    'balloon_moon': { zoom: 1, origin: '50% 50%' },
+  },
+  extra: {
+    'unclogged': { zoom: 1.13, origin: '34% 100%' },
   },
 };
 const cropFor = (crop, value) => (ASSET_CROPS[crop] && ASSET_CROPS[crop][value]) || CROPS[crop] || CROPS.extra;
@@ -86,7 +142,15 @@ const loadPreview = (key, fetcher, priority = false) => {
     const promise = new Promise((resolve) => {
         queue[priority ? 'unshift' : 'push'](async () => {
             try {
-                const blob = await fetcher();
+                // The image server sometimes times out under load: retry twice with backoff.
+                let blob;
+                for (let attempt = 0; ; attempt += 1) {
+                    try { blob = await fetcher(); break; } // eslint-disable-line no-await-in-loop
+                    catch (err) {
+                        if (attempt >= 2) throw err;
+                        await new Promise((r) => setTimeout(r, 1500 * (attempt + 1))); // eslint-disable-line no-await-in-loop
+                    }
+                }
                 const url = URL.createObjectURL(blob);
                 cache.set(key, url);
                 resolve(url);
