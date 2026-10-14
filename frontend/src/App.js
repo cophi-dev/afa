@@ -585,6 +585,8 @@ function App() {
     }, [apefest]);
     const apefestRef = useRef(APEFEST_ENABLED && apefest);
     const apefestSrcRef = useRef(null);
+    const apefestPngRef = useRef(null); // Promise<Blob> PNG of the shown ApeFest frame (download/share)
+    const fadeStartRef = useRef(0);
     const [apefestBusy, setApefestBusy] = useState(false);
     useEffect(() => { apefestRef.current = APEFEST_ENABLED && apefest; }, [apefest]);
     useEffect(() => { if (APEFEST_ENABLED) loadApefestFonts(); }, []);
@@ -858,6 +860,7 @@ function App() {
     
         // Start fade-out effect
       setFade('fade-out');
+      fadeStartRef.current = Date.now();
 
         const isPreviewOnly = previewOnlyRef.current;
         // Unminted: the server-blurred preview gets the look on top (never a sharp image).
@@ -889,19 +892,26 @@ function App() {
                 // Minted: exact launch-post render (afa's scene maths, bit-exact, in a worker).
                 // Unminted (blurred preview): editor look on top of the server blur.
                 const square = await renderApefestLaunch(rawBlob, 'square', { unminted: isPreviewOnly, tokenId: newTokenId });
-                blob = await canvasToBlob(square);
+                // Show the exact pixels at once (BMP); encode the PNG for download/share afterwards.
+                blob = square.apefestBmp || await canvasToBlob(square);
+                apefestPngRef.current = null;
+                if (square.apefestBmp) {
+                    let png = null;
+                    apefestPngRef.current = () => { if (!png) png = canvasToBlob(square); return png; };
+                    setTimeout(() => { if (apefestPngRef.current) apefestPngRef.current(); }, 1200);
+                }
                 apefestSrcRef.current = { img, blob: rawBlob };
                 if (requestId !== activeRenderRequestRef.current) return;
             }
             setSyncPendingTokenId('');
             const newImageUrl = URL.createObjectURL(blob);
     
-            // Update the image URL after fade-out transition
+            // Update the image URL after the fade-out transition (no extra wait if it already finished)
             setTimeout(() => {
                 if (requestId !== activeRenderRequestRef.current) return;
                 setCurrentImageUrl(newImageUrl);
                 setFade('fade-in'); // Start fade-in effect
-            }, 500);
+            }, Math.max(0, 500 - (Date.now() - fadeStartRef.current)));
     
             setShowLoader(false);
             releaseBackground();
@@ -1307,10 +1317,15 @@ function App() {
         return () => document.body.classList.remove('apefest-body');
     }, [apefestActive]);
 
-    const handleDownload = () => {
+    const handleDownload = async () => {
         if ((previewOnly && !apefestActive) || !currentImageUrl.startsWith('blob:')) return;
         const link = document.createElement('a');
-        link.href = currentImageUrl;
+        let href = currentImageUrl;
+        if (apefestActive && apefestPngRef.current) {
+            href = URL.createObjectURL(await apefestPngRef.current());
+            setTimeout(() => URL.revokeObjectURL(href), 4000);
+        }
+        link.href = href;
         link.download = apefestActive ? `afa-${tokenId}-apefest.png` : `afa-${tokenId}.png`;
         document.body.appendChild(link);
         link.click();
@@ -1347,7 +1362,7 @@ function App() {
     const shareImageWithText = async () => {
         const copied = await copyShareText();
         if (navigator.share && typeof navigator.canShare === 'function' && String(currentImageUrl).startsWith('blob:')) {
-            const blob = await fetch(currentImageUrl).then((r) => r.blob());
+            const blob = apefestActive && apefestPngRef.current ? await apefestPngRef.current() : await fetch(currentImageUrl).then((r) => r.blob());
             const file = new File([blob], `afa-${tokenId}.png`, { type: blob.type || 'image/png' });
             if (navigator.canShare({ files: [file], text: shareText })) {
                 if (copied) setShareNote('Text copied, paste it into your post');
