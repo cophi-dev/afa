@@ -1274,14 +1274,6 @@ function App() {
         }
     };
 
-    const traitChips = [
-        { key: 'outfit', label: 'Outfit', value: secondAsset, clear: () => setSecondAsset('') },
-        { key: 'mouth', label: 'Mouth', value: mouthAsset, clear: () => setMouthAsset('') },
-        { key: 'hat', label: 'Hat', value: hatAsset, clear: () => setHatAsset('') },
-        { key: 'eyes', label: 'Eyes', value: eyesAsset, clear: () => setEyesAsset('') },
-        { key: 'hand', label: 'Hand', value: selectedAsset, clear: () => setSelectedAsset('') },
-        { key: 'extra', label: 'Extra', value: thirdAsset, clear: () => setThirdAsset('') }
-    ].filter((t) => Boolean(t.value));
 
 
   // Phillipp: selecting an ID (autofill, gallery tile, hero input) brings the preview
@@ -1519,24 +1511,6 @@ function App() {
             </div>
           )}
 
-          {tokenId && traitChips.length > 0 && (
-            <div className="trait-chips" aria-label="Selected traits">
-              {traitChips.map((chip) => (
-                <button
-                  key={chip.key}
-                  type="button"
-                  className="trait-chip"
-                  onClick={chip.clear}
-                  title={`Clear ${chip.label}`}
-                >
-                  <span className="trait-chip-label">{chip.label}</span>
-                  <span className="trait-chip-x" aria-hidden="true">
-                    ×
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
         </section>
         <section id="editor-controls" className="studio-controls" aria-label="Editor controls">
           {tokenId && (
