@@ -1,3 +1,4 @@
+import { holdBackground, releaseBackground, backgroundHeld, onBackgroundRelease, fetchWithTimeout } from './utils/apiLane';
 import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
 import './App.css';
 import { getAllTransactions, getMintedTokenIdsNewestFirst, checkTokenMintStatus } from './services/etherscanService';
@@ -278,6 +279,25 @@ const TRAIT_CATEGORIES = [
 ];
 
 // Mobile (<768) mini preview bar: appears under the site bar once <20% of the big preview is visible.
+// ApeFest list: per-tile luminance normalisation before the duotone, so every background lands
+// evenly (~#2a0608-#4a0a0e). Mean luminance from a 16px sample -> CSS var used only in ApeFest mode.
+const TILE_TARGET_LUM = 0.55;
+function normaliseTile(e) {
+    const img = e.currentTarget;
+    try {
+        const c = document.createElement('canvas');
+        c.width = 16; c.height = 16;
+        const x = c.getContext('2d', { willReadFrequently: true });
+        x.drawImage(img, 0, 0, 16, 16);
+        const d = x.getImageData(0, 0, 16, 16).data;
+        let sum = 0;
+        for (let i = 0; i < d.length; i += 4) sum += (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
+        const mean = sum / 256;
+        const k = Math.min(1.3, Math.max(0.6, TILE_TARGET_LUM / Math.max(0.05, mean)));
+        img.style.setProperty('--tile-norm', k.toFixed(3));
+    } catch (err) { /* tainted or not decoded: keep 1 */ }
+}
+
 function MiniPreviewBar({ visible, tokenId, imageUrl, previewOnly, lastTrait, onJump }) {
     const name = previewOnly ? `Ape #${tokenId}` : `AFA #${tokenId}`;
     return (
@@ -352,7 +372,7 @@ function MintedGalleryItem({ id, imageUrl, isFailed, isSelected, onSelect, onBec
             <span className="visually-hidden">Select AFA </span>
             <div className="gallery-thumb" aria-hidden={imageUrl ? undefined : true}>
                 {imageUrl ? (
-                    <img src={imageUrl} alt={`AFA #${id}`} width="1000" height="1000" decoding="async" />
+                    <img src={imageUrl} alt={`AFA #${id}`} width="1000" height="1000" decoding="async" onLoad={normaliseTile} />
                 ) : (
                     <div className={`gallery-skeleton ${isFailed ? 'is-failed' : ''}`}>
                     </div>
@@ -453,6 +473,9 @@ function MintedGallery({
     );
 }
 
+// Hard timeout per API call: a stalled render no longer hangs the loader (#4381 ~50s).
+const API_TIMEOUT_MS = 20000;
+
 function App() {
     const apiBaseCandidates = useMemo(() => Array.from(new Set([
         process.env.REACT_APP_API_URL,
@@ -464,7 +487,7 @@ function App() {
 
         for (const baseUrl of apiBaseCandidates) {
             try {
-                const response = await fetch(`${baseUrl}${pathWithQuery}`);
+                const response = await fetchWithTimeout(`${baseUrl}${pathWithQuery}`, API_TIMEOUT_MS);
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}`);
                 }
@@ -742,6 +765,7 @@ function App() {
     }, [fetchFromAnyBase]);
 
     const pumpPreviewQueue = useCallback(() => {
+        if (backgroundHeld()) return; // main preview first
         while (previewActiveRef.current < PREVIEW_CONCURRENCY && previewQueueRef.current.length > 0) {
             const id = previewQueueRef.current.shift();
             previewActiveRef.current += 1;
@@ -768,6 +792,8 @@ function App() {
                 });
         }
     }, [fetchMintPreview]);
+
+    useEffect(() => onBackgroundRelease(pumpPreviewQueue), [pumpPreviewQueue]);
 
     const loadMintPreview = useCallback((id) => {
         if (mintPreviewUrlsRef.current[id] || mintPreviewLoadingRef.current.has(id)) return;
@@ -801,6 +827,7 @@ function App() {
         newClubAsset
     ) => {
       const requestId = ++activeRenderRequestRef.current;
+      holdBackground();
       setShowLoader(true);
       setLoaderMessage(LOADER_MESSAGES[requestId % LOADER_MESSAGES.length]);
       const resolvedBaseAsset = newSelectedAsset || 'AFA';
@@ -861,8 +888,10 @@ function App() {
             }, 500);
     
             setShowLoader(false);
+            releaseBackground();
         })
         .catch(async (error) => {
+            releaseBackground();
             if (requestId !== activeRenderRequestRef.current) return;
             if (isPreviewOnly) {
                 logError('Blurred preview failed', error);
@@ -902,6 +931,8 @@ function App() {
             (response) => response.json()
         );
 
+        // Unminted: the server answers 403 NOT_MINTED here by design; don't ask (and don't retry).
+        if (isPreviewOnly) return;
         fetchBackgroundColor()
         .catch(async () => {
             await refreshMintCache();

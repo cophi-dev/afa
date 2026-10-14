@@ -5922,7 +5922,7 @@ body.apefest-body .mini-bar { background-color: #000 !important; }
   box-shadow: 0 0 10px rgba(225, 20, 30, 0.25), inset 0 0 0 1px rgba(225, 20, 30, 0.35);
 }
 .App.apefest-mode .asset-thumb-img img { filter: url(#apefest-duo-asset); }
-.App.apefest-mode .gallery-item.has-image .gallery-thumb img { filter: url(#apefest-duo-pick); }
+.App.apefest-mode .gallery-item.has-image .gallery-thumb img { filter: brightness(var(--tile-norm, 1)) url(#apefest-duo-pick); }
 /* Scanlines only on tiles >= 80px edge (picker thumbs are 72px: none, avoids mobile moire) */
 .App.apefest-mode .gallery-item.has-image .gallery-thumb::after {
   content: "";
@@ -5968,3 +5968,20 @@ body.apefest-body .mini-bar { background-color: #000 !important; }
 
 /* Unminted ape: picker tiles are the server-blurred assets (never sharp); brighter blur curve, always filtered. */
 .App.apefest-mode.is-unminted .asset-thumb-img img { filter: url(#apefest-duo-blur) !important; }
+
+/* Perf/bugfix: ApeFest loading tiles keep a visible shimmer (were flat dark squares while queued). */
+.App.apefest-mode .asset-thumb-img.is-loading { background: #1a0d0f; }
+.App.apefest-mode .asset-thumb-img.is-loading::after {
+  background: linear-gradient(100deg, transparent 20%, rgba(225, 20, 30, 0.16) 50%, transparent 80%);
+}
+/* Tiles: isolate paint so filtered tiles don't repaint each other while scrolling. */
+.App.apefest-mode .asset-thumb-img,
+.App.apefest-mode .gallery-item .gallery-thumb { contain: paint; }
+
+/* Unminted actions: Download 1:1 / 16:9 / Share on one row, 'Mint to reveal' on its own row below. */
+.App.apefest-mode .preview-actions > .preview-mint-link {
+  order: 10;
+  flex: 1 0 100%;
+  align-self: flex-start;
+  margin-top: 2px;
+}

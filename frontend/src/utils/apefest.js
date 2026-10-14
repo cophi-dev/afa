@@ -69,28 +69,52 @@ function boxBlur(src, w, h, ch, sigma) {
     const r = Math.max(1, Math.round(Math.sqrt((12 * sigma * sigma) / 3 + 1) / 2));
     let a = src.slice();
     let b = new Float32Array(src.length);
+    // Perf: direct strided indexing (no per-sample closure); identical result to the old version.
+    const norm = 1 / (2 * r + 1);
     const pass = (from, to, horizontal) => {
         const len = horizontal ? w : h;
         const lines = horizontal ? h : w;
-        const norm = 1 / (2 * r + 1);
+        const step = (horizontal ? 1 : w) * ch;
+        const last = len - 1;
         for (let l = 0; l < lines; l += 1) {
+            const base0 = (horizontal ? l * w : l) * ch;
             for (let c = 0; c < ch; c += 1) {
-                const idx = (i) => {
-                    const k = Math.min(len - 1, Math.max(0, i));
-                    return ((horizontal ? l * w + k : k * w + l) * ch) + c;
-                };
+                const base = base0 + c;
                 let sum = 0;
-                for (let i = -r; i <= r; i += 1) sum += from[idx(i)];
+                for (let i = -r; i <= r; i += 1) sum += from[base + (i < 0 ? 0 : (i > last ? last : i)) * step];
                 for (let i = 0; i < len; i += 1) {
-                    to[idx(i)] = sum * norm;
-                    sum += from[idx(i + r + 1)] - from[idx(i - r)];
+                    to[base + i * step] = sum * norm;
+                    const ia = i + r + 1;
+                    const ib = i - r;
+                    sum += from[base + (ia > last ? last : ia) * step] - from[base + (ib < 0 ? 0 : ib) * step];
                 }
+            }
+        }
+    };
+    // Vertical pass row-major (all columns at once): cache-friendly, same summation order per column.
+    const vpass = (from, to) => {
+        const rowLen = w * ch;
+        const last = h - 1;
+        const sum = new Float64Array(rowLen);
+        for (let i = -r; i <= r; i += 1) {
+            const ro = (i < 0 ? 0 : (i > last ? last : i)) * rowLen;
+            for (let q = 0; q < rowLen; q += 1) sum[q] += from[ro + q];
+        }
+        for (let i = 0; i < h; i += 1) {
+            const ro = i * rowLen;
+            const ia = i + r + 1;
+            const ib = i - r;
+            const ra = (ia > last ? last : ia) * rowLen;
+            const rb = (ib < 0 ? 0 : ib) * rowLen;
+            for (let q = 0; q < rowLen; q += 1) {
+                to[ro + q] = sum[q] * norm;
+                sum[q] += from[ra + q] - from[rb + q];
             }
         }
     };
     for (let k = 0; k < 3; k += 1) {
         pass(a, b, true);
-        pass(b, a, false);
+        vpass(b, a);
     }
     return a;
 }
@@ -129,10 +153,22 @@ export async function renderApefest(image, format = 'square', { seed = 0, captio
     if (keyLight) {
         // Unminted blur: soft luminance key, light background -> #0b0b0c / transparent (no sharpening,
         // blur untouched, smooth ramp so there is no hard square edge); highlights clamped.
+        // The preview now carries the ape's original coloured background (e.g. blue #5000, teal #2), so
+        // key by distance to the border colour too (median of the outer ring), not only by lightness.
+        const ring = [];
+        for (let t = 0; t < s; t += 4) {
+            [[t, 2], [t, s - 3], [2, t], [s - 3, t]].forEach(([x, y]) => {
+                const o = (y * s + x) * 4;
+                ring.push([apeData[o], apeData[o + 1], apeData[o + 2]]);
+            });
+        }
+        const med = [0, 1, 2].map((c) => ring.map((v) => v[c]).sort((p, q) => p - q)[ring.length >> 1]);
         for (let i = 0; i < s * s; i += 1) {
             const o = i * 4;
             const lum = (0.2126 * apeData[o] + 0.7152 * apeData[o + 1] + 0.0722 * apeData[o + 2]) / 255;
-            const k = Math.min(1, Math.max(0, (lum - 0.72) / 0.2));
+            const dist = Math.hypot(apeData[o] - med[0], apeData[o + 1] - med[1], apeData[o + 2] - med[2]) / 441;
+            const kc = Math.min(1, Math.max(0, 1 - (dist - 0.08) / 0.16));
+            const k = Math.max(kc, Math.min(1, Math.max(0, (lum - 0.72) / 0.2)));
             const kk = k * k * (3 - 2 * k);
             for (let c = 0; c < 3; c += 1) apeData[o + c] = Math.min(200, apeData[o + c] * (1 - kk) + 11 * kk);
             alpha[i] *= 1 - kk;
@@ -144,13 +180,16 @@ export async function renderApefest(image, format = 'square', { seed = 0, captio
     const cx = W * apeX;
     const cy = H * 0.46;
     const c = new Float32Array(W * H * 3);
+    // Perf: exp(-(dx²+dy²)k) = exp(-dx²k)·exp(-dy²k), precomputed per column/row.
+    const gx = new Float32Array(W); const kx = new Float32Array(W);
+    for (let x = 0; x < W; x += 1) { const dx = (x - cx) / (m * 0.42); gx[x] = Math.exp(-dx * dx * 1.3); kx[x] = Math.exp(-dx * dx * 5); }
     for (let y = 0; y < H; y += 1) {
+        const dy = (y - cy) / (m * 0.40);
+        const gy = Math.exp(-dy * dy * 1.3) * 0.55 * glowScale;
+        const ky = Math.exp(-dy * dy * 5) * 0.18;
         for (let x = 0; x < W; x += 1) {
-            const dx = (x - cx) / (m * 0.42);
-            const dy = (y - cy) / (m * 0.40);
-            const d2 = dx * dx + dy * dy;
-            const glow = Math.exp(-d2 * 1.3) * 0.55 * glowScale;
-            const core = Math.exp(-d2 * 5) * 0.18;
+            const glow = gx[x] * gy;
+            const core = kx[x] * ky;
             const o = (y * W + x) * 3;
             c[o] = BG[0] + glow * RED[0] + core;
             c[o + 1] = BG[1] + glow * RED[1] + core * 0.3;
@@ -215,12 +254,14 @@ export async function renderApefest(image, format = 'square', { seed = 0, captio
     // Scanlines, eased back over the face
     const period = Math.max(3, Math.floor(H / 300));
     const half = Math.floor(period / 2);
+    const fxs = new Float32Array(W);
+    for (let x = 0; x < W; x += 1) { const fx = (x - cx) / (m * 0.22); fxs[x] = Math.exp(-fx * fx); }
     for (let y = 0; y < H; y += 1) {
         if (y % period >= half) continue;
+        const fy = (y - H * 0.40) / (m * 0.25);
+        const fyy = Math.exp(-fy * fy);
         for (let x = 0; x < W; x += 1) {
-            const fx = (x - cx) / (m * 0.22);
-            const fy = (y - H * 0.40) / (m * 0.25);
-            const face = Math.exp(-(fx * fx + fy * fy));
+            const face = fxs[x] * fyy;
             const f = 1 - Math.min(0.85, (0.29 - 0.07 * face) * (1 + 0.55 * (scan - 1)));
             const o = (y * W + x) * 3;
             split[o] *= f;

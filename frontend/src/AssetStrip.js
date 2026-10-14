@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { backgroundHeld, onBackgroundRelease } from './utils/apiLane';
 
 // Shared, small-concurrency queue + cache for asset preview renders.
 const cache = new Map();
 const pending = new Map();
 const queue = [];
 let active = 0;
-const MAX_ACTIVE = 6;
+const MAX_ACTIVE = 4;
 
 const finish = () => {
     active -= 1;
@@ -13,6 +14,7 @@ const finish = () => {
 };
 
 function pump() {
+    if (backgroundHeld()) return; // main preview first
     while (active < MAX_ACTIVE && queue.length) {
         const job = queue.shift();
         active += 1;
@@ -20,7 +22,7 @@ function pump() {
     }
 }
 
-const EAGER_COUNT = 6;
+onBackgroundRelease(() => pump());
 
 // Consistent short names for tiles (full name stays in the tooltip/header).
 const SHORT_NAMES = {
@@ -163,16 +165,13 @@ function AssetThumb({ option, index, active, disabled, onPick, fetchPreview, cac
             if (cancelled) return;
             if (result) setUrl(result); else setFailed(true);
         };
-        if (index < EAGER_COUNT) {
-            // First thumbnails: fetch right away, ahead of the lazy queue.
-            loadPreview(cacheKey, fetchPreview, true).then(apply);
-            return () => { cancelled = true; };
-        }
+        // Visible tiles only (viewport, incl. the strip's horizontal clipping), visible ones jump the queue.
+        // Offscreen rows no longer load up front, so the server works on what the user sees.
         const observer = new IntersectionObserver((entries) => {
             if (!entries.some((e) => e.isIntersecting)) return;
             observer.disconnect();
-            loadPreview(cacheKey, fetchPreview).then(apply);
-        }, { root: rootRef.current, rootMargin: '0px 160px' });
+            loadPreview(cacheKey, fetchPreview, true).then(apply);
+        }, { root: null, rootMargin: '200px 120px' });
         observer.observe(node);
         return () => { cancelled = true; observer.disconnect(); };
     }, [cacheKey]); // eslint-disable-line react-hooks/exhaustive-deps
