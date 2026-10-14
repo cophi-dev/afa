@@ -1,6 +1,6 @@
-// Same-origin proxy for the authoritative mint list (afa-progress.com/api/mints
+// Same-origin proxy for the authoritative mint list (afa-mint-progress.vercel.app/api/mints
 // sends no CORS headers). Validates completeness: minted.length === count.
-const SOURCE = 'https://afa-progress.com/api/mints';
+const SOURCE = 'https://afa-mint-progress.vercel.app/api/mints';
 
 const load = async () => {
   let lastError = null;
