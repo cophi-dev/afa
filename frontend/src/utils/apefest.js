@@ -8,21 +8,25 @@ const DARK = [8 / 255, 2 / 255, 3 / 255];
 const HOT = [1, 140 / 255, 120 / 255];
 const BG = [4 / 255, 2 / 255, 3 / 255];
 
-// CRT strength, shared by the baked image and the page overlay (App.js sets --crt from it).
-// 1.0 = approved look, ~2.5 = strong poster look (refs *_strong.png). Final value: Design.
-export const APEFEST_CRT = 1.0;
+// CRT strength, shared by the baked image and the page overlay (App.js sets --crt/--scan/--jump).
+// 1.0 = approved look, ~2.5 = strong poster look (refs *_strong.png). Design: 1.8 overall,
+// scanlines at the strong (2.5) level, line-jump offset kept small so jumps never cut the face.
+export const APEFEST_CRT = 1.8;
+export const APEFEST_SCAN = 2.5;
+export const APEFEST_JUMP = 1.0;
 
-// Text positions per format, in output pixels. Design decides; null = reference default
-// (caption bottom-left at the 5% margin, date bottom-right). caption = top-left of the pixel caps,
-// sub = right/baseline anchor of "10.17".
+// Text layout per format (Design). All values in output pixels.
+// square: claim centred, cap height 40, top edge y=72; date centred, 22px mono, baseline 950, 70% opacity.
+//         If the head comes closer than headGap to the claim, the ape moves down by headShift.
+// wide:   claim + date left at shoulder height, ape in the right third.
 export const APEFEST_TEXT = {
-    square: { caption: null, sub: null },
-    wide: { caption: [90, 720], sub: null },
+    square: { align: 'center', capHeight: 40, capTop: 72, headGap: 50, headShift: 30, subSize: 22, subBaseline: 950, subAlign: 'center', subAlpha: 0.7 },
+    wide: { align: 'left', x: 96, capHeight: 36, capTop: 640, subSize: 22, subBaseline: 722, subAlign: 'left', subAlpha: 0.7 },
 };
 
 export const APEFEST_FORMATS = {
     square: { W: 1000, H: 1000, apeScale: 0.92, apeX: 0.5 },
-    wide: { W: 1600, H: 900, apeScale: 0.95, apeX: 0.69 },
+    wide: { W: 1600, H: 900, apeScale: 0.95, apeX: 0.72 },
 };
 
 let fontsReady = null;
@@ -81,10 +85,10 @@ function mulberry32(seed) {
 // Exposure: the reference used 1.0 (#2388) and 0.87 (#970/#4381); 0.93 stays within ~1.5/255 of all three.
 export const APEFEST_GAIN = 0.93;
 
-export async function renderApefest(image, format = 'square', { seed = 0, caption = 'STILL HERE.', sub = '10.17', gain, crt = APEFEST_CRT, text } = {}) {
+export async function renderApefest(image, format = 'square', { seed = 0, caption = 'STILL HERE.', sub = '10.17', gain, crt = APEFEST_CRT, scan = APEFEST_SCAN, jump = APEFEST_JUMP, text } = {}) {
     await loadApefestFonts();
     const { W, H, apeScale, apeX } = APEFEST_FORMATS[format];
-    const pos = { ...APEFEST_TEXT[format], ...(text || {}) };
+    const T = { ...APEFEST_TEXT[format], ...(text || {}) };
     const m = Math.min(W, H);
     const s = Math.round(m * apeScale);
 
@@ -121,7 +125,14 @@ export async function renderApefest(image, format = 'square', { seed = 0, captio
 
     // Duotone ape + rim light, composited bottom-aligned
     const ox = Math.floor(cx - s / 2);
-    const oy = H - s;
+    let oy = H - s;
+    if (T.headGap != null) {
+        let headRow = s;
+        for (let y = 0; y < s && headRow === s; y += 1) {
+            for (let x = 0; x < s; x += 4) if (alpha[y * s + x] > 0.5) { headRow = y; break; }
+        }
+        if (oy + headRow < T.capTop + T.capHeight + T.headGap) oy += T.headShift;
+    }
     for (let y = 0; y < s; y += 1) {
         const Y = oy + y;
         if (Y < 0 || Y >= H) continue;
@@ -175,7 +186,7 @@ export async function renderApefest(image, format = 'square', { seed = 0, captio
             const fx = (x - cx) / (m * 0.22);
             const fy = (y - H * 0.40) / (m * 0.25);
             const face = Math.exp(-(fx * fx + fy * fy));
-            const f = 1 - Math.min(0.85, (0.29 - 0.07 * face) * (1 + 0.55 * (crt - 1)));
+            const f = 1 - Math.min(0.85, (0.29 - 0.07 * face) * (1 + 0.55 * (scan - 1)));
             const o = (y * W + x) * 3;
             split[o] *= f;
             split[o + 1] *= f;
@@ -188,8 +199,8 @@ export async function renderApefest(image, format = 'square', { seed = 0, captio
     const jumps = Math.round(3 * crt ** 1.5);
     for (let n = 0; n < jumps; n += 1) {
         const y0 = Math.floor(H * 0.05 + rnd() * (H * 0.8));
-        const h = Math.floor((2 + Math.floor(rnd() * 4)) * crt);
-        const dx = Math.floor((4 + Math.floor(rnd() * 8)) * crt) * (rnd() < 0.5 ? -1 : 1);
+        const h = Math.floor((2 + Math.floor(rnd() * 4)) * jump);
+        const dx = Math.floor((4 + Math.floor(rnd() * 8)) * jump) * (rnd() < 0.5 ? -1 : 1);
         for (let y = y0; y < Math.min(H, y0 + h); y += 1) {
             const row = split.slice(y * W * 3, (y + 1) * W * 3);
             for (let x = 0; x < W; x += 1) {
@@ -249,33 +260,36 @@ export async function renderApefest(image, format = 'square', { seed = 0, captio
     }
     ctx.putImageData(img, 0, 0);
 
-    // Caption: pixel caps + mono date, red with glow
-    const fs = Math.floor(H * 0.04);
-    const margin = Math.floor(m * 0.05);
-    const [x0, y0] = pos.caption || [margin, H - margin - fs];
-    const [sx, sy] = pos.sub || [W - margin, H - margin];
+    // Claim (Press Start 2P, sized to the cap height) + date (mono), red with a slight glow
+    ctx.font = '100px "Press Start 2P", monospace';
+    const capAt100 = ctx.measureText('H').actualBoundingBoxAscent || 87.5;
+    const fs = Math.round((T.capHeight * 100) / capAt100);
+    const tr = -Math.floor(fs * 0.12);
+    ctx.font = `${fs}px "Press Start 2P", monospace`;
+    const widths = [...caption].map((ch) => ctx.measureText(ch).width);
+    const total = widths.reduce((a, w) => a + w + tr, 0) - tr;
+    const capX = T.align === 'center' ? Math.round((W - total) / 2) : T.x;
+    const baseline = T.capTop + T.capHeight;
     const drawText = () => {
         ctx.fillStyle = APEFEST_RED;
         ctx.font = `${fs}px "Press Start 2P", monospace`;
-        ctx.textBaseline = 'top';
+        ctx.textBaseline = 'alphabetic';
         ctx.textAlign = 'left';
-        let x = x0;
-        const tr = -Math.floor(fs * 0.12);
-        for (const ch of caption) {
-            ctx.fillText(ch, x, y0);
-            x += ctx.measureText(ch).width + tr;
-        }
+        let x = capX;
+        [...caption].forEach((ch, i) => { ctx.fillText(ch, x, baseline); x += widths[i] + tr; });
         if (sub) {
-            ctx.font = `700 ${Math.floor(m * 0.032)}px "AFA Mono Digits", "DejaVu Sans Mono", Menlo, monospace`;
-            ctx.textBaseline = 'alphabetic';
-            ctx.textAlign = 'right';
-            ctx.fillText(sub, sx, sy);
+            ctx.save();
+            ctx.globalAlpha *= T.subAlpha;
+            ctx.font = `700 ${T.subSize}px "AFA Mono Digits", "DejaVu Sans Mono", Menlo, monospace`;
+            ctx.textAlign = T.subAlign === 'center' ? 'center' : 'left';
+            ctx.fillText(sub, T.subAlign === 'center' ? W / 2 : T.x, T.subBaseline);
+            ctx.restore();
         }
     };
     ctx.save();
     ctx.shadowColor = APEFEST_RED;
-    ctx.shadowBlur = fs / 3;
-    ctx.globalAlpha = 0.8;
+    ctx.shadowBlur = fs / 4;
+    ctx.globalAlpha = 0.6;
     drawText();
     ctx.restore();
     drawText();

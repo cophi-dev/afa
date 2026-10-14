@@ -5755,7 +5755,7 @@ details.token-panel { overflow: visible !important; }
 .apefest-button.is-on {
   background: #e1141e !important;
   color: #0b0b0c !important;
-  box-shadow: 0 0 18px rgba(225, 20, 30, 0.55) !important;
+  box-shadow: 0 0 9px rgba(225, 20, 30, 0.28) !important;
 }
 .apefest-button:disabled { opacity: 0.45; cursor: not-allowed; }
 .apefest-note { text-align: left; margin: 4px 0 8px; font-size: 13px; color: rgba(255, 255, 255, 0.6); }
@@ -5775,13 +5775,13 @@ body.apefest-body .mini-bar { background-color: #000 !important; }
   z-index: 40;
   background:
     radial-gradient(60% 50% at 30% 35%, rgba(225, 20, 30, calc(0.16 * var(--crt, 1))), rgba(0, 0, 0, 0) 70%),
-    repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0) 2px, rgba(0, 0, 0, calc(0.18 * var(--crt, 1))) 2px, rgba(0, 0, 0, calc(0.18 * var(--crt, 1))) 3px);
+    repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0) 2px, rgba(0, 0, 0, calc(0.18 * var(--scan, 1))) 2px, rgba(0, 0, 0, calc(0.18 * var(--scan, 1))) 3px);
 }
 .apefest-glitch {
   position: absolute;
   left: 0;
   right: 0;
-  height: calc(2px * var(--crt, 1));
+  height: calc(2px * var(--jump, 1));
   background: rgba(225, 20, 30, calc(0.22 * var(--crt, 1)));
   box-shadow: 0 0 6px rgba(225, 20, 30, calc(0.3 * var(--crt, 1)));
   opacity: 0;
@@ -5792,8 +5792,8 @@ body.apefest-body .mini-bar { background-color: #000 !important; }
 .apefest-glitch--3 { top: 81%; animation-delay: 4.9s; }
 @keyframes apefest-jump {
   0% { opacity: 0; transform: translateX(0); }
-  1% { opacity: 1; transform: translateX(calc(8px * var(--crt, 1))); }
-  2.5% { opacity: 0.6; transform: translateX(calc(-5px * var(--crt, 1))); }
+  1% { opacity: 1; transform: translateX(calc(8px * var(--jump, 1))); }
+  2.5% { opacity: 0.6; transform: translateX(calc(-5px * var(--jump, 1))); }
   4% { opacity: 0; transform: translateX(0); }
   100% { opacity: 0; }
 }
@@ -5823,19 +5823,22 @@ body.apefest-body .mini-bar { background-color: #000 !important; }
 .App.apefest-mode #asset-display img {
   box-shadow: 0 0 60px rgba(225, 20, 30, 0.35);
 }
+/* Press Start 2P is reserved for the in-image claim. UI headings stay Saira Extra Condensed, in red. */
 .App.apefest-mode .panel-summary,
-.App.apefest-mode .hero-caption-name,
-.App.apefest-mode .gallery-heading,
-.App.apefest-mode h1,
-.App.apefest-mode h2 {
-  font-family: 'Press Start 2P', var(--font-display) !important;
-  font-size: 12px !important;
-  letter-spacing: 0 !important;
-  text-transform: uppercase;
-  color: #e1141e !important;
-  text-shadow: 0 0 8px rgba(225, 20, 30, 0.6);
+.App.apefest-mode .gallery-heading {
+  color: rgba(225, 20, 30, 0.7) !important;
 }
-.App.apefest-mode .hero-caption-name { font-size: 13px !important; line-height: 1.6; }
+.App.apefest-mode .hero-caption-name { color: #e1141e !important; }
+.apefest-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  vertical-align: middle;
+  box-shadow: 0 0 4px currentColor;
+}
 .App.apefest-mode .preview-download:not(:disabled) {
   background: #e1141e !important;
   border-color: #e1141e !important;
@@ -5850,3 +5853,15 @@ body.apefest-body .mini-bar { background-color: #000 !important; }
 @media (prefers-reduced-motion: reduce) {
   .App.apefest-mode .apefest-button.is-on { box-shadow: none !important; }
 }
+
+/* ApeFest: tiles stay readable on the black page. Loading tiles get a visible surface
+   (they were near-black shimmer on black and looked empty); loaded tiles get a hairline. */
+.App.apefest-mode .asset-thumb-img {
+  background-color: #1d1d21;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.10);
+}
+.App.apefest-mode .asset-thumb-img.is-loading {
+  background: linear-gradient(100deg, #1c1c20 30%, #2a2a30 50%, #1c1c20 70%);
+  background-size: 220% 100%;
+}
+.App.apefest-mode .asset-thumb.is-active .asset-thumb-img { box-shadow: inset 0 0 0 2px #e1141e; }

@@ -5,7 +5,7 @@ import { debug, error as logError } from './utils/debug';
 import AssetStrip from './AssetStrip';
 import { buildShareText, buildXIntentUrl } from './utils/shareText';
 import { assetLabel } from './utils/assetLabels';
-import { renderApefest, canvasToBlob, loadImage, loadApefestFonts, APEFEST_CRT } from './utils/apefest';
+import { renderApefest, canvasToBlob, loadImage, loadApefestFonts, APEFEST_CRT, APEFEST_SCAN, APEFEST_JUMP } from './utils/apefest';
 
 // ApeFest (10.17): while true, the "Add frame" button becomes the ApeFest toggle.
 // Set to false after ApeFest to restore "Add frame"; nothing else needs to change.
@@ -1406,13 +1406,23 @@ function App() {
     if (!target) return undefined;
     const mq = window.matchMedia('(max-width: 767px)');
     let ratio = 1;
-    const update = () => setMiniVisible(mq.matches && ratio < 0.2);
+    // ApeFest: the claim sits at the top of the image, so the mini bar takes over as soon as
+    // the image top slides under the site bar (never a cropped claim); otherwise the <20% rule.
+    const claimHidden = () => {
+        if (!apefestActive) return false;
+        const bar = document.querySelector('.site-bar');
+        const barBottom = bar ? bar.getBoundingClientRect().bottom : 0;
+        const r = target.getBoundingClientRect();
+        return r.top < barBottom - 1 && r.bottom > barBottom;
+    };
+    const update = () => setMiniVisible(mq.matches && (ratio < 0.2 || claimHidden()));
     const io = new IntersectionObserver(([entry]) => { ratio = entry.intersectionRatio; update(); },
       { threshold: [0, 0.2, 0.5, 1] });
     io.observe(target);
     mq.addEventListener('change', update);
-    return () => { io.disconnect(); mq.removeEventListener('change', update); };
-  }, [tokenId]);
+    window.addEventListener('scroll', update, { passive: true });
+    return () => { io.disconnect(); mq.removeEventListener('change', update); window.removeEventListener('scroll', update); };
+  }, [tokenId, apefestActive]);
 
   const scrollToPreview = useCallback(() => {
     const target = document.querySelector('.studio-preview');
@@ -1428,7 +1438,7 @@ function App() {
 
   return (
     // Apply glamour class conditionally
-    <div className={appClassName} style={apefestActive ? { '--crt': APEFEST_CRT } : undefined}>
+    <div className={appClassName} style={apefestActive ? { '--crt': APEFEST_CRT, '--scan': APEFEST_SCAN, '--jump': APEFEST_JUMP } : undefined}>
       {apefestActive && (
         // Page CRT layer (same APEFEST_CRT as the baked image). Sits below the preview column
         // and the mini bar, so the image's own scanlines are never overlaid (no moiré, no double lines).
@@ -1615,7 +1625,7 @@ function App() {
                     title={previewOnly ? 'ApeFest look unlocks once this ape is minted.' : 'Red CRT look for ApeFest. Your traits stay on.'}
                     data-tooltip={previewOnly ? 'ApeFest look unlocks once this ape is minted.' : 'Red CRT look for ApeFest. Your traits stay on.'}
                   >
-                    {apefestActive ? 'ApeFest on' : 'ApeFest'}
+                    ApeFest{apefestActive && <span className="apefest-dot" aria-hidden="true" />}
                   </button>
                 ) : (
                 <button
