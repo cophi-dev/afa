@@ -1,0 +1,12 @@
+/* AFA typography aligned with www.apefacingapes.com (Saira Extra Condensed / Saira / Barlow).
+   All three families: SIL Open Font License 1.1, self-hosted, latin subset via @fontsource. */
+@font-face { font-family: 'Barlow'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/barlow-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Barlow'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/barlow-latin-500-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Barlow'; font-style: normal; font-weight: 600 700; font-display: swap; src: url('/fonts/barlow-latin-600-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Saira'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/saira-latin-600-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Saira Extra Condensed'; font-style: normal; font-weight: 400 900; font-display: swap; src: url('/fonts/saira-extra-condensed-latin-700-normal.woff2') format('woff2'); }
+:root {
+  --font-display: 'Saira Extra Condensed', 'Arial Narrow', ui-sans-serif, system-ui, sans-serif;
+  --font-label: 'Saira', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Barlow', ui-sans-serif, system-ui, sans-serif;
+}
