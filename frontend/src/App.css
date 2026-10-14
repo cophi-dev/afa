@@ -5877,3 +5877,39 @@ body.apefest-body .mini-bar { background-color: #000 !important; }
   text-transform: uppercase !important;
   color: rgba(225, 20, 30, 0.7) !important;
 }
+
+/* ApeFest toggle, inactive: already wears the ApeFest look (CRT screen, red pixel label,
+   soft glow pulse) so it invites the click. Press Start 2P is used on this button only. */
+.apefest-button:not(.is-on) {
+  position: relative;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0) 2px, rgba(0, 0, 0, 0.35) 2px, rgba(0, 0, 0, 0.35) 3px),
+    radial-gradient(120% 140% at 50% 50%, rgba(225, 20, 30, 0.28), rgba(10, 2, 3, 0.95) 70%) !important;
+  border: 1px solid rgba(225, 20, 30, 0.75) !important;
+  color: #ff2a33 !important;
+  font-family: 'Press Start 2P', var(--font-display) !important;
+  font-size: 10px !important;
+  letter-spacing: 0.02em !important;
+  text-transform: uppercase !important;
+  text-shadow: 1px 0 rgba(0, 200, 255, 0.35), -1px 0 rgba(255, 0, 40, 0.6), 0 0 6px rgba(225, 20, 30, 0.9);
+  /* 3 pulses (~10s), then it rests on a static glow */
+  animation: apefest-btn-pulse 3.3s ease-in-out 3;
+  box-shadow: 0 0 8px rgba(225, 20, 30, 0.35), inset 0 0 8px rgba(225, 20, 30, 0.25);
+}
+.apefest-button:not(.is-on):hover:not(:disabled),
+.apefest-button:not(.is-on):focus-visible {
+  border-color: #e1141e !important;
+  box-shadow: 0 0 16px rgba(225, 20, 30, 0.55), inset 0 0 12px rgba(225, 20, 30, 0.35) !important;
+}
+.apefest-button:not(.is-on):disabled {
+  animation: none;
+  filter: grayscale(0.6);
+}
+@keyframes apefest-btn-pulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(225, 20, 30, 0.25), inset 0 0 6px rgba(225, 20, 30, 0.2); }
+  50% { box-shadow: 0 0 14px rgba(225, 20, 30, 0.5), inset 0 0 10px rgba(225, 20, 30, 0.35); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .apefest-button:not(.is-on) { animation: none; box-shadow: 0 0 8px rgba(225, 20, 30, 0.35); }
+}
