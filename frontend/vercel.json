@@ -1,8 +1,14 @@
 {
   "rewrites": [
-    { "source": "/a/:id", "destination": "/api/a?id=:id" }
+    {
+      "source": "/a/:id",
+      "destination": "/api/a?id=:id"
+    }
   ],
   "functions": {
-    "api/og-look.js": { "maxDuration": 20, "includeFiles": "public/logo-mark.png" }
+    "api/og-look.js": {
+      "maxDuration": 20,
+      "includeFiles": "{public/logo-mark.png,lib/fonts/**}"
+    }
   }
 }

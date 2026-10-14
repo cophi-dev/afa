@@ -5364,3 +5364,25 @@ button.gallery-item.is-selected .gallery-meta {
 
 .asset-thumb { flex-basis: 76px; width: 76px; }
 .asset-thumb-img { width: 76px; height: 76px; }
+
+/* v4: asset thumbnail skeleton shimmer */
+.asset-thumb-img { position: relative; }
+.asset-thumb-img.is-loading {
+  animation: none;
+  background: #121214;
+}
+.asset-thumb-img.is-loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.07) 50%, transparent 80%);
+  transform: translateX(-100%);
+  animation: afa-thumb-shimmer 1.3s ease-in-out infinite;
+}
+.asset-thumb-img img { animation: afa-thumb-in 0.25s ease-out; }
+@keyframes afa-thumb-shimmer { to { transform: translateX(100%); } }
+@keyframes afa-thumb-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .asset-thumb-img.is-loading::after { animation: none; transform: none; }
+  .asset-thumb-img img { animation: none; }
+}

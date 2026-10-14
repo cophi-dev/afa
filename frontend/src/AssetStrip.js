@@ -20,11 +20,13 @@ function pump() {
     }
 }
 
-const loadPreview = (key, fetcher) => {
+const EAGER_COUNT = 6;
+
+const loadPreview = (key, fetcher, priority = false) => {
     if (cache.has(key)) return Promise.resolve(cache.get(key));
     if (pending.has(key)) return pending.get(key);
     const promise = new Promise((resolve) => {
-        queue.push(async () => {
+        queue[priority ? 'unshift' : 'push'](async () => {
             try {
                 const blob = await fetcher();
                 const url = URL.createObjectURL(blob);
@@ -42,7 +44,7 @@ const loadPreview = (key, fetcher) => {
     return promise;
 };
 
-function AssetThumb({ option, active, disabled, onPick, fetchPreview, cacheKey, crop, rootRef }) {
+function AssetThumb({ option, index, active, disabled, onPick, fetchPreview, cacheKey, crop, rootRef }) {
     const ref = useRef(null);
     const [url, setUrl] = useState(() => cache.get(cacheKey) || null);
     const [failed, setFailed] = useState(false);
@@ -53,13 +55,19 @@ function AssetThumb({ option, active, disabled, onPick, fetchPreview, cacheKey, 
         const node = ref.current;
         if (!node || cache.has(cacheKey)) return undefined;
         let cancelled = false;
+        const apply = (result) => {
+            if (cancelled) return;
+            if (result) setUrl(result); else setFailed(true);
+        };
+        if (index < EAGER_COUNT) {
+            // First thumbnails: fetch right away, ahead of the lazy queue.
+            loadPreview(cacheKey, fetchPreview, true).then(apply);
+            return () => { cancelled = true; };
+        }
         const observer = new IntersectionObserver((entries) => {
             if (!entries.some((e) => e.isIntersecting)) return;
             observer.disconnect();
-            loadPreview(cacheKey, fetchPreview).then((result) => {
-                if (cancelled) return;
-                if (result) setUrl(result); else setFailed(true);
-            });
+            loadPreview(cacheKey, fetchPreview).then(apply);
         }, { root: rootRef.current, rootMargin: '0px 160px' });
         observer.observe(node);
         return () => { cancelled = true; observer.disconnect(); };
@@ -100,7 +108,7 @@ export default function AssetStrip({ selectRef, param, tokenId, value, onPick, d
 
     return (
         <div className="asset-strip" ref={rootRef} role="group" aria-label="Asset previews">
-            {options.map((option) => {
+            {options.map((option, index) => {
                 const query = new URLSearchParams({ tokenId, assetType: 'AFA' });
                 query.set(param, option.value);
                 const cacheKey = `${tokenId}|${param}|${option.value}`;
@@ -108,6 +116,7 @@ export default function AssetStrip({ selectRef, param, tokenId, value, onPick, d
                     <AssetThumb
                         key={option.value}
                         option={option}
+                        index={index}
                         active={value === option.value}
                         disabled={disabled}
                         onPick={onPick}

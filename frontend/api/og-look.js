@@ -2,6 +2,7 @@ const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
 const { decodeLook, parseId } = require('../lib/look');
+const { textColumnSvg } = require('../lib/ogText');
 
 const API_URL = 'https://afa-editor.ew.r.appspot.com';
 let logo = null;
@@ -19,12 +20,17 @@ module.exports = async (req, res) => {
     const response = await fetch(`${API_URL}/api/get-asset?${query.toString()}`);
     const type = response.headers.get('content-type') || '';
     if (!response.ok || !type.startsWith('image/')) throw new Error(`asset ${response.status}`);
-    const ape = await sharp(Buffer.from(await response.arrayBuffer())).resize(630, 630, { fit: 'cover' }).png().toBuffer();
+    const ape = await sharp(Buffer.from(await response.arrayBuffer())).resize(510, 510, { fit: 'cover' }).png().toBuffer();
     if (!logo) {
-      try { logo = await sharp(fs.readFileSync(path.join(process.cwd(), 'public/logo-mark.png'))).resize({ height: 72 }).png().toBuffer(); } catch (e) { logo = false; }
+      try { logo = await sharp(fs.readFileSync(path.join(process.cwd(), 'public/logo-mark.png'))).resize({ height: 64 }).png().toBuffer(); } catch (e) { logo = false; }
     }
-    const layers = [{ input: ape, left: 285, top: 0 }];
-    if (logo) layers.push({ input: logo, left: 48, top: 40 });
+    // Same grid as the afa-progress card: ape left, logo + headline + domain right.
+    const textX = 640;
+    const layers = [
+      { input: ape, left: 60, top: 60 },
+      { input: textColumnSvg({ title: 'Dressed in the AFA editor.', footer: 'afa-editor.app', x: textX }), left: 0, top: 0 },
+    ];
+    if (logo) layers.push({ input: logo, left: textX, top: 70 });
     const png = await sharp({ create: { width: 1200, height: 630, channels: 3, background: '#0b0b0c' } })
       .composite(layers)
       .png({ compressionLevel: 9 })
