@@ -4,7 +4,7 @@ import { getAllTransactions, getMintedTokenIdsNewestFirst, checkTokenMintStatus 
 import { debug, error as logError } from './utils/debug';
 import AssetStrip from './AssetStrip';
 import { buildShareText, buildXIntentUrl } from './utils/shareText';
-import { buildSharePageUrl } from './utils/look';
+import { buildSharePageUrl, LINK_UTM } from './utils/look';
 
 const DEFAULT_API_URL = 'https://afa-editor.ew.r.appspot.com';
 const MINT_SITE_URL = 'https://www.apefacingapes.com';
@@ -881,6 +881,17 @@ function App() {
         setDownloaded(true);
     };
 
+    const lookTraits = useMemo(() => ({
+        assetType: selectedAsset,
+        secondAssetType: secondAsset,
+        thirdAssetType: thirdAsset,
+        mouthAssetType: mouthAsset,
+        hatAssetType: hatAsset,
+        eyesAssetType: eyesAsset,
+        clubAssetType: clubAsset,
+        frame: vegasButtonClicked ? '1' : '',
+    }), [selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset, vegasButtonClicked]);
+
     const shareText = useMemo(() => buildShareText({
         tokenId,
         traits: {
@@ -892,17 +903,8 @@ function App() {
             eyes: eyesAsset,
         },
         framed: vegasButtonClicked,
-        url: buildSharePageUrl(tokenId, {
-            assetType: selectedAsset,
-            secondAssetType: secondAsset,
-            thirdAssetType: thirdAsset,
-            mouthAssetType: mouthAsset,
-            hatAssetType: hatAsset,
-            eyesAssetType: eyesAsset,
-            clubAssetType: clubAsset,
-            frame: vegasButtonClicked ? '1' : '',
-        }),
-    }), [tokenId, secondAsset, selectedAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset, vegasButtonClicked]);
+        url: buildSharePageUrl(tokenId, lookTraits),
+    }), [tokenId, secondAsset, selectedAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, vegasButtonClicked, lookTraits]);
     const xShareUrl = useMemo(() => buildXIntentUrl(shareText), [shareText]);
 
     const handleShareOnX = async (event) => {
@@ -921,7 +923,7 @@ function App() {
     };
 
     const handleShare = async () => {
-        const url = window.location.href;
+        const url = buildSharePageUrl(tokenId, lookTraits, LINK_UTM);
         const shareData = {
             title: `AFA #${tokenId}`,
             text: `Ape Facing Apes #${tokenId}`,

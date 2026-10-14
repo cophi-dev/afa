@@ -11,12 +11,14 @@ export const encodeLook = (traits) => {
   return btoa(unescape(encodeURIComponent(text))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 };
 
-export const buildSharePageUrl = (tokenId, traits) => {
+const X_UTM = { utm_source: 'x', utm_medium: 'social', utm_campaign: 'editor-share' };
+// Copy link / native share sheet: destination unknown, so tag it as a link share.
+export const LINK_UTM = { utm_source: 'share', utm_medium: 'link', utm_campaign: 'editor-share' };
+
+export const buildSharePageUrl = (tokenId, traits, utm = X_UTM) => {
   const look = encodeLook(traits);
   const query = new URLSearchParams();
   if (look) query.set('look', look);
-  query.set('utm_source', 'x');
-  query.set('utm_medium', 'social');
-  query.set('utm_campaign', 'editor-share');
+  Object.entries(utm).forEach(([k, v]) => query.set(k, v));
   return `https://afa-editor.app/a/${tokenId}?${query.toString()}`;
 };
