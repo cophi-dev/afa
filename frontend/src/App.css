@@ -5706,3 +5706,20 @@ label { font-weight: 500; }
 }
 .share-hint.is-fading { opacity: 0; }
 .share-hint-icon { flex: none; }
+
+/* Gallery fix (14.10): the token-panel <details> had overflow:hidden, which made it the
+   scroll container for the sticky .gallery-toolbar. The toolbar then stayed "stuck" 57/64px
+   down inside the panel and covered the top row of tiles. Clip without a scroll container. */
+.token-panel,
+.token-panel[open],
+details.token-panel { overflow: visible !important; }
+
+/* Editor caption under the main preview (reuses #20 hero-caption classes) */
+.preview-label { display: none !important; }
+.hero-caption.preview-caption { display: none; }
+.App.has-token .hero-caption.preview-caption {
+  display: flex; flex-wrap: wrap; justify-content: flex-start; align-items: baseline;
+  column-gap: 4px; row-gap: 2px; width: 100%; margin: 10px 0 0;
+}
+.preview-caption-traits { display: contents; color: rgba(255,255,255,.6); }
+.preview-caption .hero-caption-trait { white-space: nowrap; overflow: visible; color: rgba(255,255,255,.6); }

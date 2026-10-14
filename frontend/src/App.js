@@ -325,6 +325,17 @@ function MintedGalleryItem({ id, imageUrl, isFailed, isSelected, onSelect, onBec
         return () => observer.disconnect();
     }, [id, onBecomeVisible]);
 
+    // A failed tile used to stay dark forever: the observer only fires on entering the
+    // viewport, so nothing re-requested it after the cooldown. Retry while it is on screen.
+    useEffect(() => {
+        if (!isFailed) return undefined;
+        const t = setTimeout(() => {
+            const r = ref.current && ref.current.getBoundingClientRect();
+            if (r && r.bottom > -300 && r.top < window.innerHeight + 300) onBecomeVisible(id);
+        }, PREVIEW_RETRY_COOLDOWN_MS + 500);
+        return () => clearTimeout(t);
+    }, [isFailed, id, onBecomeVisible]);
+
     return (
         <button
             ref={ref}
@@ -1289,6 +1300,12 @@ function App() {
     return () => window.cancelAnimationFrame(raf);
   }, [tokenId, selectNonce]);
 
+  // Caption under the main preview: all currently selected assets (empty = Original).
+  const selectedTraits = useMemo(() => {
+    const now = { outfit: secondAsset, mouth: mouthAsset, hat: hatAsset, eyes: eyesAsset, hand: selectedAsset, extra: thirdAsset };
+    return TRAIT_CATEGORIES.filter(([key]) => now[key]).map(([key, title]) => [key, title, now[key]]);
+  }, [secondAsset, mouthAsset, hatAsset, eyesAsset, selectedAsset, thirdAsset]);
+
   // Last changed trait for the mini bar ("Hat · Party Hat").
   const [lastTrait, setLastTrait] = useState('');
   const prevTraitsRef = useRef(null);
@@ -1384,7 +1401,18 @@ function App() {
           </div>
 
           {tokenId && (
-            <p className="preview-label">{previewOnly ? `Ape #${tokenId}` : `AFA #${tokenId}`}</p>
+            <p className="hero-caption preview-caption" aria-live="polite">
+              <span className="hero-caption-name">{previewOnly ? `Ape #${tokenId}` : `AFA #${tokenId}`}</span>
+              <span className="preview-caption-traits">
+                {selectedTraits.length === 0 ? (
+                  <span className="hero-caption-trait"> · <span className="hero-caption-val">Original</span></span>
+                ) : selectedTraits.map(([key, title, v]) => (
+                  <span className="hero-caption-trait" key={`${key}-${v}`}>
+                    {' · '}<span className="hero-caption-cat">{title}</span>{' · '}<span className="hero-caption-val">{assetLabel(key, v) || v}</span>
+                  </span>
+                ))}
+              </span>
+            </p>
           )}
           {tokenId && (previewOnly ? (
             <div className="preview-locked" role="note">
