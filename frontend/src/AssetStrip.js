@@ -22,6 +22,22 @@ function pump() {
 
 const EAGER_COUNT = 6;
 
+// Consistent short names for tiles (full name stays in the tooltip/header).
+const SHORT_NAMES = {
+    'Ape Solar Hoodie Black': 'Solar Black',
+    'Ape Solar Hoodie Blue': 'Solar Blue',
+    'Apechain Hoodie Black': 'Apechain Black',
+    'Apechain Hoodie Orange': 'Apechain Orange',
+    'Apechain Hoodie Blue': 'Apechain Blue',
+    'Mindfully Bored Hoodie': 'Mindfully Bored',
+    'Mindfully Bored Cap': 'Mindfully Bored',
+    'Applied Primate Lab Coat': 'Primate Lab Coat',
+    'Top Trader Hoodie': 'Top Trader',
+    'Singe Hoodie Glow': 'Singe Glow',
+};
+export const shortName = (label) => SHORT_NAMES[label]
+    || label.replace(/^Dr\.? Bombay /, 'Bombay ');
+
 // Per-category zoom + focal point so each tile shows the asset, not the ape.
 // origin is the transform-origin for scale(zoom) on a 1:1 render.
 const CROPS = {
@@ -97,7 +113,7 @@ function AssetThumb({ option, index, active, disabled, onPick, fetchPreview, cac
             <span className={`asset-thumb-img ${url ? '' : 'is-loading'} ${failed ? 'is-failed' : ''}`}>
                 {url && <img src={url} alt="" width="72" height="72" style={{ transform: `scale(${(CROPS[crop] || CROPS.extra).zoom})`, transformOrigin: (CROPS[crop] || CROPS.extra).origin }} />}
             </span>
-            <span className="asset-thumb-label">{option.label}</span>
+            <span className="asset-thumb-label">{shortName(option.label)}</span>
         </button>
     );
 }
@@ -106,6 +122,8 @@ function AssetThumb({ option, index, active, disabled, onPick, fetchPreview, cac
 export default function AssetStrip({ selectRef, param, tokenId, value, onPick, disabled, fetchAssetBlob, crop = 'extra' }) {
     const [options, setOptions] = useState([]);
     const rootRef = useRef(null);
+    const [title, setTitle] = useState('');
+    const [atEnd, setAtEnd] = useState(false);
 
     useEffect(() => {
         const select = selectRef.current;
@@ -113,12 +131,31 @@ export default function AssetStrip({ selectRef, param, tokenId, value, onPick, d
         setOptions(Array.from(select.options)
             .filter((o) => o.value && !o.disabled)
             .map((o) => ({ value: o.value, label: o.textContent.trim() })));
+        const label = select.id && document.querySelector(`label[for="${select.id}"]`);
+        setTitle(label ? label.textContent.trim() : '');
     }, [selectRef, tokenId]);
+
+    const onScroll = () => {
+        const el = rootRef.current;
+        if (el) setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 4);
+    };
+    const selected = options.find((o) => o.value === value);
 
     if (!tokenId || options.length === 0) return null;
 
     return (
-        <div className="asset-strip" ref={rootRef} role="group" aria-label="Asset previews">
+        <div className="asset-picker">
+        <div className="asset-picker-head">
+            <span className="asset-picker-title">{title}</span>
+            {selected && (
+                <>
+                    <span className="asset-picker-current" title={selected.label}>{selected.label}</span>
+                    <button type="button" className="asset-picker-clear" onClick={() => onPick(value)} disabled={disabled} aria-label={`Remove ${title || 'asset'}`}>×</button>
+                </>
+            )}
+        </div>
+        <div className={`asset-strip-wrap ${atEnd ? 'is-end' : ''}`}>
+        <div className="asset-strip" ref={rootRef} onScroll={onScroll} role="group" aria-label={`${title || 'Asset'} options`}>
             {options.map((option, index) => {
                 const query = new URLSearchParams({ tokenId, assetType: 'AFA' });
                 query.set(param, option.value);
@@ -138,6 +175,8 @@ export default function AssetStrip({ selectRef, param, tokenId, value, onPick, d
                     />
                 );
             })}
+        </div>
+        </div>
         </div>
     );
 }

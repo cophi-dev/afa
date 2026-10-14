@@ -5417,3 +5417,33 @@ button.gallery-item.is-selected .gallery-meta {
 @media (min-width: 980px) {
   .asset-strip { flex-wrap: nowrap !important; overflow-x: auto !important; scrollbar-width: thin; }
 }
+
+/* v6: picker header replaces the select; no container ring; desktop fade */
+.dropdown-section:has(.asset-picker) > .dropdown-header,
+.dropdown-section:has(.asset-picker) .dropdown-with-arrows > :not(.asset-picker) { display: none !important; }
+.dropdown-section:has(.asset-picker) .dropdown-with-arrows { display: block !important; border: 0 !important; background: none !important; padding: 0 !important; }
+.asset-picker-head { display: flex; align-items: baseline; gap: 8px; min-height: 22px; margin-bottom: 8px; }
+.asset-picker-title { font-size: 13px; font-weight: 600; color: #fff; }
+.asset-picker-current { font-size: 13px; color: rgba(255,255,255,0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.asset-picker-clear { border: 0; background: none; color: rgba(255,255,255,0.6); font-size: 16px; line-height: 1; padding: 0 4px; cursor: pointer; }
+.asset-picker-clear:hover { color: #fff; }
+.dropdown-section:has(.asset-picker),
+.dropdown-section:has(.asset-picker):focus-within,
+.dropdown-section:has(.asset-picker) .dropdown-with-arrows:focus-within,
+.asset-strip, .asset-strip:focus, .asset-strip:focus-within { outline: none !important; border-color: transparent !important; box-shadow: none !important; }
+.asset-thumb:focus { outline: none; }
+.asset-thumb:focus-visible .asset-thumb-img { outline: 2px solid rgba(255,255,255,0.5); outline-offset: 2px; }
+.asset-thumb.is-active:focus-visible .asset-thumb-img { outline-color: #f5c542; }
+.asset-strip { -webkit-mask-image: none !important; mask-image: none !important; margin-top: 0; }
+.asset-strip-wrap { position: relative; }
+.asset-strip-wrap::after {
+  content: ''; position: absolute; top: 0; right: 0; bottom: 6px; width: 80px; pointer-events: none;
+  background: linear-gradient(90deg, rgba(11,11,12,0), var(--bg, #0b0b0c) 75%); transition: opacity 0.2s;
+}
+.asset-strip-wrap.is-end::after { opacity: 0; }
+.asset-thumb-label {
+  font-size: 12px !important; line-height: 1.25 !important; color: rgba(255,255,255,0.6) !important;
+  white-space: normal !important; overflow: hidden; text-overflow: clip;
+  display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+}
+.asset-thumb.is-active .asset-thumb-label { color: #fff !important; }
