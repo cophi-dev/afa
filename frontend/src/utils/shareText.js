@@ -1,7 +1,7 @@
 import { assetLabel } from './assetLabels';
 
 // Short, dry share lines for X. One is picked at random per share.
-const EDITOR_URL = 'https://afa-editor.app/?utm_source=x&utm_medium=social&utm_campaign=editor-share';
+
 
 const pretty = (value) => String(value || '')
   .replace(/\.(png|webp)$/i, '')
@@ -70,7 +70,7 @@ const POOLS = {
 const pick = (list, rand) => list[Math.floor(rand() * list.length) % list.length];
 
 /** Builds the tweet text for the selected ape and its traits. */
-export const buildShareText = ({ tokenId, traits = {}, framed = false, url = EDITOR_URL }, rand = Math.random) => {
+export const buildShareText = ({ tokenId, traits = {}, framed = false, url = null, minted = true }, rand = Math.random) => {
   const options = [];
   Object.entries(traits).forEach(([key, value]) => {
     if (value && POOLS[key]) options.push(() => pick(POOLS[key], rand)(label(key, value)));
@@ -78,8 +78,9 @@ export const buildShareText = ({ tokenId, traits = {}, framed = false, url = EDI
   if (framed) options.push(() => pick(POOLS.frame, rand)());
   const raw = options.length ? pick(options, rand)() : pick(POOLS.plain, rand)();
   const line = raw.charAt(0).toUpperCase() + raw.slice(1);
-  const id = tokenId !== '' && tokenId != null ? ` AFA #${tokenId}` : '';
-  return `${line}${id} @ApeFacingApes\n\n${url}`;
+  const id = tokenId !== '' && tokenId != null ? ` ${minted ? 'AFA' : 'Ape'} #${tokenId}` : '';
+  // Phillipp: share = text + image, no link by default.
+  return url ? `${line}${id} @ApeFacingApes\n\n${url}` : `${line}${id} @ApeFacingApes`;
 };
 
 export const buildXIntentUrl = (text) =>
