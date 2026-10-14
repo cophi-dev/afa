@@ -5,7 +5,7 @@ import { debug, error as logError } from './utils/debug';
 import AssetStrip from './AssetStrip';
 import { buildShareText, buildXIntentUrl } from './utils/shareText';
 import { assetLabel } from './utils/assetLabels';
-import { renderApefest, canvasToBlob, loadImage, loadApefestFonts, APEFEST_CRT, APEFEST_PAGE_SCAN, APEFEST_JUMP } from './utils/apefest';
+import { renderApefest, canvasToBlob, loadImage, loadApefestFonts, APEFEST_CRT, APEFEST_PAGE_SCAN, APEFEST_JUMP, buildApefestShareText } from './utils/apefest';
 
 // ApeFest (10.17): while true, the "Add frame" button becomes the ApeFest toggle.
 // Set to false after ApeFest to restore "Add frame"; nothing else needs to change.
@@ -1262,7 +1262,7 @@ function App() {
     const stripTokenId = tokenId;
     const stripEndpoint = previewOnly ? 'get-asset-preview' : 'get-asset';
 
-    const shareText = useMemo(() => buildShareText({
+    const shareText = useMemo(() => (apefestActive ? buildApefestShareText(tokenId, !previewOnly) : buildShareText({
         tokenId,
         traits: {
             outfit: secondAsset,
@@ -1274,7 +1274,7 @@ function App() {
         },
         framed: vegasButtonClicked,
         minted: !previewOnly,
-    }), [tokenId, secondAsset, selectedAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, vegasButtonClicked, previewOnly]);
+    })), [apefestActive, tokenId, secondAsset, selectedAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, vegasButtonClicked, previewOnly]);
     const xShareUrl = useMemo(() => buildXIntentUrl(shareText), [shareText]);
 
     // Share = text + image, no URL (Phillipp). iOS share targets (incl. X) often drop
@@ -1434,11 +1434,38 @@ function App() {
     window.scrollTo({ top, behavior: reduce ? 'auto' : 'smooth' });
   }, []);
 
-  const appClassName = `App ${vegasButtonClicked ? 'vegas-glamour' : ''} ${tokenId ? 'has-token' : ''} ${apefestActive ? 'apefest-mode' : ''}`;
+  const appClassName = `App ${vegasButtonClicked ? 'vegas-glamour' : ''} ${tokenId ? 'has-token' : ''} ${apefestActive ? 'apefest-mode' : ''} ${previewOnly ? 'is-unminted' : ''}`;
 
   return (
     // Apply glamour class conditionally
     <div className={appClassName} style={apefestActive ? { '--crt': APEFEST_CRT, '--scan': APEFEST_PAGE_SCAN, '--jump': APEFEST_JUMP } : undefined}>
+      {apefestActive && (
+        // Tile duotone, same curve as the baked image: shadows #0b0b0c, mids #e1141e, highlights #ff5a4f.
+        // Picker variant adds ~15% luminance contrast so outlines/patterns stay readable.
+        <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true" focusable="false">
+          <filter id="apefest-duo" colorInterpolationFilters="sRGB">
+            <feColorMatrix type="matrix" values="0.2126 0.7152 0.0722 0 0  0.2126 0.7152 0.0722 0 0  0.2126 0.7152 0.0722 0 0  0 0 0 1 0" />
+            <feComponentTransfer>
+              <feFuncR type="table" tableValues="0.043 0.882 1" />
+              <feFuncG type="table" tableValues="0.043 0.078 0.353" />
+              <feFuncB type="table" tableValues="0.047 0.118 0.31" />
+            </feComponentTransfer>
+          </filter>
+          <filter id="apefest-duo-pick" colorInterpolationFilters="sRGB">
+            <feColorMatrix type="matrix" values="0.2126 0.7152 0.0722 0 0  0.2126 0.7152 0.0722 0 0  0.2126 0.7152 0.0722 0 0  0 0 0 1 0" />
+            <feComponentTransfer>
+              <feFuncR type="linear" slope="1.15" intercept="-0.075" />
+              <feFuncG type="linear" slope="1.15" intercept="-0.075" />
+              <feFuncB type="linear" slope="1.15" intercept="-0.075" />
+            </feComponentTransfer>
+            <feComponentTransfer>
+              <feFuncR type="table" tableValues="0.043 0.882 1" />
+              <feFuncG type="table" tableValues="0.043 0.078 0.353" />
+              <feFuncB type="table" tableValues="0.047 0.118 0.31" />
+            </feComponentTransfer>
+          </filter>
+        </svg>
+      )}
       {apefestActive && (
         // Page CRT layer (same APEFEST_CRT as the baked image). Sits below the preview column
         // and the mini bar, so the image's own scanlines are never overlaid (no moiré, no double lines).
