@@ -33,7 +33,7 @@ export const APEFEST_PAGE_SCAN = 1.2;
 // wide:   claim + date left at shoulder height, ape in the right third.
 export const APEFEST_TEXT = {
     square: { align: 'center', capHeight: 40, capTop: 72, headGap: 50, headShift: 30, subSize: 22, subBaseline: 950, subAlign: 'center', subAlpha: 0.7 },
-    wide: { align: 'left', x: 96, capHeight: 36, capTop: 640, subSize: 22, subBaseline: 722, subAlign: 'left', subAlpha: 0.7 },
+    wide: { align: 'left', x: 96, capHeight: 40, capTop: 450, subSize: 24, subBaseline: 540, subAlign: 'left', subAlpha: 0.7 },
 };
 
 export const APEFEST_FORMATS = {
