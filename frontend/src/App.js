@@ -5,6 +5,11 @@ import { debug, error as logError } from './utils/debug';
 import AssetStrip from './AssetStrip';
 import { buildShareText, buildXIntentUrl } from './utils/shareText';
 import { assetLabel } from './utils/assetLabels';
+import { renderApefest, canvasToBlob, loadImage, loadApefestFonts } from './utils/apefest';
+
+// ApeFest (10.17): while true, the "Add frame" button becomes the ApeFest toggle.
+// Set to false after ApeFest to restore "Add frame"; nothing else needs to change.
+const APEFEST_ENABLED = true;
 
 const DEFAULT_API_URL = 'https://afa-editor.ew.r.appspot.com';
 const MINT_SITE_URL = 'https://www.apefacingapes.com';
@@ -531,6 +536,13 @@ function App() {
     const [shareNote, setShareNote] = useState('');
     const [shareNoteFading, setShareNoteFading] = useState(false);
     const [downloaded, setDownloaded] = useState(false);
+    // ApeFest look: minted apes only (unminted stay server-side blurred, no sharp pixels reach the browser).
+    const [apefest, setApefest] = useState(false);
+    const apefestRef = useRef(false);
+    const apefestSrcRef = useRef(null);
+    const [apefestBusy, setApefestBusy] = useState(false);
+    useEffect(() => { apefestRef.current = APEFEST_ENABLED && apefest; }, [apefest]);
+    useEffect(() => { if (APEFEST_ENABLED) loadApefestFonts(); }, []);
     useEffect(() => { setDownloaded(false); }, [tokenId]);
 
   useEffect(() => {
@@ -798,6 +810,9 @@ function App() {
       setFade('fade-out');
 
         const isPreviewOnly = previewOnlyRef.current;
+        const isApefest = APEFEST_ENABLED && apefestRef.current && !isPreviewOnly;
+        // ApeFest: background off (transparent), every other asset stays; the look is applied last, client-side.
+        if (isApefest) queryParams.set('thirdAssetType', 'transparent');
         const fetchAssetBlob = () => fetchFromAnyBase(
             `/api/${isPreviewOnly ? 'get-asset-preview' : 'get-asset'}?${queryParams.toString()}`,
             (response) => response.blob()
@@ -813,8 +828,17 @@ function App() {
             await refreshMintCache();
             return fetchAssetBlob();
         })
-        .then(blob => {
+        .then(async (rawBlob) => {
             if (requestId !== activeRenderRequestRef.current) return;
+            let blob = rawBlob;
+            apefestSrcRef.current = null;
+            if (isApefest) {
+                const img = await loadImage(URL.createObjectURL(rawBlob));
+                const square = await renderApefest(img, 'square', { seed: Number(newTokenId) || 0 });
+                blob = await canvasToBlob(square);
+                apefestSrcRef.current = img;
+                if (requestId !== activeRenderRequestRef.current) return;
+            }
             setSyncPendingTokenId('');
             const newImageUrl = URL.createObjectURL(blob);
     
@@ -887,7 +911,7 @@ function App() {
         if (tokenId) {
             fetchAsset(tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset);
         }
-    }, [tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset, fetchAsset]);
+    }, [tokenId, selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset, fetchAsset, apefest]);
     
     
     const handleSecondAssetChange = event => {
@@ -1195,11 +1219,38 @@ function App() {
         return () => { window.clearTimeout(fadeId); window.clearTimeout(timerId); };
     }, [shareNote]);
 
+    const apefestActive = APEFEST_ENABLED && apefest && !previewOnly;
+
+    // Extra download for X: 1600x900 (primary output stays 1000x1000).
+    const handleDownloadWide = async () => {
+        if (!apefestActive || !apefestSrcRef.current) return;
+        setApefestBusy(true);
+        try {
+            const wide = await renderApefest(apefestSrcRef.current, 'wide', { seed: Number(tokenId) || 0 });
+            const blob = await canvasToBlob(wide);
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `afa-${tokenId}-apefest-16x9.png`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 4000);
+        } finally {
+            setApefestBusy(false);
+        }
+    };
+
+    useEffect(() => {
+        document.body.classList.toggle('apefest-body', apefestActive);
+        return () => document.body.classList.remove('apefest-body');
+    }, [apefestActive]);
+
     const handleDownload = () => {
         if (previewOnly || !currentImageUrl.startsWith('blob:')) return;
         const link = document.createElement('a');
         link.href = currentImageUrl;
-        link.download = `afa-${tokenId}.png`;
+        link.download = apefestActive ? `afa-${tokenId}-apefest.png` : `afa-${tokenId}.png`;
         document.body.appendChild(link);
         link.click();
         link.remove();
@@ -1373,7 +1424,7 @@ function App() {
     window.scrollTo({ top, behavior: reduce ? 'auto' : 'smooth' });
   }, []);
 
-  const appClassName = `App ${vegasButtonClicked ? 'vegas-glamour' : ''} ${tokenId ? 'has-token' : ''}`;
+  const appClassName = `App ${vegasButtonClicked ? 'vegas-glamour' : ''} ${tokenId ? 'has-token' : ''} ${apefestActive ? 'apefest-mode' : ''}`;
 
   return (
     // Apply glamour class conditionally
@@ -1449,8 +1500,19 @@ function App() {
                 onClick={handleDownload}
                 disabled={!String(currentImageUrl).startsWith('blob:')}
               >
-                Download PNG
+                {apefestActive ? 'Download 1:1' : 'Download PNG'}
               </button>
+              {apefestActive && (
+                <button
+                  type="button"
+                  className="preview-download preview-download--wide"
+                  onClick={handleDownloadWide}
+                  disabled={apefestBusy || !String(currentImageUrl).startsWith('blob:')}
+                  title="1600×900 for X"
+                >
+                  16:9 for X
+                </button>
+              )}
               <div className="share-wrap">
               {downloaded ? (
                 <a
@@ -1534,6 +1596,19 @@ function App() {
                 >
                   Randomize
                 </button>
+                {APEFEST_ENABLED ? (
+                  <button
+                    type="button"
+                    onClick={() => setApefest((v) => !v)}
+                    className={`action-button apefest-button ${apefestActive ? 'is-on' : ''}`}
+                    aria-pressed={apefestActive}
+                    disabled={previewOnly}
+                    title={previewOnly ? 'ApeFest look unlocks once this ape is minted.' : 'Red CRT look for ApeFest. Your traits stay on.'}
+                    data-tooltip={previewOnly ? 'ApeFest look unlocks once this ape is minted.' : 'Red CRT look for ApeFest. Your traits stay on.'}
+                  >
+                    {apefestActive ? 'ApeFest on' : 'ApeFest'}
+                  </button>
+                ) : (
                 <button
                   type="button"
                   onClick={handleFrameIt}
@@ -1543,6 +1618,7 @@ function App() {
                 >
                   Add frame
                 </button>
+                )}
               </div>
             </div>
           )}
@@ -1886,6 +1962,7 @@ function App() {
                   <div className="dropdown-container">
                     <div className="dropdown-section">
                       <label className="dropdown-header" htmlFor="extra-select">Extra</label>
+                      {apefestActive && <p className="apefest-note">Backgrounds and effects are off in ApeFest mode.</p>}
                       <div className="dropdown-with-arrows">
                         <select
                           id="extra-select"
@@ -1893,7 +1970,7 @@ function App() {
                           value={thirdAsset}
                           onChange={handleThirdAssetChange}
                           className="dropdown"
-                          disabled={clubAsset === 'elite'}
+                          disabled={clubAsset === 'elite' || apefestActive}
                         >
                           <option value="">Select</option>
                           <option value="top_trader">Top Trader</option>
@@ -1923,7 +2000,7 @@ function App() {
                               endpoint={stripEndpoint}
                               value={thirdAsset}
                               onPick={(v) => handleThirdAssetChange({ target: { value: thirdAsset === v ? '' : v } })}
-                              disabled={clubAsset === 'elite'}
+                              disabled={clubAsset === 'elite' || apefestActive}
                               fetchAssetBlob={(path) => fetchFromAnyBase(path, (r) => r.blob())}
                               crop="extra"
                             />

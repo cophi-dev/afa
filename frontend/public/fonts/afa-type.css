@@ -10,3 +10,6 @@
   --font-label: 'Saira', ui-sans-serif, system-ui, sans-serif;
   --font-body: 'Barlow', ui-sans-serif, system-ui, sans-serif;
 }
+/* ApeFest mode only: Press Start 2P (SIL OFL 1.1, see OFL-PressStart2P.txt), digits-only DejaVu Sans Mono Bold (Bitstream Vera license) for "10.17". */
+@font-face { font-family: 'Press Start 2P'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/press-start-2p-400.woff2') format('woff2'); }
+@font-face { font-family: 'AFA Mono Digits'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/dejavu-sans-mono-bold-digits.woff2') format('woff2'); }

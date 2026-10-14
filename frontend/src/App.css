@@ -5742,3 +5742,75 @@ details.token-panel { overflow: visible !important; }
   .App.has-token .hero-caption.preview-caption .hero-caption-name { display: block; }
   .preview-caption-traits { width: calc(100% + 18px); max-height: calc(2 * 1.5em + 2px); line-height: 1.5; }
 }
+
+/* =====================================================================
+   ApeFest mode (APEFEST_ENABLED in App.js). Black page, red glow, pixel
+   caps for headlines, subtle scanlines. No logos. UI copy stays Barlow.
+   ===================================================================== */
+.apefest-button.is-on,
+.apefest-button {
+  color: #e1141e !important;
+  border-color: rgba(225, 20, 30, 0.55) !important;
+}
+.apefest-button.is-on {
+  background: #e1141e !important;
+  color: #0b0b0c !important;
+  box-shadow: 0 0 18px rgba(225, 20, 30, 0.55) !important;
+}
+.apefest-button:disabled { opacity: 0.45; cursor: not-allowed; }
+.apefest-note { margin: 4px 0 8px; font-size: 13px; color: rgba(255, 255, 255, 0.6); }
+
+body.apefest-body,
+body.apefest-body .site-bar,
+body.apefest-body .gallery-toolbar,
+body.apefest-body .mini-bar { background-color: #000 !important; }
+
+.App.apefest-mode { --bg: #000; --accent: #e1141e; --accent-color: #e1141e; background: #000; }
+.App.apefest-mode::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+  background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0) 2px, rgba(0, 0, 0, 0.18) 3px);
+  mix-blend-mode: multiply;
+}
+.App.apefest-mode::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(60% 50% at 30% 35%, rgba(225, 20, 30, 0.16), rgba(0, 0, 0, 0) 70%);
+}
+.App.apefest-mode .preview-card,
+.App.apefest-mode #asset-display img {
+  box-shadow: 0 0 60px rgba(225, 20, 30, 0.35);
+}
+.App.apefest-mode .panel-summary,
+.App.apefest-mode .hero-caption-name,
+.App.apefest-mode .gallery-heading,
+.App.apefest-mode h1,
+.App.apefest-mode h2 {
+  font-family: 'Press Start 2P', var(--font-display) !important;
+  font-size: 12px !important;
+  letter-spacing: 0 !important;
+  text-transform: uppercase;
+  color: #e1141e !important;
+  text-shadow: 0 0 8px rgba(225, 20, 30, 0.6);
+}
+.App.apefest-mode .hero-caption-name { font-size: 13px !important; line-height: 1.6; }
+.App.apefest-mode .preview-download:not(:disabled) {
+  background: #e1141e !important;
+  border-color: #e1141e !important;
+  color: #000 !important;
+}
+.App.apefest-mode .preview-download--wide:not(:disabled) {
+  background: transparent !important;
+  color: #e1141e !important;
+}
+.App.apefest-mode button.gallery-item.is-selected,
+.App.apefest-mode .asset-option.is-selected { box-shadow: inset 0 0 0 2px #e1141e !important; }
+@media (prefers-reduced-motion: reduce) {
+  .App.apefest-mode .apefest-button.is-on { box-shadow: none !important; }
+}
