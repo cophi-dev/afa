@@ -79,12 +79,21 @@ const lookParams = (look) => {
     if (!out.assetType) out.assetType = 'AFA';
     return out;
 };
-const preloadImage = (url) => new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => (img.decode ? img.decode().catch(() => {}).then(() => resolve(true)) : resolve(true));
-    img.onerror = () => resolve(false);
-    img.src = url;
-});
+// /api/get-asset answers with Cache-Control: no-cache, so a plain <img> preload would be
+// fetched again on display. Preload into a blob URL instead and show that (instant swap).
+const preloadImage = async (url) => {
+    try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blobUrl = URL.createObjectURL(await res.blob());
+        const img = new Image();
+        img.src = blobUrl;
+        if (img.decode) await img.decode().catch(() => {});
+        return blobUrl;
+    } catch (e) {
+        return url;
+    }
+};
 
 function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook }) {
     const [value, setValue] = useState('');
@@ -111,9 +120,12 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook }) {
     // Cycles: build + preload all 6 looks first. The next cycle preloads during the
     // current one, so the reset to the original ape is short.
     const nextCycleRef = useRef(null);
+    const baseSrcRef = useRef(null);
+    const prevStepsRef = useRef(null);
     const prepareCycle = useCallback(() => {
         const next = buildHeroSteps();
-        const done = Promise.all(next.map((st) => preloadImage(urlFor(st.look)))).then(() => next);
+        const done = Promise.all(next.map((st) => preloadImage(urlFor(st.look))))
+            .then((srcs) => next.map((st, i) => ({ ...st, src: srcs[i] })));
         nextCycleRef.current = done;
         return done;
     }, [urlFor]);
@@ -122,6 +134,10 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook }) {
         nextCycleRef.current = null;
         setReady(false);
         const next = await pending;
+        // Free the previous cycle's blob URLs once they are off screen.
+        const old = prevStepsRef.current;
+        prevStepsRef.current = next;
+        if (old) window.setTimeout(() => old.forEach((st) => { if (st.src && st.src.startsWith('blob:')) URL.revokeObjectURL(st.src); }), 3000);
         setSteps(next);
         setReady(true);
     }, [prepareCycle]);
@@ -129,8 +145,10 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook }) {
     useEffect(() => {
         if (heroId == null) return;
         setStepIdx(-1);
-        setLayers({ a: urlFor(null), b: null, front: 'a' });
+        baseSrcRef.current = urlFor(null);
+        setLayers({ a: baseSrcRef.current, b: null, front: 'a' });
         nextCycleRef.current = null;
+        preloadImage(urlFor(null)).then((src) => { baseSrcRef.current = src; });
         startCycle();
     }, [heroId, urlFor, startCycle]);
 
@@ -138,7 +156,7 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook }) {
     useEffect(() => {
         if (reduceMotion && ready && steps) {
             setStepIdx(steps.length - 1);
-            setLayers({ a: urlFor(steps[steps.length - 1].look), b: null, front: 'a' });
+            setLayers({ a: steps[steps.length - 1].src || urlFor(steps[steps.length - 1].look), b: null, front: 'a' });
         }
     }, [reduceMotion, ready, steps, urlFor]);
 
@@ -161,11 +179,11 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook }) {
             const show = (url) => setLayers((prev) => (prev.front === 'a' ? { ...prev, b: url, front: 'b' } : { ...prev, a: url, front: 'a' }));
             if (isLast) {
                 // Reset to the original ape, then prepare a fresh cycle.
-                show(urlFor(null));
+                show(baseSrcRef.current || urlFor(null));
                 setStepIdx(-1);
                 startCycle();
             } else {
-                show(urlFor(steps[stepIdx + 1].look));
+                show(steps[stepIdx + 1].src || urlFor(steps[stepIdx + 1].look));
                 setStepIdx(stepIdx + 1);
                 if (stepIdx + 1 === 2 && !nextCycleRef.current) prepareCycle();
             }
