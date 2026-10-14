@@ -13,7 +13,8 @@ const PREVIEW_CONCURRENCY = 4;
 const PREVIEW_RETRIES = 2;
 const PREVIEW_RETRY_COOLDOWN_MS = 15000;
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const CLAIM_URL = `${MINT_SITE_URL}/claim`;
+const SUGGESTION_LIMIT = 20;
+const MINT_URL = `${MINT_SITE_URL}/?utm_source=afa-editor&utm_medium=referral&utm_campaign=unminted-preview`;
 const LOADER_MESSAGES = [
     'Brewing ape magic...',
     'Polishing pixels...',
@@ -73,7 +74,7 @@ function Footer() {
                 <a href={GRID_VIEW_URL} target="_blank" rel="noopener noreferrer">
                     Mint progress: afa-progress.com
                 </a>
-                <a href={CLAIM_URL} target="_blank" rel="noopener noreferrer">
+                <a href={`${MINT_SITE_URL}/`} target="_blank" rel="noopener noreferrer">
                     Mint on apefacingapes.com
                 </a>
             </nav>
@@ -277,6 +278,10 @@ function App() {
     const previewFailedAtRef = useRef({});
     const [isCheckingMint, setIsCheckingMint] = useState(false);
     const [unmintedTokenId, setUnmintedTokenId] = useState('');
+    // Unminted IDs: editable, but only ever rendered as a server-side blurred preview.
+    const [previewOnly, setPreviewOnly] = useState(false);
+    const previewOnlyRef = useRef(false);
+    previewOnlyRef.current = previewOnly;
     const [syncPendingTokenId, setSyncPendingTokenId] = useState('');
     const suggestionsRef = useRef(null);
     const activeRenderRequestRef = useRef(0);
@@ -301,6 +306,39 @@ function App() {
         }
     }, [thirdAsset]);
     
+    const authoritativeMintsRef = useRef(new Set());
+    const [mintListReady, setMintListReady] = useState(false);
+
+    // Source of truth for "is minted": afa-progress.com/api/mints via the
+    // same-origin /api/mints proxy (complete list, count-checked, retried).
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            for (let attempt = 0; attempt < 5 && !cancelled; attempt += 1) {
+                try {
+                    const response = await fetch('/api/mints');
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const data = await response.json();
+                    if (!Array.isArray(data.minted) || data.minted.length !== data.count) throw new Error('incomplete');
+                    if (cancelled) return;
+                    authoritativeMintsRef.current = new Set(data.minted.map(Number));
+                    setMintedTokens((prev) => new Set([...prev, ...authoritativeMintsRef.current]));
+                    setMintedTokenIds((prev) => {
+                        const have = new Set(prev);
+                        const missing = [...authoritativeMintsRef.current].filter((id) => !have.has(id)).sort((a, b) => b - a);
+                        return missing.length ? [...prev, ...missing] : prev;
+                    });
+                    setMintListReady(true);
+                    return;
+                } catch (error) {
+                    debug('Mint list (afa-progress) attempt failed', { attempt, error });
+                    await wait(800 * (attempt + 1));
+                }
+            }
+        })();
+        return () => { cancelled = true; };
+    }, []);
+
     const applyMintedIdList = useCallback((ids) => {
         const seen = new Set();
         const numericIds = [];
@@ -311,8 +349,10 @@ function App() {
             numericIds.push(id);
         }
         if (numericIds.length === 0) return;
-        setMintedTokens(new Set(numericIds));
-        setMintedTokenIds(numericIds);
+        // Never drop IDs the authoritative list (afa-progress) says are minted.
+        setMintedTokens(new Set([...numericIds, ...authoritativeMintsRef.current]));
+        const missing = [...authoritativeMintsRef.current].filter((id) => !seen.has(id)).sort((a, b) => b - a);
+        setMintedTokenIds(missing.length ? [...numericIds, ...missing] : numericIds);
     }, []);
 
     const verifyTokenMinted = useCallback(async (rawId) => {
@@ -517,8 +557,9 @@ function App() {
         // Start fade-out effect
       setFade('fade-out');
 
+        const isPreviewOnly = previewOnlyRef.current;
         const fetchAssetBlob = () => fetchFromAnyBase(
-            `/api/get-asset?${queryParams.toString()}`,
+            `/api/${isPreviewOnly ? 'get-asset-preview' : 'get-asset'}?${queryParams.toString()}`,
             (response) => response.blob()
         );
 
@@ -548,6 +589,12 @@ function App() {
         })
         .catch(async (error) => {
             if (requestId !== activeRenderRequestRef.current) return;
+            if (isPreviewOnly) {
+                logError('Blurred preview failed', error);
+                setShowLoader(false);
+                setFade('fade-in');
+                return;
+            }
 
             let chainMinted = false;
             try {
@@ -645,26 +692,44 @@ function App() {
         setSelectedAsset(event.target.value);
     };
 
+    const buildSuggestions = useCallback((value) => {
+        if (!value) return [];
+        const minted = Array.from(mintedTokens)
+            .map(Number)
+            .filter((id) => id.toString().startsWith(value))
+            .sort((a, b) => a - b);
+        const exact = Number(value);
+        const head = exact <= 9999 ? [exact] : [];
+        const mintedRest = minted.filter((id) => id !== exact);
+        // Unminted IDs are only offered once the full mint list is known,
+        // so nothing minted is ever mislabelled "Preview".
+        const rest = [];
+        if (mintListReady) {
+            const mintedSet = new Set(minted);
+            for (let mult = 10; mult <= 1000 && rest.length < SUGGESTION_LIMIT; mult *= 10) {
+                for (let k = 0; k < mult && rest.length < SUGGESTION_LIMIT; k += 1) {
+                    const id = exact * mult + k;
+                    if (id <= 9999 && !mintedSet.has(id)) rest.push(id);
+                }
+            }
+        } else if (!mintedTokens.has(exact)) {
+            head.length = 0; // exact unminted match waits for the list too
+        }
+        return [...head, ...mintedRest, ...rest].slice(0, SUGGESTION_LIMIT);
+    }, [mintedTokens, mintListReady]);
+
+    useEffect(() => {
+        if (!tokenInput) return;
+        const next = buildSuggestions(tokenInput);
+        setSuggestions(next);
+    }, [mintListReady]); // eslint-disable-line react-hooks/exhaustive-deps
+
     const handleTokenInput = (e) => {
         const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
         setTokenInput(value);
         
         if (value) {
-            const minted = Array.from(mintedTokens)
-                .map(Number)
-                .filter(id => id.toString().startsWith(value))
-                .sort((a, b) => a - b);
-            const mintedSet = new Set(minted);
-            const rest = [];
-            const base = Number(value);
-            for (let mult = 1; mult <= 1000 && rest.length < 8; mult *= 10) {
-                for (let k = 0; k < mult && rest.length < 8; k += 1) {
-                    const id = base * mult + k;
-                    if (id <= 9999 && !mintedSet.has(id)) rest.push(id);
-                }
-            }
-            const suggestions = [...minted, ...rest].slice(0, 8);
-            
+            const suggestions = buildSuggestions(value);
             setSuggestions(suggestions);
             setShowSuggestions(suggestions.length > 0);
         } else {
@@ -697,14 +762,19 @@ function App() {
 
         if (!minted) {
             resetTraitSelections();
-            setTokenId('');
-            setUnmintedTokenId(value);
+            setUnmintedTokenId('');
+            setSyncPendingTokenId('');
+            setDownloaded(false);
+            previewOnlyRef.current = true;
+            setPreviewOnly(true);
+            setTokenId(value);
             setShowSuggestions(false);
-            setCurrentImageUrl('./overview.gif');
-            return false;
+            return true;
         }
 
         resetTraitSelections();
+        previewOnlyRef.current = false;
+        setPreviewOnly(false);
         setUnmintedTokenId('');
         setSyncPendingTokenId('');
         setTokenId(value);
@@ -871,7 +941,7 @@ function App() {
     }, [shareNote]);
 
     const handleDownload = () => {
-        if (!currentImageUrl.startsWith('blob:')) return;
+        if (previewOnly || !currentImageUrl.startsWith('blob:')) return;
         const link = document.createElement('a');
         link.href = currentImageUrl;
         link.download = `afa-${tokenId}.png`;
@@ -891,6 +961,10 @@ function App() {
         clubAssetType: clubAsset,
         frame: vegasButtonClicked ? '1' : '',
     }), [selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset, vegasButtonClicked]);
+    // Unminted IDs: thumbnails come from the server already blurred
+    // (/api/get-asset-preview), so no sharp ape or asset layer reaches the client.
+    const stripTokenId = tokenId;
+    const stripEndpoint = previewOnly ? 'get-asset-preview' : 'get-asset';
 
     const shareText = useMemo(() => buildShareText({
         tokenId,
@@ -1003,7 +1077,18 @@ function App() {
             </div>
           </div>
 
-          {tokenId && (
+          {tokenId && (previewOnly ? (
+            <div className="preview-locked" role="note">
+              <p className="preview-locked-title">Ape #{tokenId} is still looking the other way.</p>
+              <div className="preview-actions">
+                <a className="preview-download preview-mint" href={MINT_URL} target="_blank" rel="noopener noreferrer">
+                  Mint to reveal
+                </a>
+                <button type="button" className="preview-share" disabled title="Available after mint">Download</button>
+              </div>
+              <p className="preview-locked-fine">Download and sharing unlock once it's minted.</p>
+            </div>
+            ) : (
             <div className="preview-actions">
               <button
                 type="button"
@@ -1029,7 +1114,7 @@ function App() {
                 </button>
               )}
             </div>
-          )}
+            ))}
 
 
 
@@ -1047,18 +1132,18 @@ function App() {
           {unmintedTokenId && (
             <div className="claim-prompt" role="alert">
               <p className="claim-prompt-title">
-                AFA #{unmintedTokenId} is not minted yet
+                Ape #{unmintedTokenId} is still looking the other way.
               </p>
               <p className="claim-prompt-copy">
-                Only minted AFAs can be edited. Mint this token to unlock the full editor.
+                Download and sharing unlock once it's minted.
               </p>
               <a
-                href={CLAIM_URL}
+                href={MINT_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="claim-prompt-cta"
               >
-                Mint on apefacingapes.com
+                Mint to reveal
               </a>
             </div>
           )}
@@ -1181,9 +1266,11 @@ function App() {
                               onClick={() => handleSuggestionClick(suggestion)}
                             >
                               <span>{suggestion}</span>
-                              {(mintedTokens.has(suggestion) || mintedTokens.has(String(suggestion))) && (
+                              {(mintedTokens.has(suggestion) || mintedTokens.has(String(suggestion))) ? (
                                 <span className="suggestion-tag">Minted</span>
-                              )}
+                              ) : mintListReady ? (
+                                <span className="suggestion-tag suggestion-tag--preview">Preview</span>
+                              ) : null}
                             </button>
                           ))}
                         </div>
@@ -1240,7 +1327,8 @@ function App() {
                             <AssetStrip
                               selectRef={outfitRef}
                               param="secondAssetType"
-                              tokenId={tokenId}
+                              tokenId={stripTokenId}
+                              endpoint={stripEndpoint}
                               value={secondAsset}
                               onPick={(v) => handleSecondAssetChange({ target: { value: secondAsset === v ? '' : v } })}
                               disabled={thirdAsset === 'selfie' || Boolean(clubAsset)}
@@ -1279,7 +1367,8 @@ function App() {
                             <AssetStrip
                               selectRef={mouthRef}
                               param="mouthAssetType"
-                              tokenId={tokenId}
+                              tokenId={stripTokenId}
+                              endpoint={stripEndpoint}
                               value={mouthAsset}
                               onPick={(v) => handleMouthAssetChange({ target: { value: mouthAsset === v ? '' : v } })}
                               disabled={clubAsset === 'elite'}
@@ -1317,7 +1406,8 @@ function App() {
                             <AssetStrip
                               selectRef={hatRef}
                               param="hatAssetType"
-                              tokenId={tokenId}
+                              tokenId={stripTokenId}
+                              endpoint={stripEndpoint}
                               value={hatAsset}
                               onPick={(v) => handleHatAssetChange({ target: { value: hatAsset === v ? '' : v } })}
                               disabled={Boolean(clubAsset) || secondAsset === 'singe_hoodie_glow' || secondAsset === 'singe_hoodie'}
@@ -1349,7 +1439,8 @@ function App() {
                             <AssetStrip
                               selectRef={eyesRef}
                               param="eyesAssetType"
-                              tokenId={tokenId}
+                              tokenId={stripTokenId}
+                              endpoint={stripEndpoint}
                               value={eyesAsset}
                               onPick={(v) => handleEyesAssetChange({ target: { value: eyesAsset === v ? '' : v } })}
                               disabled={clubAsset === 'elite'}
@@ -1407,7 +1498,8 @@ function App() {
                             <AssetStrip
                               selectRef={handRef}
                               param="assetType"
-                              tokenId={tokenId}
+                              tokenId={stripTokenId}
+                              endpoint={stripEndpoint}
                               value={selectedAsset}
                               onPick={(v) => handleAssetChange({ target: { value: selectedAsset === v ? '' : v } })}
                               disabled={thirdAsset === 'selfie' || clubAsset === 'elite'}
@@ -1482,7 +1574,8 @@ function App() {
                             <AssetStrip
                               selectRef={extraRef}
                               param="thirdAssetType"
-                              tokenId={tokenId}
+                              tokenId={stripTokenId}
+                              endpoint={stripEndpoint}
                               value={thirdAsset}
                               onPick={(v) => handleThirdAssetChange({ target: { value: thirdAsset === v ? '' : v } })}
                               disabled={clubAsset === 'elite'}

@@ -5447,3 +5447,15 @@ button.gallery-item.is-selected .gallery-meta {
   display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
 }
 .asset-thumb.is-active .asset-thumb-label { color: #fff !important; }
+
+/* Unminted preview: calm hint + Mint CTA instead of download/share */
+.preview-locked { margin-top: 12px; }
+.preview-locked-title { margin: 0 0 4px; font-size: 15px; font-weight: 600; color: #fff; }
+.preview-locked-copy { margin: 0 0 12px; font-size: 13px; line-height: 1.45; color: rgba(255,255,255,0.6); }
+.preview-locked .preview-mint { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.preview-locked .preview-share:disabled { opacity: 0.4; cursor: not-allowed; }
+.preview-locked-fine { margin: 8px 0 0; font-size: 12px; color: rgba(255,255,255,0.45); }
+
+/* ID autofill: minted first, then unminted "Preview" IDs */
+.suggestions-container { max-height: 320px; overflow-y: auto; }
+.suggestion-tag--preview { color: rgba(255,255,255,0.45); font-weight: 500; }
