@@ -5,7 +5,7 @@ import { debug, error as logError } from './utils/debug';
 import AssetStrip from './AssetStrip';
 import { buildShareText, buildXIntentUrl } from './utils/shareText';
 import { assetLabel } from './utils/assetLabels';
-import { renderApefest, canvasToBlob, loadImage, loadApefestFonts, APEFEST_CRT, APEFEST_PAGE_SCAN, APEFEST_JUMP, buildApefestShareText } from './utils/apefest';
+import { renderApefest, canvasToBlob, loadImage, loadApefestFonts, APEFEST_CRT, APEFEST_PAGE_SCAN, APEFEST_JUMP, buildApefestShareText, apefestUnmintedText } from './utils/apefest';
 
 // ApeFest (10.17): while true, the "Add frame" button becomes the ApeFest toggle.
 // Set to false after ApeFest to restore "Add frame"; nothing else needs to change.
@@ -537,8 +537,18 @@ function App() {
     const [shareNoteFading, setShareNoteFading] = useState(false);
     const [downloaded, setDownloaded] = useState(false);
     // ApeFest look: minted apes only (unminted stay server-side blurred, no sharp pixels reach the browser).
-    const [apefest, setApefest] = useState(false);
-    const apefestRef = useRef(false);
+    // ApeFest mode is ON by default for every visitor and stays on across ape/ID switches.
+    // Turning it off is remembered in this browser (localStorage); ?mode=apefest always turns it on.
+    const [apefest, setApefest] = useState(() => {
+        try {
+            if (new URLSearchParams(window.location.search).get('mode') === 'apefest') return true;
+            return window.localStorage.getItem('afa.apefest') !== '0';
+        } catch (e) { return true; }
+    });
+    useEffect(() => {
+        try { window.localStorage.setItem('afa.apefest', apefest ? '1' : '0'); } catch (e) { /* storage blocked */ }
+    }, [apefest]);
+    const apefestRef = useRef(APEFEST_ENABLED && apefest);
     const apefestSrcRef = useRef(null);
     const [apefestBusy, setApefestBusy] = useState(false);
     useEffect(() => { apefestRef.current = APEFEST_ENABLED && apefest; }, [apefest]);
@@ -810,7 +820,8 @@ function App() {
       setFade('fade-out');
 
         const isPreviewOnly = previewOnlyRef.current;
-        const isApefest = APEFEST_ENABLED && apefestRef.current && !isPreviewOnly;
+        // Unminted: the server-blurred preview gets the look on top (never a sharp image).
+        const isApefest = APEFEST_ENABLED && apefestRef.current;
         // ApeFest: background off (transparent), every other asset stays; the look is applied last, client-side.
         if (isApefest) queryParams.set('thirdAssetType', 'transparent');
         const fetchAssetBlob = () => fetchFromAnyBase(
@@ -834,7 +845,7 @@ function App() {
             apefestSrcRef.current = null;
             if (isApefest) {
                 const img = await loadImage(URL.createObjectURL(rawBlob));
-                const square = await renderApefest(img, 'square', { seed: Number(newTokenId) || 0 });
+                const square = await renderApefest(img, 'square', { seed: Number(newTokenId) || 0, ...(isPreviewOnly ? apefestUnmintedText(newTokenId) : {}) });
                 blob = await canvasToBlob(square);
                 apefestSrcRef.current = img;
                 if (requestId !== activeRenderRequestRef.current) return;
@@ -1219,14 +1230,15 @@ function App() {
         return () => { window.clearTimeout(fadeId); window.clearTimeout(timerId); };
     }, [shareNote]);
 
-    const apefestActive = APEFEST_ENABLED && apefest && !previewOnly;
+    // Hero/first impression (no ape picked yet) stays calm: the mode only shows once an ape is loaded.
+    const apefestActive = APEFEST_ENABLED && apefest && !!tokenId;
 
     // Extra download for X: 1600x900 (primary output stays 1000x1000).
     const handleDownloadWide = async () => {
         if (!apefestActive || !apefestSrcRef.current) return;
         setApefestBusy(true);
         try {
-            const wide = await renderApefest(apefestSrcRef.current, 'wide', { seed: Number(tokenId) || 0 });
+            const wide = await renderApefest(apefestSrcRef.current, 'wide', { seed: Number(tokenId) || 0, ...(previewOnly ? apefestUnmintedText(tokenId) : {}) });
             const blob = await canvasToBlob(wide);
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
@@ -1247,7 +1259,7 @@ function App() {
     }, [apefestActive]);
 
     const handleDownload = () => {
-        if (previewOnly || !currentImageUrl.startsWith('blob:')) return;
+        if ((previewOnly && !apefestActive) || !currentImageUrl.startsWith('blob:')) return;
         const link = document.createElement('a');
         link.href = currentImageUrl;
         link.download = apefestActive ? `afa-${tokenId}-apefest.png` : `afa-${tokenId}.png`;
@@ -1481,6 +1493,19 @@ function App() {
           </filter>
         </svg>
       )}
+      {apefestActive && previewOnly && (
+        // Unminted picker tiles (server-blurred assets): own brighter curve so they read as soft red glowing shapes.
+        <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true" focusable="false">
+          <filter id="apefest-duo-blur" colorInterpolationFilters="sRGB">
+            <feColorMatrix type="matrix" values="0.2126 0.7152 0.0722 0 0  0.2126 0.7152 0.0722 0 0  0.2126 0.7152 0.0722 0 0  0 0 0 1 0" />
+            <feComponentTransfer>
+              <feFuncR type="table" tableValues="0.05 0.14 0.24 0.34 0.43 0.52 0.6 0.68 0.76" />
+              <feFuncG type="table" tableValues="0.045 0.035 0.035 0.04 0.045 0.05 0.06 0.075 0.12" />
+              <feFuncB type="table" tableValues="0.05 0.04 0.04 0.045 0.05 0.055 0.065 0.08 0.11" />
+            </feComponentTransfer>
+          </filter>
+        </svg>
+      )}
       {apefestActive && (
         // Page CRT layer (same APEFEST_CRT as the baked image). Sits below the preview column
         // and the mini bar, so the image's own scanlines are never overlaid (no moiré, no double lines).
@@ -1515,6 +1540,10 @@ function App() {
           <div className="preview-card">
             <div id="asset-display" className={`${fade || ''} ${showLoader ? 'is-loading' : ''}`}>
               <img src={currentImageUrl} alt="Ape preview" width="1200" height="1200" />
+              {apefestActive && previewOnly && !showLoader && (
+                // 390: the baked 13px note is ~5px on screen, so a readable page overlay sits on top (>=11px, 60%).
+                <span className="apefest-note-overlay" aria-hidden="true">NOT YET MINTED</span>
+              )}
               {showLoader && (
                 <div className="loader" role="status" aria-live="polite">
                   <div className="loader-progress" aria-hidden="true">
@@ -1541,7 +1570,7 @@ function App() {
               </div>
             </div>
           )}
-          {tokenId && (previewOnly ? (
+          {tokenId && (previewOnly && !apefestActive ? (
             <div className="preview-locked" role="note">
               <p className="preview-locked-title">Ape #{tokenId} is still looking the other way.</p>
               <p className="preview-locked-note">Not minted yet? Try it on anyway. Your Ape stays blurred until it's yours.</p>
@@ -1573,6 +1602,11 @@ function App() {
                 >
                   16:9 for X
                 </button>
+              )}
+              {previewOnly && (
+                <a className="preview-mint-link" href={MINT_URL} target="_blank" rel="noopener noreferrer">
+                  Mint to reveal →
+                </a>
               )}
               <div className="share-wrap">
               {downloaded ? (
@@ -1663,9 +1697,8 @@ function App() {
                     onClick={() => setApefest((v) => !v)}
                     className={`action-button apefest-button ${apefestActive ? 'is-on' : ''}`}
                     aria-pressed={apefestActive}
-                    disabled={previewOnly}
-                    title={previewOnly ? 'ApeFest look unlocks once this ape is minted.' : 'Red CRT look for ApeFest. Your traits stay on.'}
-                    data-tooltip={previewOnly ? 'ApeFest look unlocks once this ape is minted.' : 'Red CRT look for ApeFest. Your traits stay on.'}
+                    title="Red CRT look for ApeFest. Your traits stay on."
+                    data-tooltip="Red CRT look for ApeFest. Your traits stay on."
                   >
                     ApeFest{apefestActive && <span className="apefest-dot" aria-hidden="true" />}
                   </button>
