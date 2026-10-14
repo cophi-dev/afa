@@ -49,6 +49,37 @@ const CROPS = {
     extra: { zoom: 1, origin: '50% 50%' },
 };
 
+// Per-asset overrides where the generic category crop misses the object.
+// Measured from each asset's render diff against the bare ape (1000px canvas).
+// Full-frame scenes (Dookie Dash, Clubhouse Sketch, ...) use zoom 1.
+const ASSET_CROPS = {
+  hand: {
+    'vegas': { zoom: 1.53, origin: '100% 92%' },
+    'ape_solar_sun_hand': { zoom: 1.35, origin: '100% 87%' },
+    'dookie_dash': { zoom: 1, origin: '50% 50%' },
+    'smartphone_gm': { zoom: 1, origin: '50% 50%' },
+    'ramen': { zoom: 1, origin: '50% 50%' },
+    'pray': { zoom: 2.4, origin: '50% 100%' },
+    'basketball': { zoom: 1, origin: '50% 50%' },
+    'shiny-gm': { zoom: 1.38, origin: '52% 100%' },
+    'pipe': { zoom: 1.55, origin: '100% 92%' },
+    'magic_eden': { zoom: 1.34, origin: '0% 92%' },
+    'gm_espresso': { zoom: 1.82, origin: '15% 100%' },
+    'banana': { zoom: 2.28, origin: '80% 94%' },
+    'otherside': { zoom: 1.87, origin: '0% 94%' },
+    'apecoin_hands1': { zoom: 1.1, origin: '53% 100%' },
+    'apecoin_hands2': { zoom: 1, origin: '50% 50%' },
+    'candle': { zoom: 2.4, origin: '86% 96%' },
+    'balloon_fireworks': { zoom: 1, origin: '50% 50%' },
+    'fireworks': { zoom: 2.4, origin: '100% 91%' },
+    'baguette': { zoom: 1.51, origin: '100% 89%' },
+    'clubhouse': { zoom: 1, origin: '50% 50%' },
+    'matchstick': { zoom: 2.4, origin: '10% 97%' },
+    'balloon_moon': { zoom: 1.36, origin: '0% 86%' },
+  },
+};
+const cropFor = (crop, value) => (ASSET_CROPS[crop] && ASSET_CROPS[crop][value]) || CROPS[crop] || CROPS.extra;
+
 const loadPreview = (key, fetcher, priority = false) => {
     if (cache.has(key)) return Promise.resolve(cache.get(key));
     if (pending.has(key)) return pending.get(key);
@@ -111,7 +142,7 @@ function AssetThumb({ option, index, active, disabled, onPick, fetchPreview, cac
             title={option.label}
         >
             <span className={`asset-thumb-img ${url ? '' : 'is-loading'} ${failed ? 'is-failed' : ''}`}>
-                {url && <img src={url} alt="" width="72" height="72" style={{ transform: `scale(${(CROPS[crop] || CROPS.extra).zoom})`, transformOrigin: (CROPS[crop] || CROPS.extra).origin }} />}
+                {url && <img src={url} alt="" width="72" height="72" style={{ transform: `scale(${cropFor(crop, option.value).zoom})`, transformOrigin: cropFor(crop, option.value).origin }} />}
             </span>
             <span className="asset-thumb-label">{shortName(option.label)}</span>
         </button>
