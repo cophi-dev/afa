@@ -14,6 +14,7 @@ const PREVIEW_RETRIES = 2;
 const PREVIEW_RETRY_COOLDOWN_MS = 15000;
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const CLAIM_URL = `${MINT_SITE_URL}/claim`;
+const SUGGESTION_LIMIT = 20;
 const MINT_URL = `${MINT_SITE_URL}/?utm_source=afa-editor&utm_medium=referral&utm_campaign=unminted-preview`;
 const LOADER_MESSAGES = [
     'Brewing ape magic...',
@@ -669,13 +670,13 @@ function App() {
             const mintedSet = new Set(minted);
             const rest = [];
             const base = Number(value);
-            for (let mult = 1; mult <= 1000 && rest.length < 8; mult *= 10) {
-                for (let k = 0; k < mult && rest.length < 8; k += 1) {
+            for (let mult = 1; mult <= 1000 && rest.length < SUGGESTION_LIMIT; mult *= 10) {
+                for (let k = 0; k < mult && rest.length < SUGGESTION_LIMIT; k += 1) {
                     const id = base * mult + k;
                     if (id <= 9999 && !mintedSet.has(id)) rest.push(id);
                 }
             }
-            const suggestions = [...minted, ...rest].slice(0, 8);
+            const suggestions = [...minted, ...rest].slice(0, SUGGESTION_LIMIT);
             
             setSuggestions(suggestions);
             setShowSuggestions(suggestions.length > 0);
@@ -1214,8 +1215,10 @@ function App() {
                               onClick={() => handleSuggestionClick(suggestion)}
                             >
                               <span>{suggestion}</span>
-                              {(mintedTokens.has(suggestion) || mintedTokens.has(String(suggestion))) && (
+                              {(mintedTokens.has(suggestion) || mintedTokens.has(String(suggestion))) ? (
                                 <span className="suggestion-tag">Minted</span>
+                              ) : (
+                                <span className="suggestion-tag suggestion-tag--preview">Preview</span>
                               )}
                             </button>
                           ))}

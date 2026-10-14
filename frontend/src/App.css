@@ -5455,3 +5455,7 @@ button.gallery-item.is-selected .gallery-meta {
 .preview-locked .preview-mint { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
 .preview-locked .preview-share:disabled { opacity: 0.4; cursor: not-allowed; }
 .preview-locked-fine { margin: 8px 0 0; font-size: 12px; color: rgba(255,255,255,0.45); }
+
+/* ID autofill: minted first, then unminted "Preview" IDs */
+.suggestions-container { max-height: 320px; overflow-y: auto; }
+.suggestion-tag--preview { color: rgba(255,255,255,0.45); font-weight: 500; }
