@@ -23,11 +23,11 @@ export function makeBmp(px, W, H) {
 //           afa's layer, bottom 'APE #N' + 'NOT YET MINTED' drawn here (DejaVu Sans Mono Bold, as afa).
 // Wide:     same scene maths at 1600x900, text drawn by the editor.
 const MINTED = {
-    square: { W: 1000, H: 1000, opts: {}, glowLayers: ['/apefest/text_minted_1000_glow.png'], layers: ['/apefest/text_minted_1000.png'] },
+    square: { W: 1000, H: 1000, opts: {}, glowLayers: ['/apefest/text_minted_1000_glow.png'], layers: ['/apefest/text_claim_outline_1000.png', '/apefest/text_minted_1000.png'] },
     wide: { W: 1600, H: 900, opts: { apeScale: 0.95, apeX: 0.69 }, glowLayers: [], layers: [] },
 };
 const UNMINTED = {
-    square: { W: 1000, H: 1000, opts: { ...LAUNCH_UNMINTED }, glowLayers: ['/apefest/text_top_1000_glow.png'], layers: ['/apefest/text_top_1000.png'] },
+    square: { W: 1000, H: 1000, opts: { ...LAUNCH_UNMINTED }, glowLayers: ['/apefest/text_top_1000_glow.png'], layers: ['/apefest/text_claim_outline_1000.png', '/apefest/text_top_1000.png'] },
     wide: { W: 1600, H: 900, opts: { ...LAUNCH_UNMINTED, apeScale: 0.87, apeX: 0.69 }, glowLayers: [], layers: [] },
 };
 export const LAUNCH_FORMATS = MINTED;
