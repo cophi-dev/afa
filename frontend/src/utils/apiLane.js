@@ -2,7 +2,7 @@
 // The image server renders every request (2-4s each); background work used to flood it
 // (~40 renders on ape load) and the main preview queued behind it ("Dialing in drip..." up to ~50s).
 // While the main preview is rendering, background queues hold (max HOLD_MAX_MS), then resume.
-const HOLD_MAX_MS = 8000;
+const HOLD_MAX_MS = 15000;
 let holdUntil = 0;
 const listeners = new Set();
 

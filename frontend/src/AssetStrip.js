@@ -6,7 +6,7 @@ const cache = new Map();
 const pending = new Map();
 const queue = [];
 let active = 0;
-const MAX_ACTIVE = 4;
+const MAX_ACTIVE = 3;
 
 const finish = () => {
     active -= 1;
