@@ -621,18 +621,34 @@ def normalize_token_id(token_id):
     return normalized if normalized.isdigit() else None
 
 
+# Perf: an unminted ape's picker fires ~40 preview renders; each used to force a full chain sync
+# + an ownerOf RPC call (5-12 s, and public RPCs answer 429). Remember "not minted" briefly.
+UNMINTED_TTL = 60
+_unminted_seen = {}
+_unminted_lock = threading.Lock()
+
+
 def is_minted(token_id):
     normalized = normalize_token_id(token_id)
     if not normalized:
         return False
     if normalized in minted_ids:
         return True
+    now = time.time()
+    with _unminted_lock:
+        seen = _unminted_seen.get(normalized)
+    if seen and now - seen < UNMINTED_TTL:
+        return False
     refresh_mint_cache(force=True)
     if normalized in minted_ids:
         return True
     if check_token_minted_via_eth_call(normalized):
         remember_minted_token(normalized)
         return True
+    with _unminted_lock:
+        if len(_unminted_seen) > 20000:
+            _unminted_seen.clear()
+        _unminted_seen[normalized] = now
     return False
 
 
@@ -1239,6 +1255,86 @@ def get_minted_token_ids():
         return jsonify({'error': 'Internal Server Error'}), 500
 
 
+
+# ---- Render performance (cache + thumbnails) ------------------------------------------
+# db.json (~8 MB) used to be parsed on every render; keep it in memory (reload if the file changes).
+_db_cache = {'mtime': None, 'data': None}
+_db_lock = threading.Lock()
+
+
+def load_db():
+    path = os.path.join(os.path.dirname(__file__), 'db.json')
+    mtime = os.path.getmtime(path)
+    with _db_lock:
+        if _db_cache['data'] is None or _db_cache['mtime'] != mtime:
+            with open(path, 'r') as file:
+                _db_cache['data'] = json.load(file)
+            _db_cache['mtime'] = mtime
+        return _db_cache['data']
+
+
+# In-memory LRU of finished renders, keyed by endpoint + full query. Renders are deterministic
+# per query, so identical requests (same picker tiles for every visitor of an ape) are served
+# from memory instead of re-composing (~2-4 s each on F1).
+from collections import OrderedDict
+RENDER_CACHE_MAX_BYTES = int(os.environ.get('RENDER_CACHE_MAX_BYTES', str(96 * 1024 * 1024)))
+_render_cache = OrderedDict()
+_render_cache_bytes = 0
+_render_lock = threading.Lock()
+
+
+def render_cache_key(endpoint):
+    return endpoint + '?' + '&'.join(f'{k}={v}' for k, v in sorted(request.args.items(multi=True)))
+
+
+def render_cache_get(key):
+    with _render_lock:
+        hit = _render_cache.get(key)
+        if hit is not None:
+            _render_cache.move_to_end(key)
+        return hit
+
+
+def render_cache_put(key, data, mimetype):
+    global _render_cache_bytes
+    if len(data) > RENDER_CACHE_MAX_BYTES // 8:
+        return
+    with _render_lock:
+        old = _render_cache.pop(key, None)
+        if old is not None:
+            _render_cache_bytes -= len(old[0])
+        _render_cache[key] = (data, mimetype)
+        _render_cache_bytes += len(data)
+        while _render_cache_bytes > RENDER_CACHE_MAX_BYTES and _render_cache:
+            _, (d, _m) = _render_cache.popitem(last=False)
+            _render_cache_bytes -= len(d)
+
+
+# Optional small output for picker/list tiles: ?size=160|256|384 -> WebP (a few KB-tens of KB
+# instead of a ~400 KB 1000px PNG). Without size the response is unchanged (full PNG).
+THUMB_SIZES = (160, 256, 384)
+
+
+def requested_thumb_size():
+    try:
+        size = int(request.args.get('size', '0'))
+    except ValueError:
+        return None
+    return size if size in THUMB_SIZES else None
+
+
+def cached_image_response(data, mimetype, cache_control):
+    response = Response(data, mimetype=mimetype)
+    response.headers['Cache-Control'] = cache_control
+    response.headers['X-Render-Cache'] = 'HIT' if getattr(request, '_render_hit', False) else 'MISS'
+    return response
+
+
+# Minted renders never change for a given query (traits are static) -> long-lived + immutable.
+CACHE_IMMUTABLE = 'public, max-age=31536000, immutable'
+# Mint-status-dependent (unminted blur): short.
+CACHE_SHORT = 'public, max-age=300'
+
 @app.route('/api/get-asset', methods=['GET'])
 def get_asset():
     token_id = request.args.get('tokenId')
@@ -1262,20 +1358,29 @@ def get_asset():
         # Return a message indicating the token ID is not eligible for elite assets
         return jsonify({'error': 'Token ID not eligible for dubai assets'}), 200
 
+    key = render_cache_key('get-asset')
+    hit = render_cache_get(key)
+    if hit is not None:
+        request._render_hit = True
+        return cached_image_response(hit[0], hit[1], CACHE_IMMUTABLE)
     try:
-        db_path = os.path.join(os.path.dirname(__file__), 'db.json')
-        with open(db_path, 'r') as file:
-            data = json.load(file)
-        
-        image = compose_ape(token_id, data, asset_type, second_asset_type, third_asset_type, 
+        data = load_db()
+        image = compose_ape(token_id, data, asset_type, second_asset_type, third_asset_type,
                           mouth_asset_type, hat_asset_type, eyes_asset_type, club_asset_type)
         if not image:
             raise ValueError("Ape not found")
-        
+
         img_io = BytesIO()
-        image.save(img_io, 'PNG')
-        img_io.seek(0)
-        return send_file(img_io, mimetype='image/png')
+        size = requested_thumb_size()
+        if size:
+            image.resize((size, size), Image.LANCZOS).save(img_io, 'WEBP', quality=82, method=4)
+            mimetype = 'image/webp'
+        else:
+            image.save(img_io, 'PNG')
+            mimetype = 'image/png'
+        payload = img_io.getvalue()
+        render_cache_put(key, payload, mimetype)
+        return cached_image_response(payload, mimetype, CACHE_IMMUTABLE)
     
     except Exception as e:
         print(f"Error processing Token ID {token_id}: {e}")
@@ -1336,10 +1441,13 @@ def get_asset_preview():
     club_asset_type = request.args.get('clubAssetType', '')
     if club_asset_type in ('elite', 'dubai'):
         return jsonify({'error': 'Club assets are not available in preview'}), 400
+    key = render_cache_key('get-asset-preview')
+    hit = render_cache_get(key)
+    if hit is not None:
+        request._render_hit = True
+        return cached_image_response(hit[0], hit[1], CACHE_SHORT)
     try:
-        db_path = os.path.join(os.path.dirname(__file__), 'db.json')
-        with open(db_path, 'r') as file:
-            data = json.load(file)
+        data = load_db()
         image = compose_ape(
             token_id, data,
             request.args.get('assetType', ''), request.args.get('secondAssetType', ''),
@@ -1348,11 +1456,14 @@ def get_asset_preview():
         if not image:
             raise ValueError('Ape not found')
         out = BytesIO()
-        blur_preview(image, token_id).save(out, 'WEBP', quality=60)
-        out.seek(0)
-        response = send_file(out, mimetype='image/webp')
-        response.headers['Cache-Control'] = 'public, max-age=600'
-        return response
+        blurred = blur_preview(image, token_id)
+        size = requested_thumb_size()
+        if size:
+            blurred = blurred.resize((size, size), Image.LANCZOS)
+        blurred.save(out, 'WEBP', quality=60)
+        payload = out.getvalue()
+        render_cache_put(key, payload, 'image/webp')
+        return cached_image_response(payload, 'image/webp', CACHE_SHORT)
     except Exception as e:
         print(f"Error building preview for Token ID {token_id}: {e}")
         return jsonify({'error': 'Internal Server Error'}), 500
@@ -1365,9 +1476,8 @@ def get_background_color():
         return not_minted_response(token_id)
 
     try:
-        db_path = os.path.join(os.path.dirname(__file__), 'db.json')
-        with open(db_path, 'r') as file:
-            data = json.load(file)
+        if True:
+            data = load_db()
             ape = next((item for item in data["apes"] if str(item["id"]) == token_id), None)
             if ape:
                 background_color = next((attr['value'] for attr in ape["metadata"]["attributes"] if attr['trait_type'] == 'Background'), 'Default')
