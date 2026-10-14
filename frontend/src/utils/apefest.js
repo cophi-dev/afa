@@ -336,6 +336,14 @@ export async function renderApefest(image, format = 'square', { seed = 0, captio
     }
     ctx.putImageData(img, 0, 0);
 
+    drawApefestText(ctx, format, { caption, sub, note, text });
+    return out;
+}
+
+// Claim + date/sub/note over a rendered ApeFest frame (shared by the launch renderer for 16:9).
+export function drawApefestText(ctx, format = 'square', { caption = 'STILL HERE.', sub = '10.17', note = null, text } = {}) {
+    const T = { ...APEFEST_TEXT[format], ...(text || {}) };
+    const { width: W } = ctx.canvas;
     // Claim (Press Start 2P, sized to the cap height) + date (mono), red with a slight glow
     ctx.font = '100px "Press Start 2P", monospace';
     const capAt100 = ctx.measureText('H').actualBoundingBoxAscent || 87.5;
@@ -383,7 +391,6 @@ export async function renderApefest(image, format = 'square', { seed = 0, captio
     drawText();
     ctx.restore();
     drawText();
-    return out;
 }
 
 export const canvasToBlob = (canvas) => new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
