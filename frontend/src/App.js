@@ -291,6 +291,13 @@ function App() {
     const [vegasButtonClicked, setVegasButtonClicked] = useState(false); // State for glamour effect
     const [shareNote, setShareNote] = useState('');
     const [downloaded, setDownloaded] = useState(false);
+    const [toast, setToast] = useState('');
+    const toastTimerRef = useRef(null);
+    const showToast = useCallback((message) => {
+        setToast(message);
+        window.clearTimeout(toastTimerRef.current);
+        toastTimerRef.current = window.setTimeout(() => setToast(''), 4500);
+    }, []);
     useEffect(() => { setDownloaded(false); }, [tokenId]);
 
   useEffect(() => {
@@ -878,6 +885,7 @@ function App() {
         link.click();
         link.remove();
         setDownloaded(true);
+        showToast('Saved. Share on X and attach the PNG to your post.');
     };
 
     const xShareUrl = useMemo(() => buildXIntentUrl(buildShareText({
@@ -984,19 +992,26 @@ function App() {
               >
                 Download PNG
               </button>
-              <button type="button" className="preview-share" onClick={handleShare}>
-                {shareNote || 'Share'}
-              </button>
+              {downloaded ? (
+                <a
+                  className="preview-share preview-share--x"
+                  href={xShareUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => showToast('Attach the PNG you just downloaded to your post.')}
+                >
+                  Share on X
+                </a>
+              ) : (
+                <button type="button" className="preview-share" onClick={handleShare}>
+                  {shareNote || 'Share'}
+                </button>
+              )}
             </div>
           )}
 
-          {tokenId && downloaded && (
-            <div className="share-x">
-              <a className="share-x-button" href={xShareUrl} target="_blank" rel="noopener noreferrer">
-                Share on X
-              </a>
-              <p className="share-x-hint">Attach the PNG you just downloaded to your post.</p>
-            </div>
+          {toast && (
+            <div className="toast" role="status" aria-live="polite">{toast}</div>
           )}
 
           {syncPendingTokenId && (
@@ -1068,7 +1083,7 @@ function App() {
                   title="Randomizes outfit, mouth, hat, eyes, hand, and extra."
                   data-tooltip="Randomizes outfit, mouth, hat, eyes, hand, and extra."
                 >
-                  Randomize 👀
+                  Randomize
                 </button>
                 <button
                   type="button"
@@ -1481,7 +1496,7 @@ function App() {
             title="Randomize traits"
             disabled={!tokenId}
         >
-            New Perspective 👀
+            New Perspective
         </button>
         <button
             onClick={handleSelectVegas}
