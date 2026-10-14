@@ -210,9 +210,9 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook }) {
                     <div className="hero-stage" ref={stageRef} onClick={onStageClick}
                         onMouseEnter={() => { hoverRef.current = true; }} onMouseLeave={() => { hoverRef.current = false; }}
                         role="img" aria-label={heroId != null ? `AFA #${heroId} trying on traits` : 'Loading ape'}>
-                        {layers.a && <img src={layers.a} alt="" width="480" height="480" decoding="async"
+                        {layers.a && <img src={layers.a} alt="" width="480" height="480" decoding="sync"
                             className={`hero-ape ${layers.front === 'a' ? 'is-front' : ''}`} />}
-                        {layers.b && <img src={layers.b} alt="" width="480" height="480" decoding="async"
+                        {layers.b && <img src={layers.b} alt="" width="480" height="480" decoding="sync"
                             className={`hero-ape ${layers.front === 'b' ? 'is-front' : ''}`} />}
                     </div>
                     {heroId != null && (
