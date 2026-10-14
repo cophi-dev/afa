@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import './App.css';
 import { getAllTransactions, getMintedTokenIdsNewestFirst, checkTokenMintStatus } from './services/etherscanService';
 import { debug, error as logError } from './utils/debug';
+import AssetStrip from './AssetStrip';
 import { buildShareText, buildXIntentUrl } from './utils/shareText';
 
 const DEFAULT_API_URL = 'https://afa-editor.ew.r.appspot.com';
@@ -1202,6 +1203,16 @@ function App() {
                                 <option value="jacket">Jacket</option>
                                 <option value="blazer">Blazer</option>
                             </select>
+                            <AssetStrip
+                              selectRef={outfitRef}
+                              param="secondAssetType"
+                              tokenId={tokenId}
+                              value={secondAsset}
+                              onPick={(v) => handleSecondAssetChange({ target: { value: secondAsset === v ? '' : v } })}
+                              disabled={thirdAsset === 'selfie' || Boolean(clubAsset)}
+                              fetchAssetBlob={(path) => fetchFromAnyBase(path, (r) => r.blob())}
+                              crop="center 85%"
+                            />
                         </div>
                     </div>
                 </div>
@@ -1231,6 +1242,16 @@ function App() {
                                 <option value="doodles_rainbow">Doodles Rainbow</option>
                                 <option value="big_smile">Big Smile</option>
                             </select>
+                            <AssetStrip
+                              selectRef={mouthRef}
+                              param="mouthAssetType"
+                              tokenId={tokenId}
+                              value={mouthAsset}
+                              onPick={(v) => handleMouthAssetChange({ target: { value: mouthAsset === v ? '' : v } })}
+                              disabled={clubAsset === 'elite'}
+                              fetchAssetBlob={(path) => fetchFromAnyBase(path, (r) => r.blob())}
+                              crop="center 62%"
+                            />
                         </div>
                     </div>
                     <div className="dropdown-section">
@@ -1259,6 +1280,16 @@ function App() {
                                 <option value="pudgy_hat2">Pudgy Penguins Hat 2</option>
                                 <option value="glitter_cowboy_hat">Glitter Cowboy Hat</option>
                             </select>
+                            <AssetStrip
+                              selectRef={hatRef}
+                              param="hatAssetType"
+                              tokenId={tokenId}
+                              value={hatAsset}
+                              onPick={(v) => handleHatAssetChange({ target: { value: hatAsset === v ? '' : v } })}
+                              disabled={Boolean(clubAsset) || secondAsset === 'singe_hoodie_glow' || secondAsset === 'singe_hoodie'}
+                              fetchAssetBlob={(path) => fetchFromAnyBase(path, (r) => r.blob())}
+                              crop="center 8%"
+                            />
                         </div>
                     </div>
                     <div className="dropdown-section">
@@ -1281,6 +1312,16 @@ function App() {
                                 <option value="btc_eyes">BTC Coin</option>
                                 <option value="star_glasses">Star Glasses</option>
                             </select>
+                            <AssetStrip
+                              selectRef={eyesRef}
+                              param="eyesAssetType"
+                              tokenId={tokenId}
+                              value={eyesAsset}
+                              onPick={(v) => handleEyesAssetChange({ target: { value: eyesAsset === v ? '' : v } })}
+                              disabled={clubAsset === 'elite'}
+                              fetchAssetBlob={(path) => fetchFromAnyBase(path, (r) => r.blob())}
+                              crop="center 38%"
+                            />
                         </div>
                     </div>
                     <div className="dropdown-section">
@@ -1329,6 +1370,16 @@ function App() {
                                 <option value="matchstick">Matchstick</option>
                                 <option value="balloon_moon">2024 Balloon</option>
                             </select>
+                            <AssetStrip
+                              selectRef={handRef}
+                              param="assetType"
+                              tokenId={tokenId}
+                              value={selectedAsset}
+                              onPick={(v) => handleAssetChange({ target: { value: selectedAsset === v ? '' : v } })}
+                              disabled={thirdAsset === 'selfie' || clubAsset === 'elite'}
+                              fetchAssetBlob={(path) => fetchFromAnyBase(path, (r) => r.blob())}
+                              crop="center 80%"
+                            />
                         </div>
                     </div>
                 {/* <div className="dropdown-section">
@@ -1394,6 +1445,16 @@ function App() {
                           <option value="verified">Verified</option>
                           <option value="vintage_frame">Vintage Frame</option>
                         </select>
+                            <AssetStrip
+                              selectRef={extraRef}
+                              param="thirdAssetType"
+                              tokenId={tokenId}
+                              value={thirdAsset}
+                              onPick={(v) => handleThirdAssetChange({ target: { value: thirdAsset === v ? '' : v } })}
+                              disabled={clubAsset === 'elite'}
+                              fetchAssetBlob={(path) => fetchFromAnyBase(path, (r) => r.blob())}
+                              crop="center"
+                            />
                       </div>
                     </div>
                   </div>

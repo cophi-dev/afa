@@ -1,0 +1,123 @@
+import React, { useEffect, useRef, useState } from 'react';
+
+// Shared, small-concurrency queue + cache for asset preview renders.
+const cache = new Map();
+const pending = new Map();
+const queue = [];
+let active = 0;
+const MAX_ACTIVE = 3;
+
+const finish = () => {
+    active -= 1;
+    pump(); // eslint-disable-line no-use-before-define
+};
+
+function pump() {
+    while (active < MAX_ACTIVE && queue.length) {
+        const job = queue.shift();
+        active += 1;
+        job().finally(finish);
+    }
+}
+
+const loadPreview = (key, fetcher) => {
+    if (cache.has(key)) return Promise.resolve(cache.get(key));
+    if (pending.has(key)) return pending.get(key);
+    const promise = new Promise((resolve) => {
+        queue.push(async () => {
+            try {
+                const blob = await fetcher();
+                const url = URL.createObjectURL(blob);
+                cache.set(key, url);
+                resolve(url);
+            } catch {
+                resolve(null);
+            } finally {
+                pending.delete(key);
+            }
+        });
+        pump();
+    });
+    pending.set(key, promise);
+    return promise;
+};
+
+function AssetThumb({ option, active, disabled, onPick, fetchPreview, cacheKey, crop, rootRef }) {
+    const ref = useRef(null);
+    const [url, setUrl] = useState(() => cache.get(cacheKey) || null);
+    const [failed, setFailed] = useState(false);
+
+    useEffect(() => {
+        setUrl(cache.get(cacheKey) || null);
+        setFailed(false);
+        const node = ref.current;
+        if (!node || cache.has(cacheKey)) return undefined;
+        let cancelled = false;
+        const observer = new IntersectionObserver((entries) => {
+            if (!entries.some((e) => e.isIntersecting)) return;
+            observer.disconnect();
+            loadPreview(cacheKey, fetchPreview).then((result) => {
+                if (cancelled) return;
+                if (result) setUrl(result); else setFailed(true);
+            });
+        }, { root: rootRef.current, rootMargin: '0px 160px' });
+        observer.observe(node);
+        return () => { cancelled = true; observer.disconnect(); };
+    }, [cacheKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    return (
+        <button
+            ref={ref}
+            type="button"
+            className={`asset-thumb ${active ? 'is-active' : ''}`}
+            onClick={() => onPick(option.value)}
+            disabled={disabled}
+            aria-pressed={active}
+            title={option.label}
+        >
+            <span className={`asset-thumb-img ${url ? '' : 'is-loading'} ${failed ? 'is-failed' : ''}`}>
+                {url && <img src={url} alt="" width="72" height="72" style={{ objectPosition: crop, transformOrigin: crop }} />}
+            </span>
+            <span className="asset-thumb-label">{option.label}</span>
+        </button>
+    );
+}
+
+/** Horizontal, swipeable thumbnail row mirroring an existing <select>. */
+export default function AssetStrip({ selectRef, param, tokenId, value, onPick, disabled, fetchAssetBlob, crop = 'center' }) {
+    const [options, setOptions] = useState([]);
+    const rootRef = useRef(null);
+
+    useEffect(() => {
+        const select = selectRef.current;
+        if (!select) return;
+        setOptions(Array.from(select.options)
+            .filter((o) => o.value && !o.disabled)
+            .map((o) => ({ value: o.value, label: o.textContent.trim() })));
+    }, [selectRef, tokenId]);
+
+    if (!tokenId || options.length === 0) return null;
+
+    return (
+        <div className="asset-strip" ref={rootRef} role="group" aria-label="Asset previews">
+            {options.map((option) => {
+                const query = new URLSearchParams({ tokenId, assetType: 'AFA' });
+                query.set(param, option.value);
+                const cacheKey = `${tokenId}|${param}|${option.value}`;
+                return (
+                    <AssetThumb
+                        key={option.value}
+                        option={option}
+                        active={value === option.value}
+                        disabled={disabled}
+                        onPick={onPick}
+                        cacheKey={cacheKey}
+                        crop={crop}
+                        rootRef={rootRef}
+                        fetchPreview={() => fetchAssetBlob(`/api/get-asset?${query.toString()}`)}
+                    />
+                );
+            })}
+        </div>
+    );
+}
