@@ -22,6 +22,17 @@ function pump() {
 
 const EAGER_COUNT = 6;
 
+// Per-category zoom + focal point so each tile shows the asset, not the ape.
+// origin is the transform-origin for scale(zoom) on a 1:1 render.
+const CROPS = {
+    outfit: { zoom: 2.2, origin: '50% 100%' },
+    hat: { zoom: 2.4, origin: '50% 0%' },
+    eyes: { zoom: 3.2, origin: '50% 36%' },
+    mouth: { zoom: 3, origin: '50% 68%' },
+    hand: { zoom: 2, origin: '0% 100%' },
+    extra: { zoom: 1, origin: '50% 50%' },
+};
+
 const loadPreview = (key, fetcher, priority = false) => {
     if (cache.has(key)) return Promise.resolve(cache.get(key));
     if (pending.has(key)) return pending.get(key);
@@ -84,7 +95,7 @@ function AssetThumb({ option, index, active, disabled, onPick, fetchPreview, cac
             title={option.label}
         >
             <span className={`asset-thumb-img ${url ? '' : 'is-loading'} ${failed ? 'is-failed' : ''}`}>
-                {url && <img src={url} alt="" width="72" height="72" style={{ objectPosition: crop, transformOrigin: crop }} />}
+                {url && <img src={url} alt="" width="72" height="72" style={{ transform: `scale(${(CROPS[crop] || CROPS.extra).zoom})`, transformOrigin: (CROPS[crop] || CROPS.extra).origin }} />}
             </span>
             <span className="asset-thumb-label">{option.label}</span>
         </button>
@@ -92,7 +103,7 @@ function AssetThumb({ option, index, active, disabled, onPick, fetchPreview, cac
 }
 
 /** Horizontal, swipeable thumbnail row mirroring an existing <select>. */
-export default function AssetStrip({ selectRef, param, tokenId, value, onPick, disabled, fetchAssetBlob, crop = 'center' }) {
+export default function AssetStrip({ selectRef, param, tokenId, value, onPick, disabled, fetchAssetBlob, crop = 'extra' }) {
     const [options, setOptions] = useState([]);
     const rootRef = useRef(null);
 

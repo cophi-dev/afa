@@ -1243,7 +1243,7 @@ function App() {
                               onPick={(v) => handleSecondAssetChange({ target: { value: secondAsset === v ? '' : v } })}
                               disabled={thirdAsset === 'selfie' || Boolean(clubAsset)}
                               fetchAssetBlob={(path) => fetchFromAnyBase(path, (r) => r.blob())}
-                              crop="center 85%"
+                              crop="outfit"
                             />
                         </div>
                     </div>
@@ -1282,7 +1282,7 @@ function App() {
                               onPick={(v) => handleMouthAssetChange({ target: { value: mouthAsset === v ? '' : v } })}
                               disabled={clubAsset === 'elite'}
                               fetchAssetBlob={(path) => fetchFromAnyBase(path, (r) => r.blob())}
-                              crop="center 62%"
+                              crop="mouth"
                             />
                         </div>
                     </div>
@@ -1320,7 +1320,7 @@ function App() {
                               onPick={(v) => handleHatAssetChange({ target: { value: hatAsset === v ? '' : v } })}
                               disabled={Boolean(clubAsset) || secondAsset === 'singe_hoodie_glow' || secondAsset === 'singe_hoodie'}
                               fetchAssetBlob={(path) => fetchFromAnyBase(path, (r) => r.blob())}
-                              crop="center 8%"
+                              crop="hat"
                             />
                         </div>
                     </div>
@@ -1352,7 +1352,7 @@ function App() {
                               onPick={(v) => handleEyesAssetChange({ target: { value: eyesAsset === v ? '' : v } })}
                               disabled={clubAsset === 'elite'}
                               fetchAssetBlob={(path) => fetchFromAnyBase(path, (r) => r.blob())}
-                              crop="center 38%"
+                              crop="eyes"
                             />
                         </div>
                     </div>
@@ -1410,7 +1410,7 @@ function App() {
                               onPick={(v) => handleAssetChange({ target: { value: selectedAsset === v ? '' : v } })}
                               disabled={thirdAsset === 'selfie' || clubAsset === 'elite'}
                               fetchAssetBlob={(path) => fetchFromAnyBase(path, (r) => r.blob())}
-                              crop="center 80%"
+                              crop="hand"
                             />
                         </div>
                     </div>
@@ -1485,7 +1485,7 @@ function App() {
                               onPick={(v) => handleThirdAssetChange({ target: { value: thirdAsset === v ? '' : v } })}
                               disabled={clubAsset === 'elite'}
                               fetchAssetBlob={(path) => fetchFromAnyBase(path, (r) => r.blob())}
-                              crop="center"
+                              crop="extra"
                             />
                       </div>
                     </div>
