@@ -14,6 +14,7 @@ const PREVIEW_RETRIES = 2;
 const PREVIEW_RETRY_COOLDOWN_MS = 15000;
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const CLAIM_URL = `${MINT_SITE_URL}/claim`;
+const MINT_URL = `${MINT_SITE_URL}/?utm_source=afa-editor&utm_medium=referral&utm_campaign=unminted-preview`;
 const LOADER_MESSAGES = [
     'Brewing ape magic...',
     'Polishing pixels...',
@@ -277,6 +278,10 @@ function App() {
     const previewFailedAtRef = useRef({});
     const [isCheckingMint, setIsCheckingMint] = useState(false);
     const [unmintedTokenId, setUnmintedTokenId] = useState('');
+    // Unminted IDs: editable, but only ever rendered as a server-side blurred preview.
+    const [previewOnly, setPreviewOnly] = useState(false);
+    const previewOnlyRef = useRef(false);
+    previewOnlyRef.current = previewOnly;
     const [syncPendingTokenId, setSyncPendingTokenId] = useState('');
     const suggestionsRef = useRef(null);
     const activeRenderRequestRef = useRef(0);
@@ -517,8 +522,9 @@ function App() {
         // Start fade-out effect
       setFade('fade-out');
 
+        const isPreviewOnly = previewOnlyRef.current;
         const fetchAssetBlob = () => fetchFromAnyBase(
-            `/api/get-asset?${queryParams.toString()}`,
+            `/api/${isPreviewOnly ? 'get-asset-preview' : 'get-asset'}?${queryParams.toString()}`,
             (response) => response.blob()
         );
 
@@ -548,6 +554,12 @@ function App() {
         })
         .catch(async (error) => {
             if (requestId !== activeRenderRequestRef.current) return;
+            if (isPreviewOnly) {
+                logError('Blurred preview failed', error);
+                setShowLoader(false);
+                setFade('fade-in');
+                return;
+            }
 
             let chainMinted = false;
             try {
@@ -697,14 +709,19 @@ function App() {
 
         if (!minted) {
             resetTraitSelections();
-            setTokenId('');
-            setUnmintedTokenId(value);
+            setUnmintedTokenId('');
+            setSyncPendingTokenId('');
+            setDownloaded(false);
+            previewOnlyRef.current = true;
+            setPreviewOnly(true);
+            setTokenId(value);
             setShowSuggestions(false);
-            setCurrentImageUrl('./overview.gif');
-            return false;
+            return true;
         }
 
         resetTraitSelections();
+        previewOnlyRef.current = false;
+        setPreviewOnly(false);
         setUnmintedTokenId('');
         setSyncPendingTokenId('');
         setTokenId(value);
@@ -871,7 +888,7 @@ function App() {
     }, [shareNote]);
 
     const handleDownload = () => {
-        if (!currentImageUrl.startsWith('blob:')) return;
+        if (previewOnly || !currentImageUrl.startsWith('blob:')) return;
         const link = document.createElement('a');
         link.href = currentImageUrl;
         link.download = `afa-${tokenId}.png`;
@@ -891,6 +908,9 @@ function App() {
         clubAssetType: clubAsset,
         frame: vegasButtonClicked ? '1' : '',
     }), [selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset, vegasButtonClicked]);
+    // Thumbnails for unminted IDs show the asset on a minted reference ape,
+    // so no sharp layer of the unminted ape is ever requested.
+    const stripTokenId = previewOnly ? String(mintedTokenIds[0] || '') : tokenId;
 
     const shareText = useMemo(() => buildShareText({
         tokenId,
@@ -1003,7 +1023,19 @@ function App() {
             </div>
           </div>
 
-          {tokenId && (
+          {tokenId && (previewOnly ? (
+            <div className="preview-locked" role="note">
+              <p className="preview-locked-title">AFA #{tokenId} is still looking the other way.</p>
+              <p className="preview-locked-copy">Try on any look here. Mint it to see it sharp, download and share it.</p>
+              <div className="preview-actions">
+                <a className="preview-download preview-mint" href={MINT_URL} target="_blank" rel="noopener noreferrer">
+                  Mint for 0.05 ETH / 69 APE
+                </a>
+                <button type="button" className="preview-share" disabled title="Available after mint">Download</button>
+              </div>
+              <p className="preview-locked-fine">Plus gas. Download and sharing unlock once it's minted.</p>
+            </div>
+            ) : (
             <div className="preview-actions">
               <button
                 type="button"
@@ -1029,7 +1061,7 @@ function App() {
                 </button>
               )}
             </div>
-          )}
+            ))}
 
 
 
@@ -1240,7 +1272,7 @@ function App() {
                             <AssetStrip
                               selectRef={outfitRef}
                               param="secondAssetType"
-                              tokenId={tokenId}
+                              tokenId={stripTokenId}
                               value={secondAsset}
                               onPick={(v) => handleSecondAssetChange({ target: { value: secondAsset === v ? '' : v } })}
                               disabled={thirdAsset === 'selfie' || Boolean(clubAsset)}
@@ -1279,7 +1311,7 @@ function App() {
                             <AssetStrip
                               selectRef={mouthRef}
                               param="mouthAssetType"
-                              tokenId={tokenId}
+                              tokenId={stripTokenId}
                               value={mouthAsset}
                               onPick={(v) => handleMouthAssetChange({ target: { value: mouthAsset === v ? '' : v } })}
                               disabled={clubAsset === 'elite'}
@@ -1317,7 +1349,7 @@ function App() {
                             <AssetStrip
                               selectRef={hatRef}
                               param="hatAssetType"
-                              tokenId={tokenId}
+                              tokenId={stripTokenId}
                               value={hatAsset}
                               onPick={(v) => handleHatAssetChange({ target: { value: hatAsset === v ? '' : v } })}
                               disabled={Boolean(clubAsset) || secondAsset === 'singe_hoodie_glow' || secondAsset === 'singe_hoodie'}
@@ -1349,7 +1381,7 @@ function App() {
                             <AssetStrip
                               selectRef={eyesRef}
                               param="eyesAssetType"
-                              tokenId={tokenId}
+                              tokenId={stripTokenId}
                               value={eyesAsset}
                               onPick={(v) => handleEyesAssetChange({ target: { value: eyesAsset === v ? '' : v } })}
                               disabled={clubAsset === 'elite'}
@@ -1407,7 +1439,7 @@ function App() {
                             <AssetStrip
                               selectRef={handRef}
                               param="assetType"
-                              tokenId={tokenId}
+                              tokenId={stripTokenId}
                               value={selectedAsset}
                               onPick={(v) => handleAssetChange({ target: { value: selectedAsset === v ? '' : v } })}
                               disabled={thirdAsset === 'selfie' || clubAsset === 'elite'}
@@ -1482,7 +1514,7 @@ function App() {
                             <AssetStrip
                               selectRef={extraRef}
                               param="thirdAssetType"
-                              tokenId={tokenId}
+                              tokenId={stripTokenId}
                               value={thirdAsset}
                               onPick={(v) => handleThirdAssetChange({ target: { value: thirdAsset === v ? '' : v } })}
                               disabled={clubAsset === 'elite'}

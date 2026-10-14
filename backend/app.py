@@ -1281,6 +1281,61 @@ def get_asset():
         print(f"Error processing Token ID {token_id}: {e}")
         return jsonify({'error': 'Internal Server Error'}), 500
 
+PREVIEW_SIZE = 512
+PREVIEW_BASE = 32          # same "medium" level as afa-progress /api/og-ape
+PREVIEW_RADIUS = 2.6 * (PREVIEW_SIZE / PREVIEW_BASE) / 2 * 0.6
+PREVIEW_NOISE = 22
+
+
+def blur_preview(image, seed):
+    """Medium blur: 32px downsample, upscale, Gaussian blur, grain. Never sharp."""
+    from PIL import ImageFilter, ImageChops
+    import random
+    rgb = image.convert('RGB')
+    tiny = rgb.resize((PREVIEW_BASE, PREVIEW_BASE), Image.BOX)
+    big = tiny.resize((PREVIEW_SIZE, PREVIEW_SIZE), Image.BICUBIC)
+    big = big.filter(ImageFilter.GaussianBlur(PREVIEW_RADIUS))
+    rnd = random.Random(int(seed) if str(seed).isdigit() else 1)
+    grain_small = Image.frombytes('L', (128, 128), bytes(
+        128 - PREVIEW_NOISE // 2 + rnd.randrange(PREVIEW_NOISE) for _ in range(128 * 128)))
+    grain = grain_small.resize((PREVIEW_SIZE, PREVIEW_SIZE), Image.NEAREST).convert('RGB')
+    return ImageChops.soft_light(big, grain)
+
+
+@app.route('/api/get-asset-preview', methods=['GET'])
+def get_asset_preview():
+    """Blurred try-on preview for UNMINTED tokens. The sharp composite and its
+    layers never leave the server; minted tokens must use /api/get-asset."""
+    token_id = normalize_token_id(request.args.get('tokenId'))
+    if not token_id or int(token_id) > 9999:
+        return jsonify({'error': 'invalid_id'}), 400
+    if is_minted(token_id):
+        return jsonify({'error': 'Token is minted, use /api/get-asset', 'code': 'MINTED'}), 409
+    club_asset_type = request.args.get('clubAssetType', '')
+    if club_asset_type in ('elite', 'dubai'):
+        return jsonify({'error': 'Club assets are not available in preview'}), 400
+    try:
+        db_path = os.path.join(os.path.dirname(__file__), 'db.json')
+        with open(db_path, 'r') as file:
+            data = json.load(file)
+        image = compose_ape(
+            token_id, data,
+            request.args.get('assetType', ''), request.args.get('secondAssetType', ''),
+            request.args.get('thirdAssetType', ''), request.args.get('mouthAssetType', ''),
+            request.args.get('hatAssetType', ''), request.args.get('eyesAssetType', ''), '')
+        if not image:
+            raise ValueError('Ape not found')
+        out = BytesIO()
+        blur_preview(image, token_id).save(out, 'WEBP', quality=60)
+        out.seek(0)
+        response = send_file(out, mimetype='image/webp')
+        response.headers['Cache-Control'] = 'public, max-age=600'
+        return response
+    except Exception as e:
+        print(f"Error building preview for Token ID {token_id}: {e}")
+        return jsonify({'error': 'Internal Server Error'}), 500
+
+
 @app.route('/api/get-background-color', methods=['GET'])
 def get_background_color():
     token_id = request.args.get('tokenId')
