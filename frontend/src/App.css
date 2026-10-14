@@ -4503,3 +4503,118 @@ button.gallery-item.is-selected {
   font-size: var(--fs-xs);
   color: rgba(240, 242, 245, 0.5);
 }
+
+/* ===== Design review round 2 ===== */
+.App {
+  padding-top: 0;
+}
+
+.site-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: calc(100% + 32px);
+  margin: 0 -16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px max(16px, calc((100% - 1200px) / 2));
+  background: rgba(8, 8, 14, 0.82);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.site-bar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: #fff;
+  text-decoration: none;
+}
+
+.site-bar-logo {
+  height: 44px;
+  width: auto;
+  display: block;
+}
+
+.site-bar-title {
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(240, 242, 245, 0.8);
+}
+
+.site-bar-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 196, 81, 0.55);
+  color: #f5c451;
+  font-weight: 700;
+  font-size: var(--fs-sm);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.site-bar-link:hover,
+.site-bar-link:focus-visible {
+  background: rgba(245, 196, 81, 0.12);
+}
+
+.hero,
+.studio,
+.footer {
+  max-width: 1200px;
+  margin-inline: auto;
+}
+
+.hero {
+  padding-top: clamp(16px, 4vw, 48px);
+}
+
+.hero-art {
+  align-items: center;
+}
+
+.hero-ape {
+  object-fit: contain;
+  max-height: min(420px, 60vh);
+  width: auto;
+  max-width: 100%;
+}
+
+/* No old logo box while picking: the preview only appears once an ape is selected */
+.studio--picking .studio-preview {
+  display: none;
+}
+
+@media (min-width: 980px) {
+  .studio.studio--picking {
+    grid-template-columns: 1fr;
+  }
+
+  .studio--picking .studio-controls {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .site-bar-logo {
+    height: 36px;
+  }
+
+  .site-bar-title {
+    display: none;
+  }
+
+  .hero-cta {
+    width: 80%;
+    align-self: center;
+  }
+}
