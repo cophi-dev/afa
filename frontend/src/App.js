@@ -1440,15 +1440,16 @@ function App() {
     // Apply glamour class conditionally
     <div className={appClassName} style={apefestActive ? { '--crt': APEFEST_CRT, '--scan': APEFEST_PAGE_SCAN, '--jump': APEFEST_JUMP } : undefined}>
       {apefestActive && (
-        // Tile duotone, same curve as the baked image: shadows #0b0b0c, mids #e1141e, highlights #ff5a4f.
+        // Tile duotone, dark like the main preview: coloured backgrounds land ~#2a0608-#4a0a0e,
+        // only the brightest outlines/highlights reach #e1141e-#ff5a4f. Shadows #0b0b0c.
         // Picker variant adds ~15% luminance contrast so outlines/patterns stay readable.
         <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true" focusable="false">
           <filter id="apefest-duo" colorInterpolationFilters="sRGB">
             <feColorMatrix type="matrix" values="0.2126 0.7152 0.0722 0 0  0.2126 0.7152 0.0722 0 0  0.2126 0.7152 0.0722 0 0  0 0 0 1 0" />
             <feComponentTransfer>
-              <feFuncR type="table" tableValues="0.043 0.882 1" />
-              <feFuncG type="table" tableValues="0.043 0.078 0.353" />
-              <feFuncB type="table" tableValues="0.047 0.118 0.31" />
+              <feFuncR type="table" tableValues="0.043 0.08 0.12 0.16 0.2 0.26 0.42 0.882 1" />
+              <feFuncG type="table" tableValues="0.043 0.03 0.025 0.025 0.03 0.035 0.05 0.078 0.353" />
+              <feFuncB type="table" tableValues="0.047 0.035 0.03 0.033 0.04 0.045 0.06 0.118 0.31" />
             </feComponentTransfer>
           </filter>
           <filter id="apefest-duo-pick" colorInterpolationFilters="sRGB">
@@ -1459,9 +1460,9 @@ function App() {
               <feFuncB type="linear" slope="1.15" intercept="-0.075" />
             </feComponentTransfer>
             <feComponentTransfer>
-              <feFuncR type="table" tableValues="0.043 0.882 1" />
-              <feFuncG type="table" tableValues="0.043 0.078 0.353" />
-              <feFuncB type="table" tableValues="0.047 0.118 0.31" />
+              <feFuncR type="table" tableValues="0.043 0.08 0.12 0.16 0.2 0.26 0.42 0.882 1" />
+              <feFuncG type="table" tableValues="0.043 0.03 0.025 0.025 0.03 0.035 0.05 0.078 0.353" />
+              <feFuncB type="table" tableValues="0.047 0.035 0.03 0.033 0.04 0.045 0.06 0.118 0.31" />
             </feComponentTransfer>
           </filter>
         </svg>
