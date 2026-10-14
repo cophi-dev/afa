@@ -24,7 +24,7 @@ export const buildApefestShareText = (tokenId, minted = true) =>
   (minted ? APEFEST_SHARE_TEXT : APEFEST_SHARE_TEXT_UNMINTED).replace(/\{id\}/g, String(tokenId ?? ''));
 // Unminted apes: the existing server-blurred image gets the same ApeFest render on top (blur unchanged).
 // Bottom line becomes 'APE #N' (mono) with a small 'NOT YET MINTED' (50%) below; the claim stays.
-export const apefestUnmintedText = (tokenId) => ({ sub: `APE #${tokenId}`, note: 'NOT YET MINTED' });
+export const apefestUnmintedText = (tokenId) => ({ sub: `APE #${tokenId}`, note: 'NOT YET MINTED', keyLight: true, glowScale: APEFEST_UNMINTED_GLOW });
 export const APEFEST_PAGE_SCAN = 1.2;
 
 // Text layout per format (Design). All values in output pixels.
@@ -41,14 +41,25 @@ export const APEFEST_FORMATS = {
     wide: { W: 1600, H: 900, apeScale: 0.95, apeX: 0.72 },
 };
 
+// Mono labels on the image ('10.17', 'APE #N', 'NOT YET MINTED'): JetBrains Mono 500, self-hosted Latin subset.
+const APEFEST_MONO = '"JetBrains Mono", ui-monospace, Menlo, monospace';
+// Unminted note under 'APE #N': 13px at 1000px, letter-spacing 0.08em, 10px below, 50% opacity.
+export const APEFEST_NOTE = { size: 13, gap: 10, tracking: 0.08, alpha: 0.5 };
+// Unminted: glow -10%; the light blur background is keyed to #0b0b0c before the duotone.
+export const APEFEST_UNMINTED_GLOW = 0.9;
+
 let fontsReady = null;
 export function loadApefestFonts() {
     if (fontsReady) return fontsReady;
     const faces = [
         new FontFace('Press Start 2P', "url('/fonts/press-start-2p-400.woff2') format('woff2')"),
-        new FontFace('AFA Mono Digits', "url('/fonts/dejavu-sans-mono-bold-digits.woff2') format('woff2')", { weight: '700' }),
+        new FontFace('JetBrains Mono', "url('/fonts/jetbrains-mono-500.woff2') format('woff2')", { weight: '500', display: 'swap' }),
     ];
-    fontsReady = Promise.all(faces.map((f) => f.load().then((l) => { document.fonts.add(l); }).catch(() => null)));
+    fontsReady = Promise.all(faces.map((f) => f.load().then((l) => { document.fonts.add(l); }).catch(() => null)))
+        .then(() => Promise.all([
+            document.fonts.load(`500 22px ${APEFEST_MONO}`, 'APE #0123456789. NOT YET MINTED'),
+            document.fonts.load('40px "Press Start 2P"', 'STILL HERE.'),
+        ]).catch(() => null));
     return fontsReady;
 }
 
@@ -97,7 +108,7 @@ function mulberry32(seed) {
 // Exposure: the reference used 1.0 (#2388) and 0.87 (#970/#4381); 0.93 stays within ~1.5/255 of all three.
 export const APEFEST_GAIN = 0.93;
 
-export async function renderApefest(image, format = 'square', { seed = 0, caption = 'STILL HERE.', sub = '10.17', note = null, gain, crt = APEFEST_CRT, scan = APEFEST_SCAN, jump = APEFEST_JUMP, text } = {}) {
+export async function renderApefest(image, format = 'square', { seed = 0, caption = 'STILL HERE.', sub = '10.17', note = null, keyLight = false, glowScale = 1, gain, crt = APEFEST_CRT, scan = APEFEST_SCAN, jump = APEFEST_JUMP, text } = {}) {
     await loadApefestFonts();
     const { W, H, apeScale, apeX } = APEFEST_FORMATS[format];
     const T = { ...APEFEST_TEXT[format], ...(text || {}) };
@@ -115,6 +126,18 @@ export async function renderApefest(image, format = 'square', { seed = 0, captio
 
     const alpha = new Float32Array(s * s);
     for (let i = 0; i < s * s; i += 1) alpha[i] = apeData[i * 4 + 3] / 255;
+    if (keyLight) {
+        // Unminted blur: soft luminance key, light background -> #0b0b0c / transparent (no sharpening,
+        // blur untouched, smooth ramp so there is no hard square edge); highlights clamped.
+        for (let i = 0; i < s * s; i += 1) {
+            const o = i * 4;
+            const lum = (0.2126 * apeData[o] + 0.7152 * apeData[o + 1] + 0.0722 * apeData[o + 2]) / 255;
+            const k = Math.min(1, Math.max(0, (lum - 0.72) / 0.2));
+            const kk = k * k * (3 - 2 * k);
+            for (let c = 0; c < 3; c += 1) apeData[o + c] = Math.min(200, apeData[o + c] * (1 - kk) + 11 * kk);
+            alpha[i] *= 1 - kk;
+        }
+    }
     const inner = boxBlur(alpha, s, s, 1, s / 120);
 
     // Background with CRT glow
@@ -126,7 +149,7 @@ export async function renderApefest(image, format = 'square', { seed = 0, captio
             const dx = (x - cx) / (m * 0.42);
             const dy = (y - cy) / (m * 0.40);
             const d2 = dx * dx + dy * dy;
-            const glow = Math.exp(-d2 * 1.3) * 0.55;
+            const glow = Math.exp(-d2 * 1.3) * 0.55 * glowScale;
             const core = Math.exp(-d2 * 5) * 0.18;
             const o = (y * W + x) * 3;
             c[o] = BG[0] + glow * RED[0] + core;
@@ -173,7 +196,7 @@ export async function renderApefest(image, format = 'square', { seed = 0, captio
     // Bloom (screen blend with blurred copy)
     for (let i = 0; i < c.length; i += 1) c[i] = Math.min(1, Math.max(0, Math.round(c[i] * 255) / 255));
     const bl = boxBlur(c, W, H, 3, m / 60);
-    for (let i = 0; i < c.length; i += 1) c[i] = 1 - (1 - c[i]) * (1 - bl[i] * (0.35 + 0.12 * (crt - 1)));
+    for (let i = 0; i < c.length; i += 1) c[i] = 1 - (1 - c[i]) * (1 - bl[i] * (0.35 + 0.12 * (crt - 1)) * glowScale);
 
     // RGB split
     const sh = Math.max(1, Math.round((W / 500) * crt));
@@ -292,18 +315,23 @@ export async function renderApefest(image, format = 'square', { seed = 0, captio
         if (sub) {
             ctx.save();
             ctx.globalAlpha *= T.subAlpha;
-            ctx.font = `700 ${T.subSize}px "AFA Mono Digits", "DejaVu Sans Mono", Menlo, monospace`;
+            ctx.font = `500 ${T.subSize}px ${APEFEST_MONO}`;
             ctx.textAlign = T.subAlign === 'center' ? 'center' : 'left';
             ctx.fillText(sub, T.subAlign === 'center' ? W / 2 : T.x, T.subBaseline);
             ctx.restore();
         }
         if (note) {
-            // Second, smaller line under the sub (unminted: 'NOT YET MINTED'), 50% opacity.
             ctx.save();
-            ctx.globalAlpha *= 0.5;
-            ctx.font = `700 ${Math.round(T.subSize * 0.62)}px "AFA Mono Digits", "DejaVu Sans Mono", Menlo, monospace`;
-            ctx.textAlign = T.subAlign === 'center' ? 'center' : 'left';
-            ctx.fillText(note, T.subAlign === 'center' ? W / 2 : T.x, T.subBaseline + Math.round(T.subSize * 1.15));
+            ctx.globalAlpha *= APEFEST_NOTE.alpha;
+            ctx.font = `500 ${APEFEST_NOTE.size}px ${APEFEST_MONO}`;
+            ctx.textAlign = 'left';
+            const tr = APEFEST_NOTE.size * APEFEST_NOTE.tracking;
+            const chars = [...note];
+            const ws = chars.map((ch) => ctx.measureText(ch).width);
+            const tw = ws.reduce((a, w) => a + w + tr, 0) - tr;
+            let nx = T.subAlign === 'center' ? (W - tw) / 2 : T.x;
+            const ny = T.subBaseline + APEFEST_NOTE.gap + APEFEST_NOTE.size;
+            chars.forEach((ch, k) => { ctx.fillText(ch, nx, ny); nx += ws[k] + tr; });
             ctx.restore();
         }
     };

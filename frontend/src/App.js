@@ -1525,6 +1525,10 @@ function App() {
           <div className="preview-card">
             <div id="asset-display" className={`${fade || ''} ${showLoader ? 'is-loading' : ''}`}>
               <img src={currentImageUrl} alt="Ape preview" width="1200" height="1200" />
+              {apefestActive && previewOnly && !showLoader && (
+                // 390: the baked 13px note is ~5px on screen, so a readable page overlay sits on top (>=11px, 60%).
+                <span className="apefest-note-overlay" aria-hidden="true">NOT YET MINTED</span>
+              )}
               {showLoader && (
                 <div className="loader" role="status" aria-live="polite">
                   <div className="loader-progress" aria-hidden="true">

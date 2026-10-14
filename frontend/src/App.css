@@ -5940,3 +5940,28 @@ body.apefest-body .mini-bar { background-color: #000 !important; }
   box-shadow: 0 0 16px rgba(255, 42, 54, 0.55);
 }
 .App.apefest-mode button.gallery-item.is-selected .gallery-thumb::after { opacity: 0.25; }
+
+/* Unminted ApeFest image, mobile: readable 'NOT YET MINTED' over the baked one (same spot, >=11px, 60%) */
+.apefest-note-overlay { display: none; }
+@media (max-width: 767px) {
+  .App.apefest-mode #asset-display { position: relative; }
+  .App.apefest-mode .apefest-note-overlay {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 97.3%;
+    transform: translateY(-50%);
+    width: max-content;
+    margin: 0 auto;
+    padding: 1px 4px;
+    background: #0b0b0c; /* hides the baked ~5px note underneath */
+    text-align: center;
+    font: 500 11px/1 "JetBrains Mono", ui-monospace, Menlo, monospace;
+    letter-spacing: 0.08em;
+    color: #e1141e;
+    opacity: 0.6;
+    pointer-events: none;
+    z-index: 2;
+  }
+}
