@@ -1302,10 +1302,32 @@ def blur_preview(image, seed):
     return ImageChops.soft_light(big, grain)
 
 
+PREVIEW_RATE_LIMIT = 60      # requests
+PREVIEW_RATE_WINDOW = 60     # seconds, per client IP and instance
+_preview_hits = {}
+_preview_lock = threading.Lock()
+
+
+def preview_rate_limited(ip):
+    now = time.time()
+    with _preview_lock:
+        hits = [t for t in _preview_hits.get(ip, []) if now - t < PREVIEW_RATE_WINDOW]
+        limited = len(hits) >= PREVIEW_RATE_LIMIT
+        if not limited:
+            hits.append(now)
+        _preview_hits[ip] = hits
+        if len(_preview_hits) > 5000:
+            _preview_hits.clear()
+    return limited
+
+
 @app.route('/api/get-asset-preview', methods=['GET'])
 def get_asset_preview():
     """Blurred try-on preview for UNMINTED tokens. The sharp composite and its
     layers never leave the server; minted tokens must use /api/get-asset."""
+    ip = (request.headers.get('X-Forwarded-For') or request.remote_addr or '').split(',')[0].strip()
+    if preview_rate_limited(ip):
+        return jsonify({'error': 'rate_limited'}), 429
     token_id = normalize_token_id(request.args.get('tokenId'))
     if not token_id or int(token_id) > 9999:
         return jsonify({'error': 'invalid_id'}), 400
