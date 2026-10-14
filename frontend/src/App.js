@@ -8,7 +8,7 @@ import { assetLabel } from './utils/assetLabels';
 
 const DEFAULT_API_URL = 'https://afa-editor.ew.r.appspot.com';
 const MINT_SITE_URL = 'https://www.apefacingapes.com';
-const GRID_VIEW_URL = 'https://afa-progress.com';
+const GRID_VIEW_URL = 'https://afa-mint-progress.vercel.app';
 const PREVIEW_CONCURRENCY = 4;
 const PREVIEW_RETRIES = 2;
 const PREVIEW_RETRY_COOLDOWN_MS = 15000;
@@ -296,7 +296,7 @@ function Footer() {
         <footer className="footer">
             <nav className="footer-nav" aria-label="AFA sites">
                 <a href={GRID_VIEW_URL} target="_blank" rel="noopener noreferrer">
-                    Mint progress: afa-progress.com
+                    Mint progress: afa-mint-progress.vercel.app
                 </a>
                 <a href={`${MINT_SITE_URL}/`} target="_blank" rel="noopener noreferrer">
                     Mint on apefacingapes.com
@@ -543,7 +543,7 @@ function App() {
     const authoritativeMintsRef = useRef(new Set());
     const [mintListReady, setMintListReady] = useState(false);
 
-    // Source of truth for "is minted": afa-progress.com/api/mints via the
+    // Source of truth for "is minted": afa-mint-progress.vercel.app/api/mints via the
     // same-origin /api/mints proxy (complete list, count-checked, retried).
     useEffect(() => {
         let cancelled = false;
