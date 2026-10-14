@@ -5758,7 +5758,7 @@ details.token-panel { overflow: visible !important; }
   box-shadow: 0 0 18px rgba(225, 20, 30, 0.55) !important;
 }
 .apefest-button:disabled { opacity: 0.45; cursor: not-allowed; }
-.apefest-note { margin: 4px 0 8px; font-size: 13px; color: rgba(255, 255, 255, 0.6); }
+.apefest-note { text-align: left; margin: 4px 0 8px; font-size: 13px; color: rgba(255, 255, 255, 0.6); }
 
 body.apefest-body,
 body.apefest-body .site-bar,
@@ -5766,23 +5766,59 @@ body.apefest-body .gallery-toolbar,
 body.apefest-body .mini-bar { background-color: #000 !important; }
 
 .App.apefest-mode { --bg: #000; --accent: #e1141e; --accent-color: #e1141e; background: #000; }
-.App.apefest-mode::after {
-  content: '';
+/* Page CRT layer. z 40: above page content, below the site bar (50) and mini bar (60).
+   The preview column is lifted to z 45, so the overlay cuts out the preview image area. */
+.apefest-overlay {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 60;
-  background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0) 2px, rgba(0, 0, 0, 0.18) 3px);
-  mix-blend-mode: multiply;
+  z-index: 40;
+  background:
+    radial-gradient(60% 50% at 30% 35%, rgba(225, 20, 30, calc(0.16 * var(--crt, 1))), rgba(0, 0, 0, 0) 70%),
+    repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0) 2px, rgba(0, 0, 0, calc(0.18 * var(--crt, 1))) 2px, rgba(0, 0, 0, calc(0.18 * var(--crt, 1))) 3px);
 }
-.App.apefest-mode::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background: radial-gradient(60% 50% at 30% 35%, rgba(225, 20, 30, 0.16), rgba(0, 0, 0, 0) 70%);
+.apefest-glitch {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: calc(2px * var(--crt, 1));
+  background: rgba(225, 20, 30, calc(0.22 * var(--crt, 1)));
+  box-shadow: 0 0 6px rgba(225, 20, 30, calc(0.3 * var(--crt, 1)));
+  opacity: 0;
+  animation: apefest-jump 7s steps(1, end) infinite;
 }
+.apefest-glitch--1 { top: 22%; animation-delay: 0s; }
+.apefest-glitch--2 { top: 57%; animation-delay: 2.3s; }
+.apefest-glitch--3 { top: 81%; animation-delay: 4.9s; }
+@keyframes apefest-jump {
+  0% { opacity: 0; transform: translateX(0); }
+  1% { opacity: 1; transform: translateX(calc(8px * var(--crt, 1))); }
+  2.5% { opacity: 0.6; transform: translateX(calc(-5px * var(--crt, 1))); }
+  4% { opacity: 0; transform: translateX(0); }
+  100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .apefest-glitch { animation: none; opacity: 0; }
+}
+.App.apefest-mode .studio-preview,
+.App.apefest-mode .studio-preview.has-token { z-index: 45; }
+/* Where the preview column is not sticky, it still needs a positioned box for z-index. */
+.App.apefest-mode .studio-preview:not(.has-token),
+.App.apefest-mode .studio-preview.has-token[style*="static"] { position: relative; }
+@media (max-width: 768px) {
+  .App.apefest-mode .studio-preview,
+  .App.apefest-mode .studio-preview.has-token { position: relative !important; }
+}
+
+/* Extra picker off in ApeFest: clearly greyed out */
+.App.apefest-mode .asset-thumb:disabled,
+.asset-thumb:disabled {
+  opacity: 0.28;
+  filter: grayscale(1);
+  cursor: not-allowed;
+}
+.App.apefest-mode .asset-thumb:disabled .asset-thumb-label { text-decoration: line-through; }
+
 .App.apefest-mode .preview-card,
 .App.apefest-mode #asset-display img {
   box-shadow: 0 0 60px rgba(225, 20, 30, 0.35);

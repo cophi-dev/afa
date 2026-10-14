@@ -8,9 +8,21 @@ const DARK = [8 / 255, 2 / 255, 3 / 255];
 const HOT = [1, 140 / 255, 120 / 255];
 const BG = [4 / 255, 2 / 255, 3 / 255];
 
+// CRT strength, shared by the baked image and the page overlay (App.js sets --crt from it).
+// 1.0 = approved look, ~2.5 = strong poster look (refs *_strong.png). Final value: Design.
+export const APEFEST_CRT = 1.0;
+
+// Text positions per format, in output pixels. Design decides; null = reference default
+// (caption bottom-left at the 5% margin, date bottom-right). caption = top-left of the pixel caps,
+// sub = right/baseline anchor of "10.17".
+export const APEFEST_TEXT = {
+    square: { caption: null, sub: null },
+    wide: { caption: [90, 720], sub: null },
+};
+
 export const APEFEST_FORMATS = {
-    square: { W: 1000, H: 1000, apeScale: 0.92, apeX: 0.5, capPos: null },
-    wide: { W: 1600, H: 900, apeScale: 0.95, apeX: 0.69, capPos: [90, 720] },
+    square: { W: 1000, H: 1000, apeScale: 0.92, apeX: 0.5 },
+    wide: { W: 1600, H: 900, apeScale: 0.95, apeX: 0.69 },
 };
 
 let fontsReady = null;
@@ -69,9 +81,10 @@ function mulberry32(seed) {
 // Exposure: the reference used 1.0 (#2388) and 0.87 (#970/#4381); 0.93 stays within ~1.5/255 of all three.
 export const APEFEST_GAIN = 0.93;
 
-export async function renderApefest(image, format = 'square', { seed = 0, caption = 'STILL HERE.', sub = '10.17', gain } = {}) {
+export async function renderApefest(image, format = 'square', { seed = 0, caption = 'STILL HERE.', sub = '10.17', gain, crt = APEFEST_CRT, text } = {}) {
     await loadApefestFonts();
-    const { W, H, apeScale, apeX, capPos } = APEFEST_FORMATS[format];
+    const { W, H, apeScale, apeX } = APEFEST_FORMATS[format];
+    const pos = { ...APEFEST_TEXT[format], ...(text || {}) };
     const m = Math.min(W, H);
     const s = Math.round(m * apeScale);
 
@@ -137,10 +150,10 @@ export async function renderApefest(image, format = 'square', { seed = 0, captio
     // Bloom (screen blend with blurred copy)
     for (let i = 0; i < c.length; i += 1) c[i] = Math.min(1, Math.max(0, Math.round(c[i] * 255) / 255));
     const bl = boxBlur(c, W, H, 3, m / 60);
-    for (let i = 0; i < c.length; i += 1) c[i] = 1 - (1 - c[i]) * (1 - bl[i] * 0.35);
+    for (let i = 0; i < c.length; i += 1) c[i] = 1 - (1 - c[i]) * (1 - bl[i] * (0.35 + 0.12 * (crt - 1)));
 
     // RGB split
-    const sh = Math.max(1, Math.floor(W / 500));
+    const sh = Math.max(1, Math.round((W / 500) * crt));
     const split = new Float32Array(c.length);
     for (let y = 0; y < H; y += 1) {
         for (let x = 0; x < W; x += 1) {
@@ -162,7 +175,7 @@ export async function renderApefest(image, format = 'square', { seed = 0, captio
             const fx = (x - cx) / (m * 0.22);
             const fy = (y - H * 0.40) / (m * 0.25);
             const face = Math.exp(-(fx * fx + fy * fy));
-            const f = 1 - (0.29 - 0.07 * face);
+            const f = 1 - Math.min(0.85, (0.29 - 0.07 * face) * (1 + 0.55 * (crt - 1)));
             const o = (y * W + x) * 3;
             split[o] *= f;
             split[o + 1] *= f;
@@ -170,20 +183,47 @@ export async function renderApefest(image, format = 'square', { seed = 0, captio
         }
     }
 
-    // Three small line jumps (deterministic per seed)
+    // Line jumps: 3 at crt 1.0, more/larger when stronger (deterministic per seed)
     const rnd = mulberry32(seed + 1);
-    for (let n = 0; n < 3; n += 1) {
-        const y0 = Math.floor(H * 0.25 + rnd() * (H * 0.55));
-        const h = 2 + Math.floor(rnd() * 4);
-        const dx = 4 + Math.floor(rnd() * 8);
+    const jumps = Math.round(3 * crt ** 1.5);
+    for (let n = 0; n < jumps; n += 1) {
+        const y0 = Math.floor(H * 0.05 + rnd() * (H * 0.8));
+        const h = Math.floor((2 + Math.floor(rnd() * 4)) * crt);
+        const dx = Math.floor((4 + Math.floor(rnd() * 8)) * crt) * (rnd() < 0.5 ? -1 : 1);
         for (let y = y0; y < Math.min(H, y0 + h); y += 1) {
             const row = split.slice(y * W * 3, (y + 1) * W * 3);
             for (let x = 0; x < W; x += 1) {
-                const from = ((x - dx + W) % W) * 3;
+                const from = (((x - dx) % W + W) % W) * 3;
                 const o = (y * W + x) * 3;
                 split[o] = row[from];
                 split[o + 1] = row[from + 1];
                 split[o + 2] = row[from + 2];
+            }
+        }
+    }
+
+    // Phosphor softness when stronger than 1.0 (3-tap gaussian, sigma 0.4*(crt-1))
+    if (crt > 1) {
+        const sg = 0.4 * (crt - 1);
+        const wSide = Math.exp(-1 / (2 * sg * sg));
+        const norm = 1 / (1 + 2 * wSide);
+        const tmp = new Float32Array(split.length);
+        for (let y = 0; y < H; y += 1) {
+            for (let x = 0; x < W; x += 1) {
+                const xl = Math.max(0, x - 1);
+                const xr = Math.min(W - 1, x + 1);
+                for (let k = 0; k < 3; k += 1) {
+                    tmp[(y * W + x) * 3 + k] = (split[(y * W + x) * 3 + k] + wSide * (split[(y * W + xl) * 3 + k] + split[(y * W + xr) * 3 + k])) * norm;
+                }
+            }
+        }
+        for (let y = 0; y < H; y += 1) {
+            const yu = Math.max(0, y - 1);
+            const yd = Math.min(H - 1, y + 1);
+            for (let x = 0; x < W; x += 1) {
+                for (let k = 0; k < 3; k += 1) {
+                    split[(y * W + x) * 3 + k] = (tmp[(y * W + x) * 3 + k] + wSide * (tmp[(yu * W + x) * 3 + k] + tmp[(yd * W + x) * 3 + k])) * norm;
+                }
             }
         }
     }
@@ -212,7 +252,8 @@ export async function renderApefest(image, format = 'square', { seed = 0, captio
     // Caption: pixel caps + mono date, red with glow
     const fs = Math.floor(H * 0.04);
     const margin = Math.floor(m * 0.05);
-    const [x0, y0] = capPos || [margin, H - margin - fs];
+    const [x0, y0] = pos.caption || [margin, H - margin - fs];
+    const [sx, sy] = pos.sub || [W - margin, H - margin];
     const drawText = () => {
         ctx.fillStyle = APEFEST_RED;
         ctx.font = `${fs}px "Press Start 2P", monospace`;
@@ -228,7 +269,7 @@ export async function renderApefest(image, format = 'square', { seed = 0, captio
             ctx.font = `700 ${Math.floor(m * 0.032)}px "AFA Mono Digits", "DejaVu Sans Mono", Menlo, monospace`;
             ctx.textBaseline = 'alphabetic';
             ctx.textAlign = 'right';
-            ctx.fillText(sub, W - margin, H - margin);
+            ctx.fillText(sub, sx, sy);
         }
     };
     ctx.save();

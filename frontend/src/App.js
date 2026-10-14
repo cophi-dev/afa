@@ -5,7 +5,7 @@ import { debug, error as logError } from './utils/debug';
 import AssetStrip from './AssetStrip';
 import { buildShareText, buildXIntentUrl } from './utils/shareText';
 import { assetLabel } from './utils/assetLabels';
-import { renderApefest, canvasToBlob, loadImage, loadApefestFonts } from './utils/apefest';
+import { renderApefest, canvasToBlob, loadImage, loadApefestFonts, APEFEST_CRT } from './utils/apefest';
 
 // ApeFest (10.17): while true, the "Add frame" button becomes the ApeFest toggle.
 // Set to false after ApeFest to restore "Add frame"; nothing else needs to change.
@@ -1428,7 +1428,16 @@ function App() {
 
   return (
     // Apply glamour class conditionally
-    <div className={appClassName}>
+    <div className={appClassName} style={apefestActive ? { '--crt': APEFEST_CRT } : undefined}>
+      {apefestActive && (
+        // Page CRT layer (same APEFEST_CRT as the baked image). Sits below the preview column
+        // and the mini bar, so the image's own scanlines are never overlaid (no moiré, no double lines).
+        <div className="apefest-overlay" aria-hidden="true">
+          <span className="apefest-glitch apefest-glitch--1" />
+          <span className="apefest-glitch apefest-glitch--2" />
+          <span className="apefest-glitch apefest-glitch--3" />
+        </div>
+      )}
       <a className="skip-link" href="#editor-controls">Skip to editor</a>
       <SiteBar />
       {!tokenId && (
