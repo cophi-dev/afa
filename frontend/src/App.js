@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import './App.css';
 import { getAllTransactions, getMintedTokenIdsNewestFirst, checkTokenMintStatus } from './services/etherscanService';
 import { debug, error as logError } from './utils/debug';
+import { buildShareText, buildXIntentUrl } from './utils/shareText';
 
 const DEFAULT_API_URL = 'https://afa-editor.ew.r.appspot.com';
 const MINT_SITE_URL = 'https://www.apefacingapes.com';
@@ -27,7 +28,7 @@ const MINT_GALLERY_SORT = {
 function SiteBar() {
     return (
         <header className="site-bar">
-            <a href={MINT_SITE_URL} target="_blank" rel="noopener noreferrer" className="site-bar-brand">
+            <a href="/" className="site-bar-brand" aria-label="AFA Editor home">
                 <img src="./logo-mark.png" alt="Ape Facing Apes" width="240" height="207" className="site-bar-logo" />
                 <span className="site-bar-title">Editor</span>
             </a>
@@ -288,6 +289,8 @@ function App() {
     const extraRef = useRef(null);
     const [vegasButtonClicked, setVegasButtonClicked] = useState(false); // State for glamour effect
     const [shareNote, setShareNote] = useState('');
+    const [downloaded, setDownloaded] = useState(false);
+    useEffect(() => { setDownloaded(false); }, [tokenId]);
 
   useEffect(() => {
         if (thirdAsset === 'selfie') {
@@ -645,10 +648,20 @@ function App() {
         setTokenInput(value);
         
         if (value) {
-            const suggestions = Array.from(mintedTokens)
+            const minted = Array.from(mintedTokens)
+                .map(Number)
                 .filter(id => id.toString().startsWith(value))
-                .sort((a, b) => a - b)  // Simple numeric sort
-                .slice(0, 5);
+                .sort((a, b) => a - b);
+            const mintedSet = new Set(minted);
+            const rest = [];
+            const base = Number(value);
+            for (let mult = 1; mult <= 1000 && rest.length < 8; mult *= 10) {
+                for (let k = 0; k < mult && rest.length < 8; k += 1) {
+                    const id = base * mult + k;
+                    if (id <= 9999 && !mintedSet.has(id)) rest.push(id);
+                }
+            }
+            const suggestions = [...minted, ...rest].slice(0, 8);
             
             setSuggestions(suggestions);
             setShowSuggestions(suggestions.length > 0);
@@ -863,7 +876,21 @@ function App() {
         document.body.appendChild(link);
         link.click();
         link.remove();
+        setDownloaded(true);
     };
+
+    const xShareUrl = useMemo(() => buildXIntentUrl(buildShareText({
+        tokenId,
+        traits: {
+            outfit: secondAsset,
+            hand: selectedAsset,
+            extra: thirdAsset,
+            mouth: mouthAsset,
+            hat: hatAsset,
+            eyes: eyesAsset,
+        },
+        framed: vegasButtonClicked,
+    })), [tokenId, secondAsset, selectedAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, vegasButtonClicked]);
 
     const handleShare = async () => {
         const url = window.location.href;
@@ -959,6 +986,15 @@ function App() {
               <button type="button" className="preview-share" onClick={handleShare}>
                 {shareNote || 'Share'}
               </button>
+            </div>
+          )}
+
+          {tokenId && downloaded && (
+            <div className="share-x">
+              <a className="share-x-button" href={xShareUrl} target="_blank" rel="noopener noreferrer">
+                Share on X
+              </a>
+              <p className="share-x-hint">Attach the PNG you just downloaded to your post.</p>
             </div>
           )}
 
@@ -1109,7 +1145,10 @@ function App() {
                               className={`suggestion-item ${index === selectedSuggestionIndex ? 'selected' : ''}`}
                               onClick={() => handleSuggestionClick(suggestion)}
                             >
-                              {suggestion}
+                              <span>{suggestion}</span>
+                              {(mintedTokens.has(suggestion) || mintedTokens.has(String(suggestion))) && (
+                                <span className="suggestion-tag">Minted</span>
+                              )}
                             </button>
                           ))}
                         </div>
