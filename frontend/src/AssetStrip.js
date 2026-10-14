@@ -119,7 +119,7 @@ function AssetThumb({ option, index, active, disabled, onPick, fetchPreview, cac
 }
 
 /** Horizontal, swipeable thumbnail row mirroring an existing <select>. */
-export default function AssetStrip({ selectRef, param, tokenId, value, onPick, disabled, fetchAssetBlob, crop = 'extra' }) {
+export default function AssetStrip({ selectRef, param, tokenId, value, onPick, disabled, fetchAssetBlob, crop = 'extra', endpoint = 'get-asset' }) {
     const [options, setOptions] = useState([]);
     const rootRef = useRef(null);
     const [title, setTitle] = useState('');
@@ -159,7 +159,7 @@ export default function AssetStrip({ selectRef, param, tokenId, value, onPick, d
             {options.map((option, index) => {
                 const query = new URLSearchParams({ tokenId, assetType: 'AFA' });
                 query.set(param, option.value);
-                const cacheKey = `${tokenId}|${param}|${option.value}`;
+                const cacheKey = `${endpoint}|${tokenId}|${param}|${option.value}`;
                 return (
                     <AssetThumb
                         key={option.value}
@@ -171,7 +171,7 @@ export default function AssetStrip({ selectRef, param, tokenId, value, onPick, d
                         cacheKey={cacheKey}
                         crop={crop}
                         rootRef={rootRef}
-                        fetchPreview={() => fetchAssetBlob(`/api/get-asset?${query.toString()}`)}
+                        fetchPreview={() => fetchAssetBlob(`/api/${endpoint}?${query.toString()}`)}
                     />
                 );
             })}

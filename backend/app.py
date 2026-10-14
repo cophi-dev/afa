@@ -1302,7 +1302,7 @@ def blur_preview(image, seed):
     return ImageChops.soft_light(big, grain)
 
 
-PREVIEW_RATE_LIMIT = 60      # requests
+PREVIEW_RATE_LIMIT = 300     # requests (a full picker is ~100 blurred thumbnails)
 PREVIEW_RATE_WINDOW = 60     # seconds, per client IP and instance
 _preview_hits = {}
 _preview_lock = threading.Lock()

@@ -908,9 +908,10 @@ function App() {
         clubAssetType: clubAsset,
         frame: vegasButtonClicked ? '1' : '',
     }), [selectedAsset, secondAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset, vegasButtonClicked]);
-    // Thumbnails for unminted IDs show the asset on a minted reference ape,
-    // so no sharp layer of the unminted ape is ever requested.
-    const stripTokenId = previewOnly ? String(mintedTokenIds[0] || '') : tokenId;
+    // Unminted IDs: thumbnails come from the server already blurred
+    // (/api/get-asset-preview), so no sharp ape or asset layer reaches the client.
+    const stripTokenId = tokenId;
+    const stripEndpoint = previewOnly ? 'get-asset-preview' : 'get-asset';
 
     const shareText = useMemo(() => buildShareText({
         tokenId,
@@ -1273,6 +1274,7 @@ function App() {
                               selectRef={outfitRef}
                               param="secondAssetType"
                               tokenId={stripTokenId}
+                              endpoint={stripEndpoint}
                               value={secondAsset}
                               onPick={(v) => handleSecondAssetChange({ target: { value: secondAsset === v ? '' : v } })}
                               disabled={thirdAsset === 'selfie' || Boolean(clubAsset)}
@@ -1312,6 +1314,7 @@ function App() {
                               selectRef={mouthRef}
                               param="mouthAssetType"
                               tokenId={stripTokenId}
+                              endpoint={stripEndpoint}
                               value={mouthAsset}
                               onPick={(v) => handleMouthAssetChange({ target: { value: mouthAsset === v ? '' : v } })}
                               disabled={clubAsset === 'elite'}
@@ -1350,6 +1353,7 @@ function App() {
                               selectRef={hatRef}
                               param="hatAssetType"
                               tokenId={stripTokenId}
+                              endpoint={stripEndpoint}
                               value={hatAsset}
                               onPick={(v) => handleHatAssetChange({ target: { value: hatAsset === v ? '' : v } })}
                               disabled={Boolean(clubAsset) || secondAsset === 'singe_hoodie_glow' || secondAsset === 'singe_hoodie'}
@@ -1382,6 +1386,7 @@ function App() {
                               selectRef={eyesRef}
                               param="eyesAssetType"
                               tokenId={stripTokenId}
+                              endpoint={stripEndpoint}
                               value={eyesAsset}
                               onPick={(v) => handleEyesAssetChange({ target: { value: eyesAsset === v ? '' : v } })}
                               disabled={clubAsset === 'elite'}
@@ -1440,6 +1445,7 @@ function App() {
                               selectRef={handRef}
                               param="assetType"
                               tokenId={stripTokenId}
+                              endpoint={stripEndpoint}
                               value={selectedAsset}
                               onPick={(v) => handleAssetChange({ target: { value: selectedAsset === v ? '' : v } })}
                               disabled={thirdAsset === 'selfie' || clubAsset === 'elite'}
@@ -1515,6 +1521,7 @@ function App() {
                               selectRef={extraRef}
                               param="thirdAssetType"
                               tokenId={stripTokenId}
+                              endpoint={stripEndpoint}
                               value={thirdAsset}
                               onPick={(v) => handleThirdAssetChange({ target: { value: thirdAsset === v ? '' : v } })}
                               disabled={clubAsset === 'elite'}
