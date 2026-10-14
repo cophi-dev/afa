@@ -518,6 +518,7 @@ function App() {
     const extraRef = useRef(null);
     const [vegasButtonClicked, setVegasButtonClicked] = useState(false); // State for glamour effect
     const [shareNote, setShareNote] = useState('');
+    const [shareNoteFading, setShareNoteFading] = useState(false);
     const [downloaded, setDownloaded] = useState(false);
     useEffect(() => { setDownloaded(false); }, [tokenId]);
 
@@ -1176,8 +1177,11 @@ function App() {
 
     useEffect(() => {
         if (!shareNote) return undefined;
-        const timerId = window.setTimeout(() => setShareNote(''), 2200);
-        return () => window.clearTimeout(timerId);
+        setShareNoteFading(false);
+        // Design: visible ~4s, then 200ms fade-out.
+        const fadeId = window.setTimeout(() => setShareNoteFading(true), 4000);
+        const timerId = window.setTimeout(() => { setShareNote(''); setShareNoteFading(false); }, 4200);
+        return () => { window.clearTimeout(fadeId); window.clearTimeout(timerId); };
     }, [shareNote]);
 
     const handleDownload = () => {
@@ -1404,6 +1408,7 @@ function App() {
               >
                 Download PNG
               </button>
+              <div className="share-wrap">
               {downloaded ? (
                 <a
                   className="preview-share preview-share--x"
@@ -1416,9 +1421,18 @@ function App() {
                 </a>
               ) : (
                 <button type="button" className="preview-share" onClick={handleShare}>
-                  {shareNote || 'Share'}
+                  Share
                 </button>
               )}
+              {shareNote && (
+                <p className={`share-hint${shareNoteFading ? ' is-fading' : ''}`} role="status">
+                  <svg className="share-hint-icon" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+                    <path d="M2 6.5l2.5 2.5L10 3.5" fill="none" stroke="#f5c542" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  {shareNote}
+                </p>
+              )}
+              </div>
             </div>
             ))}
 
