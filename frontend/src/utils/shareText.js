@@ -44,7 +44,7 @@ const POOLS = {
 const pick = (list, rand) => list[Math.floor(rand() * list.length) % list.length];
 
 /** Builds the tweet text for the selected ape and its traits. */
-export const buildShareText = ({ tokenId, traits = {}, framed = false }, rand = Math.random) => {
+export const buildShareText = ({ tokenId, traits = {}, framed = false, url = EDITOR_URL }, rand = Math.random) => {
   const options = [];
   Object.entries(traits).forEach(([key, value]) => {
     if (value && POOLS[key]) options.push(() => pick(POOLS[key], rand)(pretty(value)));
@@ -53,7 +53,7 @@ export const buildShareText = ({ tokenId, traits = {}, framed = false }, rand = 
   const raw = options.length ? pick(options, rand)() : pick(POOLS.plain, rand)();
   const line = raw.charAt(0).toUpperCase() + raw.slice(1);
   const id = tokenId !== '' && tokenId != null ? ` AFA #${tokenId}` : '';
-  return `${line}${id} @ApeFacingApes\n\n${EDITOR_URL}`;
+  return `${line}${id} @ApeFacingApes\n\n${url}`;
 };
 
 export const buildXIntentUrl = (text) =>

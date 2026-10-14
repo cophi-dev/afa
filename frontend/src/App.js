@@ -4,6 +4,7 @@ import { getAllTransactions, getMintedTokenIdsNewestFirst, checkTokenMintStatus 
 import { debug, error as logError } from './utils/debug';
 import AssetStrip from './AssetStrip';
 import { buildShareText, buildXIntentUrl } from './utils/shareText';
+import { buildSharePageUrl } from './utils/look';
 
 const DEFAULT_API_URL = 'https://afa-editor.ew.r.appspot.com';
 const MINT_SITE_URL = 'https://www.apefacingapes.com';
@@ -291,13 +292,6 @@ function App() {
     const [vegasButtonClicked, setVegasButtonClicked] = useState(false); // State for glamour effect
     const [shareNote, setShareNote] = useState('');
     const [downloaded, setDownloaded] = useState(false);
-    const [toast, setToast] = useState('');
-    const toastTimerRef = useRef(null);
-    const showToast = useCallback((message) => {
-        setToast(message);
-        window.clearTimeout(toastTimerRef.current);
-        toastTimerRef.current = window.setTimeout(() => setToast(''), 4500);
-    }, []);
     useEffect(() => { setDownloaded(false); }, [tokenId]);
 
   useEffect(() => {
@@ -885,10 +879,9 @@ function App() {
         link.click();
         link.remove();
         setDownloaded(true);
-        showToast('Saved. Share on X and attach the PNG to your post.');
     };
 
-    const xShareUrl = useMemo(() => buildXIntentUrl(buildShareText({
+    const shareText = useMemo(() => buildShareText({
         tokenId,
         traits: {
             outfit: secondAsset,
@@ -899,7 +892,33 @@ function App() {
             eyes: eyesAsset,
         },
         framed: vegasButtonClicked,
-    })), [tokenId, secondAsset, selectedAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, vegasButtonClicked]);
+        url: buildSharePageUrl(tokenId, {
+            assetType: selectedAsset,
+            secondAssetType: secondAsset,
+            thirdAssetType: thirdAsset,
+            mouthAssetType: mouthAsset,
+            hatAssetType: hatAsset,
+            eyesAssetType: eyesAsset,
+            clubAssetType: clubAsset,
+            frame: vegasButtonClicked ? '1' : '',
+        }),
+    }), [tokenId, secondAsset, selectedAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, clubAsset, vegasButtonClicked]);
+    const xShareUrl = useMemo(() => buildXIntentUrl(shareText), [shareText]);
+
+    const handleShareOnX = async (event) => {
+        const isTouch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+        if (!isTouch || !navigator.canShare || !String(currentImageUrl).startsWith('blob:')) return;
+        event.preventDefault();
+        try {
+            const blob = await fetch(currentImageUrl).then((r) => r.blob());
+            const file = new File([blob], `afa-${tokenId}.png`, { type: 'image/png' });
+            if (!navigator.canShare({ files: [file] })) throw new Error('files not shareable');
+            await navigator.share({ files: [file], text: shareText });
+        } catch (error) {
+            if (error && error.name === 'AbortError') return;
+            window.open(xShareUrl, '_blank', 'noopener,noreferrer');
+        }
+    };
 
     const handleShare = async () => {
         const url = window.location.href;
@@ -998,7 +1017,7 @@ function App() {
                   href={xShareUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => showToast('Attach the PNG you just downloaded to your post.')}
+                  onClick={handleShareOnX}
                 >
                   Share on X
                 </a>
@@ -1010,9 +1029,7 @@ function App() {
             </div>
           )}
 
-          {toast && (
-            <div className="toast" role="status" aria-live="polite">{toast}</div>
-          )}
+
 
           {syncPendingTokenId && (
             <div className="claim-prompt" role="alert">
