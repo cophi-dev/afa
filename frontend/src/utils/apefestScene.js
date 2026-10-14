@@ -59,9 +59,12 @@ const PB = 22; // Resample PRECISION_BITS
 const clip8 = (ss) => { const v = ss >> PB; return v < 0 ? 0 : (v > 255 ? 255 : v); };
 const sinc = (x) => { if (x === 0.0) return 1.0; const t = x * Math.PI; return Math.sin(t) / t; };
 const lanczos = (x) => ((-3.0 <= x && x < 3.0) ? sinc(x) * sinc(x / 3) : 0.0);
-function coeffs(inSize, outSize) {
+const bicubic = (x0) => { const a = -0.5; const x = x0 < 0.0 ? -x0 : x0; if (x < 1.0) return ((a + 2.0) * x - (a + 3.0)) * x * x + 1; if (x < 2.0) return (((x - 5) * x + 8) * x - 4) * a; return 0.0; };
+const FILTERS = { lanczos: [lanczos, 3.0], bicubic: [bicubic, 2.0] };
+function coeffs(inSize, outSize, filterName = 'lanczos') {
+    const [filt, sup] = FILTERS[filterName];
     const scale = inSize / outSize; const fs = scale < 1.0 ? 1.0 : scale;
-    const support = 3.0 * fs; const ksize = Math.ceil(support) * 2 + 1;
+    const support = sup * fs; const ksize = Math.ceil(support) * 2 + 1;
     const kk = new Int32Array(outSize * ksize); const bounds = new Int32Array(outSize * 2);
     for (let xx = 0; xx < outSize; xx += 1) {
         const center = 0 + (xx + 0.5) * scale; const ss = 1.0 / fs;
@@ -69,7 +72,7 @@ function coeffs(inSize, outSize) {
         let xmax = Math.trunc(center + support + 0.5); if (xmax > inSize) xmax = inSize;
         xmax -= xmin;
         const k = new Float64Array(xmax); let ww = 0.0;
-        for (let x = 0; x < xmax; x += 1) { const wv = lanczos((x + xmin - center + 0.5) * ss); k[x] = wv; ww += wv; }
+        for (let x = 0; x < xmax; x += 1) { const wv = filt((x + xmin - center + 0.5) * ss); k[x] = wv; ww += wv; }
         for (let x = 0; x < xmax; x += 1) {
             const v = ww !== 0.0 ? k[x] / ww : k[x];
             kk[xx * ksize + x] = v < 0 ? Math.trunc(-0.5 + v * (1 << PB)) : Math.trunc(0.5 + v * (1 << PB));
@@ -79,14 +82,14 @@ function coeffs(inSize, outSize) {
     return { kk, bounds, ksize };
 }
 // Image.resize((s, s), LANCZOS) on RGBA: RGBA->RGBa, horizontal then vertical 8bpc pass, RGBa->RGBA.
-export function resizeLanczosRGBA(src, w, h, ow, oh) {
-    const pm = new Uint8Array(src.length);
-    for (let i = 0; i < src.length; i += 4) {
+export function resizeLanczosRGBA(src, w, h, ow, oh, filterName = 'lanczos', premultiply = true) {
+    const pm = premultiply ? new Uint8Array(src.length) : src;
+    if (premultiply) for (let i = 0; i < src.length; i += 4) {
         const a = src[i + 3];
         for (let c = 0; c < 3; c += 1) { const t = src[i + c] * a + 128; pm[i + c] = ((t >> 8) + t) >> 8; }
         pm[i + 3] = a;
     }
-    const H = coeffs(w, ow); const V = coeffs(h, oh);
+    const H = coeffs(w, ow, filterName); const V = coeffs(h, oh, filterName);
     const yfirst = V.bounds[0]; const ylast = V.bounds[oh * 2 - 2] + V.bounds[oh * 2 - 1];
     const th = ylast - yfirst; const tmp = new Uint8Array(ow * th * 4);
     for (let yy = 0; yy < th; yy += 1) {
@@ -113,7 +116,7 @@ export function resizeLanczosRGBA(src, w, h, ow, oh) {
             const o = (yy * ow + xx) * 4; out[o] = clip8(s0); out[o + 1] = clip8(s1); out[o + 2] = clip8(s2); out[o + 3] = clip8(s3);
         }
     }
-    for (let i = 0; i < out.length; i += 4) {
+    if (premultiply) for (let i = 0; i < out.length; i += 4) {
         const a = out[i + 3];
         if (a !== 255 && a !== 0) {
             for (let c = 0; c < 3; c += 1) { const v = Math.trunc((255 * out[i + c]) / a); out[i + c] = v <= 0 ? 0 : (v < 256 ? v : 255); }
@@ -199,7 +202,7 @@ export const LAUNCH_TEARS = {
     '1000x1000': [[730, 7, -14], [296, 3, -7], [190, 9, 16], [452, 7, 19], [555, 7, 14], [271, 9, -16], [365, 9, -14]],
     '1600x900': [[657, 7, -14], [266, 3, -7], [171, 9, 16], [407, 7, 19], [500, 7, 14], [244, 9, -16], [328, 9, -14]],
 };
-export const LAUNCH = { crt: 1.8, apeScale: 0.92, apeX: 0.5, gain: 1.0, glow: 1.0, rimK: 1.0, rimR: 1.0, soft: true };
+export const LAUNCH = { rimTopFade: false, crt: 1.8, apeScale: 0.92, apeX: 0.5, gain: 1.0, glow: 1.0, rimK: 1.0, rimR: 1.0, soft: true };
 
 export function renderSceneRGB(ape, W = 1000, H = 1000, opts = {}) {
     const o = { ...LAUNCH, ...opts };
@@ -214,6 +217,15 @@ export function renderSceneRGB(ape, W = 1000, H = 1000, opts = {}) {
     const am = new Uint8Array(n);
     for (let i = 0; i < n; i += 1) am[i] = Math.trunc(al[i] * 255);
     const innerU = pilGaussianBlur(am, s, s, 1, (s / 120) * o.rimR);
+    const rimG = new Float64Array(s).fill(1);
+    if (o.rimTopFade) { // rim glow -> 0 in upper third of the ape mask, smooth gradient
+        let y0 = -1; let y1 = -1;
+        for (let y = 0; y < s; y += 1) { let mx = 0; for (let x = 0; x < s; x += 1) mx = Math.max(mx, al[y * s + x]); if (mx > 0.05) { if (y0 < 0) y0 = y; y1 = y; } }
+        if (y0 >= 0) {
+            const ye = y0 + (y1 - y0) / 3;
+            for (let y = 0; y < s; y += 1) { const g = Math.min(Math.max((y - y0) / Math.max(1, ye - y0), 0), 1); rimG[y] = g * g * (3 - 2 * g); }
+        }
+    }
     const col = new Float64Array(n * 3);
     for (let y = 0; y < s; y += 1) {
         for (let x = 0; x < s; x += 1) {
@@ -225,6 +237,7 @@ export function renderSceneRGB(ape, W = 1000, H = 1000, opts = {}) {
             const key = Math.min(Math.max(1.25 - Math.hypot(xx - 0.66, yy - 0.28) * 1.5, 0.15), 1);
             t = t * key * o.gain;
             let rim = Math.min(Math.max(al[i] - innerU[i] / 255, 0), 1) * 2.2 * o.rimK;
+            if (o.rimTopFade) rim *= rimG[y];
             for (let c = 0; c < 3; c += 1) {
                 let v = t < 0.6 ? dark[c] + (red[c] - dark[c]) * (t / 0.6) : red[c] + (hot[c] - red[c]) * ((t - 0.6) / 0.4) ** 2;
                 v = v + rim * red[c] * 0.9 * o.glow;
@@ -311,3 +324,78 @@ export function renderSceneRGB(ape, W = 1000, H = 1000, opts = {}) {
     return out;
 }
 
+
+// ---------- unminted: afa reply/editor_blur_scene_lib.py key_white + key_reply ----------
+const median = (arr) => { const v = Float64Array.from(arr).sort(); const n = v.length; return n % 2 ? v[(n - 1) / 2] : (v[n / 2 - 1] + v[n / 2]) / 2; };
+function percentile(arr, q) {
+    const v = Float64Array.from(arr).sort(); const idx = (v.length - 1) * (q / 100);
+    const lo = Math.floor(idx); const hi = Math.min(lo + 1, v.length - 1); const t = idx - lo; const a = v[lo]; const b = v[hi];
+    const d = b - a; return t >= 0.5 ? b - d * (1 - t) : a + d * t;
+}
+// prev: decoded server blur preview (opaque). Returns the keyed 1000px RGBA ape layer (never sharpened).
+export function keyReply(prev, { feather = 7, extraBlur = 12, gain = 1.15, shadow = 0.8, hi = 0.4, topExtra = 12 } = {}) {
+    const S = 1000; const N = S * S;
+    const rs = resizeLanczosRGBA(prev.data, prev.w, prev.h, S, S, 'bicubic', false);
+    const bg = [0, 1, 2].map((c) => {
+        const vals = [];
+        for (let y = 0; y < 20; y += 1) for (let x = 0; x < S; x += 1) vals.push(rs[(y * S + x) * 4 + c]);
+        for (let y = S - 20; y < S; y += 1) for (let x = 0; x < S; x += 1) vals.push(rs[(y * S + x) * 4 + c]);
+        for (let y = 0; y < S; y += 1) for (let x = 0; x < 20; x += 1) vals.push(rs[(y * S + x) * 4 + c]);
+        for (let y = 0; y < S; y += 1) for (let x = S - 20; x < S; x += 1) vals.push(rs[(y * S + x) * 4 + c]);
+        return median(vals);
+    });
+    const K = [11, 11, 12];
+    const keyed = new Uint8Array(N * 4);
+    for (let i = 0; i < N; i += 1) {
+        const r = rs[i * 4] - bg[0]; const g = rs[i * 4 + 1] - bg[1]; const b = rs[i * 4 + 2] - bg[2];
+        const dist = Math.sqrt(r ** 2 + g ** 2 + b ** 2);
+        const alpha = Math.min(Math.max((dist - 12) / 60, 0), 1);
+        const k = Math.max(alpha, 0.05);
+        for (let c = 0; c < 3; c += 1) {
+            let v = Math.min(Math.max((rs[i * 4 + c] - bg[c] * (1 - alpha)) / k, 0), 255);
+            v = v * alpha + K[c] * (1 - alpha);
+            keyed[i * 4 + c] = Math.trunc(Math.min(v, 215));
+        }
+        keyed[i * 4 + 3] = Math.trunc(alpha * 255);
+    }
+    const am = new Uint8Array(N); for (let i = 0; i < N; i += 1) am[i] = keyed[i * 4 + 3];
+    const alB = pilGaussianBlur(am, S, S, 1, feather / 2);
+    const lum = new Float64Array(N); const sel = [];
+    for (let i = 0; i < N; i += 1) {
+        lum[i] = 0.3 * keyed[i * 4] + 0.59 * keyed[i * 4 + 1] + 0.11 * keyed[i * 4 + 2];
+        if (keyed[i * 4 + 3] / 255 > 0.5) sel.push(lum[i]);
+    }
+    const F = sel.length ? percentile(sel, 75) : 128;
+    const pm0 = new Uint8Array(N * 4);
+    for (let i = 0; i < N; i += 1) {
+        let nw = Math.max(lum[i], shadow * F); if (nw > F) nw = F + (nw - F) * hi;
+        const al = alB[i] / 255;
+        for (let c = 0; c < 3; c += 1) {
+            const v = Math.min(Math.max(keyed[i * 4 + c] + (nw - lum[i]), 0), 255);
+            pm0[i * 4 + c] = Math.trunc(Math.min(Math.max(v * gain, 0), 255) * al);
+        }
+        pm0[i * 4 + 3] = Math.trunc(al * 255);
+    }
+    const pmU = pilGaussianBlur(pm0, S, S, 4, extraBlur);
+    const pm = Float64Array.from(pmU);
+    if (topExtra) {
+        let y0 = -1; let y1 = -1;
+        for (let y = 0; y < S; y += 1) { let mx = 0; for (let x = 0; x < S; x += 1) mx = Math.max(mx, pmU[(y * S + x) * 4 + 3]); if (mx > 12) { if (y0 < 0) y0 = y; y1 = y; } }
+        if (y0 >= 0) {
+            const ye = y0 + (y1 - y0) / 3;
+            const pm2 = pilGaussianBlur(pmU, S, S, 4, topExtra);
+            for (let y = 0; y < S; y += 1) {
+                let w = 1 - Math.min(Math.max((y - y0) / Math.max(1, ye - y0), 0), 1); w = w * w * (3 - 2 * w);
+                for (let j = y * S * 4; j < (y + 1) * S * 4; j += 1) pm[j] = pm[j] * (1 - w) + pm2[j] * w;
+            }
+        }
+    }
+    const out = new Uint8Array(N * 4);
+    for (let i = 0; i < N; i += 1) {
+        const a = pm[i * 4 + 3] / 255;
+        for (let c = 0; c < 3; c += 1) out[i * 4 + c] = Math.trunc(Math.min(Math.max(a > 0.004 ? pm[i * 4 + c] / Math.max(a, 0.004) : 0, 0), 255));
+        out[i * 4 + 3] = Math.trunc(pm[i * 4 + 3]);
+    }
+    return { w: S, h: S, data: out };
+}
+export const LAUNCH_UNMINTED = { crt: 1.8, soft: false, apeScale: 0.84, glow: 0.9, rimK: 0.4, rimR: 2.0, rimTopFade: true };

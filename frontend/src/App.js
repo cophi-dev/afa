@@ -7,7 +7,7 @@ import AssetStrip from './AssetStrip';
 import { buildShareText, buildXIntentUrl } from './utils/shareText';
 import { assetLabel } from './utils/assetLabels';
 import { renderApefestLaunch } from './utils/apefestLaunch';
-import { renderApefest, drawApefestText, canvasToBlob, loadImage, loadApefestFonts, APEFEST_CRT, APEFEST_PAGE_SCAN, APEFEST_JUMP, buildApefestShareText, apefestUnmintedText } from './utils/apefest';
+import { drawApefestText, canvasToBlob, loadImage, loadApefestFonts, APEFEST_CRT, APEFEST_PAGE_SCAN, APEFEST_JUMP, buildApefestShareText, apefestUnmintedText } from './utils/apefest';
 
 // ApeFest (10.17): while true, the "Add frame" button becomes the ApeFest toggle.
 // Set to false after ApeFest to restore "Add frame"; nothing else needs to change.
@@ -863,7 +863,8 @@ function App() {
         // Unminted: the server-blurred preview gets the look on top (never a sharp image).
         const isApefest = APEFEST_ENABLED && apefestRef.current;
         // ApeFest: background off (transparent), every other asset stays; the look is applied last, client-side.
-        if (isApefest) queryParams.set('thirdAssetType', 'transparent');
+        // Unminted keeps the original background: the launch key (afa key_reply) removes it to #0b0b0c.
+        if (isApefest && !isPreviewOnly) queryParams.set('thirdAssetType', 'transparent');
         const fetchAssetBlob = () => fetchFromAnyBase(
             `/api/${isPreviewOnly ? 'get-asset-preview' : 'get-asset'}?${queryParams.toString()}`,
             (response) => response.blob()
@@ -887,9 +888,7 @@ function App() {
                 const img = await loadImage(URL.createObjectURL(rawBlob));
                 // Minted: exact launch-post render (afa's scene maths, bit-exact, in a worker).
                 // Unminted (blurred preview): editor look on top of the server blur.
-                const square = isPreviewOnly
-                    ? await renderApefest(img, 'square', { seed: Number(newTokenId) || 0, ...apefestUnmintedText(newTokenId) })
-                    : await renderApefestLaunch(rawBlob, 'square');
+                const square = await renderApefestLaunch(rawBlob, 'square', { unminted: isPreviewOnly, tokenId: newTokenId });
                 blob = await canvasToBlob(square);
                 apefestSrcRef.current = { img, blob: rawBlob };
                 if (requestId !== activeRenderRequestRef.current) return;
@@ -1287,12 +1286,8 @@ function App() {
         setApefestBusy(true);
         try {
             let wide;
-            if (previewOnly) {
-                wide = await renderApefest(apefestSrcRef.current.img, 'wide', { seed: Number(tokenId) || 0, ...apefestUnmintedText(tokenId) });
-            } else {
-                wide = await renderApefestLaunch(apefestSrcRef.current.blob, 'wide');
-                drawApefestText(wide.getContext('2d'), 'wide');
-            }
+            wide = await renderApefestLaunch(apefestSrcRef.current.blob, 'wide', { unminted: previewOnly, tokenId });
+            drawApefestText(wide.getContext('2d'), 'wide', previewOnly ? apefestUnmintedText(tokenId) : {});
             const blob = await canvasToBlob(wide);
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
