@@ -959,14 +959,6 @@ function App() {
               <button type="button" className="preview-share" onClick={handleShare}>
                 {shareNote || 'Share'}
               </button>
-              <a
-                className="preview-mint"
-                href={CLAIM_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Mint
-              </a>
             </div>
           )}
 
