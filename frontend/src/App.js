@@ -537,12 +537,13 @@ function App() {
     const [shareNoteFading, setShareNoteFading] = useState(false);
     const [downloaded, setDownloaded] = useState(false);
     // ApeFest look: minted apes only (unminted stay server-side blurred, no sharp pixels reach the browser).
-    // ApeFest mode persists across ape/ID switches and reloads (localStorage); ?mode=apefest turns it on.
+    // ApeFest mode is ON by default for every visitor and stays on across ape/ID switches.
+    // Turning it off is remembered in this browser (localStorage); ?mode=apefest always turns it on.
     const [apefest, setApefest] = useState(() => {
         try {
             if (new URLSearchParams(window.location.search).get('mode') === 'apefest') return true;
-            return window.localStorage.getItem('afa.apefest') === '1';
-        } catch (e) { return false; }
+            return window.localStorage.getItem('afa.apefest') !== '0';
+        } catch (e) { return true; }
     });
     useEffect(() => {
         try { window.localStorage.setItem('afa.apefest', apefest ? '1' : '0'); } catch (e) { /* storage blocked */ }
@@ -1229,7 +1230,8 @@ function App() {
         return () => { window.clearTimeout(fadeId); window.clearTimeout(timerId); };
     }, [shareNote]);
 
-    const apefestActive = APEFEST_ENABLED && apefest;
+    // Hero/first impression (no ape picked yet) stays calm: the mode only shows once an ape is loaded.
+    const apefestActive = APEFEST_ENABLED && apefest && !!tokenId;
 
     // Extra download for X: 1600x900 (primary output stays 1000x1000).
     const handleDownloadWide = async () => {
@@ -1487,6 +1489,19 @@ function App() {
               <feFuncR type="table" tableValues="0.043 0.1 0.16 0.23 0.3 0.37 0.45 0.55 0.7 0.88 1" />
               <feFuncG type="table" tableValues="0.043 0.03 0.028 0.03 0.034 0.04 0.048 0.058 0.075 0.1 0.33" />
               <feFuncB type="table" tableValues="0.047 0.034 0.032 0.035 0.04 0.045 0.054 0.064 0.085 0.12 0.29" />
+            </feComponentTransfer>
+          </filter>
+        </svg>
+      )}
+      {apefestActive && previewOnly && (
+        // Unminted picker tiles (server-blurred assets): own brighter curve so they read as soft red glowing shapes.
+        <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true" focusable="false">
+          <filter id="apefest-duo-blur" colorInterpolationFilters="sRGB">
+            <feColorMatrix type="matrix" values="0.2126 0.7152 0.0722 0 0  0.2126 0.7152 0.0722 0 0  0.2126 0.7152 0.0722 0 0  0 0 0 1 0" />
+            <feComponentTransfer>
+              <feFuncR type="table" tableValues="0.06 0.22 0.4 0.58 0.74 0.86 0.93 0.97 1" />
+              <feFuncG type="table" tableValues="0.045 0.04 0.05 0.06 0.07 0.08 0.1 0.15 0.3" />
+              <feFuncB type="table" tableValues="0.05 0.045 0.055 0.065 0.075 0.085 0.1 0.14 0.27" />
             </feComponentTransfer>
           </filter>
         </svg>

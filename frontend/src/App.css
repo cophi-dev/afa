@@ -5965,3 +5965,6 @@ body.apefest-body .mini-bar { background-color: #000 !important; }
     z-index: 2;
   }
 }
+
+/* Unminted ape: picker tiles are the server-blurred assets (never sharp); brighter blur curve, always filtered. */
+.App.apefest-mode.is-unminted .asset-thumb-img img { filter: url(#apefest-duo-blur) !important; }
