@@ -5,6 +5,7 @@ import { debug, error as logError } from './utils/debug';
 import AssetStrip from './AssetStrip';
 import { buildShareText, buildXIntentUrl } from './utils/shareText';
 import { buildSharePageUrl, LINK_UTM } from './utils/look';
+import { assetLabel } from './utils/assetLabels';
 
 const DEFAULT_API_URL = 'https://afa-editor.ew.r.appspot.com';
 const MINT_SITE_URL = 'https://www.apefacingapes.com';
@@ -43,28 +44,251 @@ function SiteBar() {
     );
 }
 
-function Hero({ heroImage, onPick }) {
+// Hero auto-swap (Design spec 14.10). One random MINTED ape per load stays as base;
+// one trait layer changes per step, cumulative, then hold and reset.
+const HERO_STEP_MS = 1200;
+const HERO_HOLD_MS = 1000;
+// Curated: strong silhouettes only.
+const HERO_POOL = {
+    hat: ['glitter_cowboy_hat', 'german_ape_club_hat', 'beret', 'pudgy_hat', 'cats_hat', 'vegas'],
+    outfit: ['vegas', 'cheetah_hoodie', 'french_stripes', 'blazer', 'apefest_jacket'],
+    eyes: ['star_glasses', 'vision_pro', 'btc_eyes'],
+    hand: ['banana', 'basketball', 'candle', 'fireworks', 'gm_espresso', 'balloon_moon'],
+    mouth: ['lollipop', 'banana_smile', 'big_smile'],
+};
+const HERO_ORDER = ['hat', 'outfit', 'eyes', 'hand', 'hat', 'mouth'];
+const HERO_PARAM = { hat: 'hatAssetType', outfit: 'secondAssetType', eyes: 'eyesAssetType', hand: 'assetType', mouth: 'mouthAssetType' };
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+// Builds the 6 cumulative looks for one cycle: [{ look, cat, value }].
+function buildHeroSteps() {
+    const look = {};
+    const usedHat = new Set();
+    return HERO_ORDER.map((cat) => {
+        let options = HERO_POOL[cat];
+        if (cat === 'hat') options = options.filter((v) => !usedHat.has(v));
+        const value = pick(options);
+        if (cat === 'hat') usedHat.add(value);
+        look[cat] = value;
+        return { look: { ...look }, cat, value };
+    });
+}
+const lookParams = (look) => {
+    const out = {};
+    Object.entries(look || {}).forEach(([cat, v]) => { if (v) out[HERO_PARAM[cat]] = v; });
+    if (!out.assetType) out.assetType = 'AFA';
+    return out;
+};
+// /api/get-asset answers with Cache-Control: no-cache, so a plain <img> preload would be
+// fetched again on display. Preload into a blob URL instead and show that (instant swap).
+const preloadImage = async (url) => {
+    try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blobUrl = URL.createObjectURL(await res.blob());
+        const img = new Image();
+        img.src = blobUrl;
+        if (img.decode) await img.decode().catch(() => {});
+        return blobUrl;
+    } catch (e) {
+        return url;
+    }
+};
+
+function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook }) {
+    const [value, setValue] = useState('');
+    const [heroId, setHeroId] = useState(null);
+    useEffect(() => {
+        if (heroId == null && mintedIds.length) setHeroId(pick(mintedIds));
+    }, [heroId, mintedIds]);
+    const urlFor = useCallback((look) => {
+        const q = new URLSearchParams({ tokenId: String(heroId), ...lookParams(look) });
+        return `${apiBase}/api/get-asset?${q.toString()}`;
+    }, [apiBase, heroId]);
+
+    const reduceMotion = useMemo(() => typeof window !== 'undefined' && window.matchMedia
+        && window.matchMedia('(prefers-reduced-motion: reduce)').matches, []);
+    const [steps, setSteps] = useState(null);      // current cycle
+    const [ready, setReady] = useState(false);     // all 6 preloaded
+    const [stepIdx, setStepIdx] = useState(-1);    // -1 = original ape
+    const [layers, setLayers] = useState({ a: null, b: null, front: 'a' });
+    const [stopped, setStopped] = useState(false);
+    const hoverRef = useRef(false);
+    const inViewRef = useRef(true);
+    const stageRef = useRef(null);
+
+    // Cycles: build + preload all 6 looks first. The next cycle preloads during the
+    // current one, so the reset to the original ape is short.
+    const nextCycleRef = useRef(null);
+    const baseSrcRef = useRef(null);
+    const prevStepsRef = useRef(null);
+    const prepareCycle = useCallback(() => {
+        const next = buildHeroSteps();
+        const done = Promise.all(next.map((st) => preloadImage(urlFor(st.look))))
+            .then((srcs) => next.map((st, i) => ({ ...st, src: srcs[i] })));
+        nextCycleRef.current = done;
+        return done;
+    }, [urlFor]);
+    const startCycle = useCallback(async () => {
+        const pending = nextCycleRef.current || prepareCycle();
+        nextCycleRef.current = null;
+        setReady(false);
+        const next = await pending;
+        // Free the previous cycle's blob URLs once they are off screen.
+        const old = prevStepsRef.current;
+        prevStepsRef.current = next;
+        if (old) window.setTimeout(() => old.forEach((st) => { if (st.src && st.src.startsWith('blob:')) URL.revokeObjectURL(st.src); }), 3000);
+        setSteps(next);
+        setReady(true);
+    }, [prepareCycle]);
+
+    useEffect(() => {
+        if (heroId == null) return;
+        setStepIdx(-1);
+        baseSrcRef.current = urlFor(null);
+        setLayers({ a: baseSrcRef.current, b: null, front: 'a' });
+        nextCycleRef.current = null;
+        preloadImage(urlFor(null)).then((src) => { baseSrcRef.current = src; });
+        startCycle();
+    }, [heroId, urlFor, startCycle]);
+
+    // Reduced motion: show the full look statically.
+    useEffect(() => {
+        if (reduceMotion && ready && steps) {
+            setStepIdx(steps.length - 1);
+            setLayers({ a: steps[steps.length - 1].src || urlFor(steps[steps.length - 1].look), b: null, front: 'a' });
+        }
+    }, [reduceMotion, ready, steps, urlFor]);
+
+    // Pause when out of viewport.
+    useEffect(() => {
+        const el = stageRef.current;
+        if (!el || typeof IntersectionObserver === 'undefined') return undefined;
+        const io = new IntersectionObserver(([e]) => { inViewRef.current = e.isIntersecting; }, { threshold: 0.1 });
+        io.observe(el);
+        return () => io.disconnect();
+    }, [heroId]);
+
+    useEffect(() => {
+        if (reduceMotion || stopped || !ready || !steps) return undefined;
+        const isLast = stepIdx === steps.length - 1;
+        const delay = isLast ? HERO_STEP_MS + HERO_HOLD_MS : HERO_STEP_MS;
+        let timer = null;
+        const tick = () => {
+            if (document.hidden || hoverRef.current || !inViewRef.current) { timer = window.setTimeout(tick, 250); return; }
+            const show = (url) => setLayers((prev) => (prev.front === 'a' ? { ...prev, b: url, front: 'b' } : { ...prev, a: url, front: 'a' }));
+            if (isLast) {
+                // Reset to the original ape, then prepare a fresh cycle.
+                show(baseSrcRef.current || urlFor(null));
+                setStepIdx(-1);
+                startCycle();
+            } else {
+                show(steps[stepIdx + 1].src || urlFor(steps[stepIdx + 1].look));
+                setStepIdx(stepIdx + 1);
+                if (stepIdx + 1 === 2 && !nextCycleRef.current) prepareCycle();
+            }
+        };
+        timer = window.setTimeout(tick, delay);
+        return () => window.clearTimeout(timer);
+    }, [reduceMotion, stopped, ready, steps, stepIdx, urlFor, startCycle, prepareCycle]);
+
+    const current = steps && stepIdx >= 0 ? steps[stepIdx] : null;
+    const currentLook = current ? current.look : {};
+    const openThis = () => {
+        if (heroId == null) return;
+        setStopped(true);
+        onOpenLook(String(heroId), currentLook);
+    };
+    const onStageClick = () => {
+        // Mobile: tap stops the swap and opens this ape with the current look.
+        if (window.matchMedia('(hover: none)').matches) openThis();
+    };
+
+    const submit = (e) => {
+        e.preventDefault();
+        const id = value.replace(/[^0-9]/g, '').slice(0, 4);
+        if (id) onSubmitId(id);
+        else document.getElementById('hero-token-id')?.focus();
+    };
+    const tryRandom = () => {
+        if (!mintedIds.length) return;
+        const id = String(pick(mintedIds));
+        setValue(id);
+        onSubmitId(id);
+    };
+    const catLabel = { hat: 'Hat', outfit: 'Outfit', eyes: 'Eyes', hand: 'Hand', mouth: 'Mouth' };
+
     return (
-        <section className="hero" aria-labelledby="hero-title">
+        <section className="hero hero--try" aria-labelledby="hero-title">
             <div className="hero-copy">
+                <p className="hero-eyebrow">AFA Editor</p>
                 <h1 id="hero-title" className="hero-title">Dress up your Ape Facing Ape.</h1>
-                <p className="hero-lede">
-                    Ape Facing Apes are Bored Apes turned to face you. Pick a minted AFA, swap outfits, hats and effects, and download the result.
-                </p>
-                <button type="button" className="hero-cta" onClick={onPick}>
-                    Pick your ape
+                <p className="hero-lede">Pick an ape, try on hats, outfits and effects.</p>
+                <div className="hero-art">
+                    <div className="hero-stage" ref={stageRef} onClick={onStageClick}
+                        onMouseEnter={() => { hoverRef.current = true; }} onMouseLeave={() => { hoverRef.current = false; }}
+                        role="img" aria-label={heroId != null ? `AFA #${heroId} trying on traits` : 'Loading ape'}>
+                        {layers.a && <img src={layers.a} alt="" width="480" height="480" decoding="sync"
+                            className={`hero-ape ${layers.front === 'a' ? 'is-front' : ''}`} />}
+                        {layers.b && <img src={layers.b} alt="" width="480" height="480" decoding="sync"
+                            className={`hero-ape ${layers.front === 'b' ? 'is-front' : ''}`} />}
+                    </div>
+                    {heroId != null && (
+                        <div className="hero-caption">
+                            <span className="hero-caption-left">
+                                <span className="hero-caption-name">AFA #{heroId}</span>
+                                {reduceMotion ? (
+                                    <span className="hero-caption-trait"> · styled</span>
+                                ) : (
+                                    <span className="hero-caption-trait" key={stepIdx}>
+                                        {' · '}<span className="hero-caption-cat">{current ? catLabel[current.cat] : 'Original'}</span>
+                                        {current && <>{' · '}<span className="hero-caption-val">{assetLabel(current.cat, current.value) || current.value}</span></>}
+                                    </span>
+                                )}
+                            </span>
+                            <button type="button" className="hero-style-link" onClick={openThis}>Style this ape →</button>
+                        </div>
+                    )}
+                </div>
+                <form className="hero-form" onSubmit={submit} role="search">
+                    <label htmlFor="hero-token-id" className="visually-hidden">Ape ID</label>
+                    <input id="hero-token-id" className="hero-input" inputMode="numeric" autoComplete="off"
+                        placeholder="Ape ID, e.g. 2388" value={value}
+                        onChange={(e) => setValue(e.target.value.replace(/[^0-9]/g, '').slice(0, 4))} />
+                    <button type="submit" className="hero-cta">Open your ape</button>
+                </form>
+                <button type="button" className="hero-random" onClick={tryRandom} disabled={!mintedIds.length}>
+                    or try a random one
                 </button>
-            </div>
-            <div className="hero-art">
-                <img
-                    src={heroImage || './face.png'}
-                    alt=""
-                    width="1000"
-                    height="1000"
-                    className={`hero-ape ${heroImage ? '' : 'is-placeholder'}`}
-                />
+                <p className="hero-secondary">
+                    Not minted yet? Try it on anyway. Your Ape stays blurred until it's yours.{' '}
+                    <a href={MINT_URL} target="_blank" rel="noopener noreferrer">Mint to reveal</a> →
+                </p>
             </div>
         </section>
+    );
+}
+
+const TRAIT_CATEGORIES = [
+    ['outfit', 'Outfit'], ['mouth', 'Mouth'], ['hat', 'Hat'], ['eyes', 'Eyes'], ['hand', 'Hand'], ['extra', 'Extra'],
+];
+
+// Mobile (<768) mini preview bar: appears under the site bar once <20% of the big preview is visible.
+function MiniPreviewBar({ visible, tokenId, imageUrl, previewOnly, lastTrait, onJump }) {
+    const name = previewOnly ? `Ape #${tokenId}` : `AFA #${tokenId}`;
+    return (
+        <div className={`mini-bar ${visible ? 'is-visible' : ''}`} aria-hidden={!visible}>
+            <button type="button" className="mini-bar-main" onClick={onJump} tabIndex={visible ? 0 : -1}
+                aria-label={`Back to ${name} preview`}>
+                <span className={`mini-bar-thumb ${previewOnly ? 'is-blurred' : ''}`}>
+                    {String(imageUrl).startsWith('blob:') && <img key={imageUrl} src={imageUrl} alt="" width="56" height="56" />}
+                </span>
+                <span className="mini-bar-text">
+                    <span className="mini-bar-name">{name}</span>
+                    {lastTrait && <span className="mini-bar-trait">{lastTrait}</span>}
+                </span>
+            </button>
+        </div>
     );
 }
 
@@ -79,9 +303,6 @@ function Footer() {
                     Mint on apefacingapes.com
                 </a>
             </nav>
-            <p className="footer-legal">
-                © Ape Facing Apes. BAYC marks and assets licensed from Yuga Labs, Inc.
-            </p>
         </footer>
     );
 }
@@ -791,6 +1012,17 @@ function App() {
         return true;
     }, [resetTraitSelections, verifyTokenMinted]);
 
+    // Hero "Style this ape": open a minted ape with the hero's current look.
+    const handleOpenLook = useCallback(async (id, look) => {
+        const ok = await handleTokenSubmit(id);
+        if (!ok || !look) return;
+        if (look.hat) setHatAsset(look.hat);
+        if (look.outfit) setSecondAsset(look.outfit);
+        if (look.eyes) setEyesAsset(look.eyes);
+        if (look.hand) setSelectedAsset(look.hand);
+        if (look.mouth) setMouthAsset(look.mouth);
+    }, [handleTokenSubmit]);
+
     const handleSuggestionClick = (value) => {
         // Suggestions are derived from minted token data, so select immediately.
         handleTokenSubmit(value);
@@ -1048,14 +1280,6 @@ function App() {
         { key: 'extra', label: 'Extra', value: thirdAsset, clear: () => setThirdAsset('') }
     ].filter((t) => Boolean(t.value));
 
-  const handlePickYourApe = () => {
-    const target = document.getElementById('editor-controls');
-    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    window.setTimeout(() => {
-      const input = document.getElementById('afa-token-id');
-      if (input) input.focus({ preventScroll: true });
-    }, 450);
-  };
 
   // Phillipp: selecting an ID (autofill, gallery tile, hero input) brings the preview
   // to the top of the viewport, below the sticky site bar. Reduced motion = instant jump.
@@ -1073,6 +1297,59 @@ function App() {
     return () => window.cancelAnimationFrame(raf);
   }, [tokenId, selectNonce]);
 
+  // Last changed trait for the mini bar ("Hat · Party Hat").
+  const [lastTrait, setLastTrait] = useState('');
+  const prevTraitsRef = useRef(null);
+  useEffect(() => {
+    const now = { outfit: secondAsset, mouth: mouthAsset, hat: hatAsset, eyes: eyesAsset, hand: selectedAsset, extra: thirdAsset };
+    const prev = prevTraitsRef.current;
+    prevTraitsRef.current = now;
+    if (!prev) return;
+    const changed = TRAIT_CATEGORIES.find(([key]) => prev[key] !== now[key]);
+    if (!changed) return;
+    const [key, title] = changed;
+    const v = now[key];
+    setLastTrait(v ? `${title} · ${assetLabel(key, v) || v}` : `${title} · None`);
+  }, [secondAsset, mouthAsset, hatAsset, eyesAsset, selectedAsset, thirdAsset]);
+  useEffect(() => { setLastTrait(''); }, [tokenId]);
+
+  // Expose the sticky header height to CSS (sticky preview top, scroll-margin).
+  useEffect(() => {
+    const bar = document.querySelector('.site-bar');
+    if (!bar) return undefined;
+    const apply = () => document.documentElement.style.setProperty('--site-bar-h', `${Math.round(bar.getBoundingClientRect().height)}px`);
+    apply();
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(apply) : null;
+    if (ro) ro.observe(bar);
+    window.addEventListener('resize', apply);
+    return () => { if (ro) ro.disconnect(); window.removeEventListener('resize', apply); };
+  }, []);
+
+  const [miniVisible, setMiniVisible] = useState(false);
+  useEffect(() => {
+    if (!tokenId || typeof IntersectionObserver === 'undefined') { setMiniVisible(false); return undefined; }
+    const target = document.getElementById('asset-display');
+    if (!target) return undefined;
+    const mq = window.matchMedia('(max-width: 767px)');
+    let ratio = 1;
+    const update = () => setMiniVisible(mq.matches && ratio < 0.2);
+    const io = new IntersectionObserver(([entry]) => { ratio = entry.intersectionRatio; update(); },
+      { threshold: [0, 0.2, 0.5, 1] });
+    io.observe(target);
+    mq.addEventListener('change', update);
+    return () => { io.disconnect(); mq.removeEventListener('change', update); };
+  }, [tokenId]);
+
+  const scrollToPreview = useCallback(() => {
+    const target = document.querySelector('.studio-preview');
+    if (!target) return;
+    const bar = document.querySelector('.site-bar');
+    const offset = (bar ? bar.getBoundingClientRect().height : 0) + 12;
+    const top = Math.max(0, target.getBoundingClientRect().top + window.scrollY - offset);
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top, behavior: reduce ? 'auto' : 'smooth' });
+  }, []);
+
   const appClassName = `App ${vegasButtonClicked ? 'vegas-glamour' : ''} ${tokenId ? 'has-token' : ''}`;
 
   return (
@@ -1082,8 +1359,20 @@ function App() {
       <SiteBar />
       {!tokenId && (
         <Hero
-          heroImage={sortedMintGalleryIds.length > 0 ? mintPreviewUrls[sortedMintGalleryIds[0]] : null}
-          onPick={handlePickYourApe}
+          apiBase={apiBaseCandidates[0]}
+          mintedIds={mintedTokenIds}
+          onSubmitId={handleTokenSubmit}
+          onOpenLook={handleOpenLook}
+        />
+      )}
+      {tokenId && (
+        <MiniPreviewBar
+          visible={miniVisible}
+          tokenId={tokenId}
+          imageUrl={currentImageUrl}
+          previewOnly={previewOnly}
+          lastTrait={lastTrait}
+          onJump={scrollToPreview}
         />
       )}
       <main className={`studio ${tokenId ? 'studio--editing' : 'studio--picking'}`}>
@@ -1102,12 +1391,16 @@ function App() {
             </div>
           </div>
 
+          {tokenId && (
+            <p className="preview-label">{previewOnly ? `Ape #${tokenId}` : `AFA #${tokenId}`}</p>
+          )}
           {tokenId && (previewOnly ? (
             <div className="preview-locked" role="note">
               <p className="preview-locked-title">Ape #{tokenId} is still looking the other way.</p>
+              <p className="preview-locked-note">Not minted yet? Try it on anyway. Your Ape stays blurred until it's yours.</p>
               <div className="preview-actions">
-                <a className="preview-download preview-mint" href={MINT_URL} target="_blank" rel="noopener noreferrer">
-                  Mint to reveal
+                <a className="preview-mint-link" href={MINT_URL} target="_blank" rel="noopener noreferrer">
+                  Mint to reveal →
                 </a>
                 <button type="button" className="preview-share" disabled title="Available after mint">Download</button>
               </div>
