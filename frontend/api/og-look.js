@@ -22,7 +22,7 @@ module.exports = async (req, res) => {
     if (!response.ok || !type.startsWith('image/')) throw new Error(`asset ${response.status}`);
     const ape = await sharp(Buffer.from(await response.arrayBuffer())).resize(510, 510, { fit: 'cover' }).png().toBuffer();
     if (!logo) {
-      try { logo = await sharp(fs.readFileSync(path.join(process.cwd(), 'public/logo-mark.png'))).resize({ height: 64 }).png().toBuffer(); } catch (e) { logo = false; }
+      try { logo = await sharp(fs.readFileSync(path.join(__dirname, '..', 'public', 'logo-mark.png'))).resize({ height: 64 }).png().toBuffer(); } catch (e) { logo = false; }
     }
     // Same grid as the afa-progress card: ape left, logo + headline + domain right.
     const textX = 640;

@@ -8,7 +8,7 @@
   "functions": {
     "api/og-look.js": {
       "maxDuration": 20,
-      "includeFiles": "{public/logo-mark.png,lib/fonts/**}"
+      "includeFiles": "{public/logo-mark.png,lib/fonts/Inter-SemiBold.ttf}"
     }
   }
 }
