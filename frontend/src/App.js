@@ -5,7 +5,7 @@ import { debug, error as logError } from './utils/debug';
 import AssetStrip from './AssetStrip';
 import { buildShareText, buildXIntentUrl } from './utils/shareText';
 import { assetLabel } from './utils/assetLabels';
-import { renderApefest, canvasToBlob, loadImage, loadApefestFonts, APEFEST_CRT, APEFEST_PAGE_SCAN, APEFEST_JUMP } from './utils/apefest';
+import { renderApefest, canvasToBlob, loadImage, loadApefestFonts, APEFEST_CRT, APEFEST_PAGE_SCAN, APEFEST_JUMP, buildApefestShareText } from './utils/apefest';
 
 // ApeFest (10.17): while true, the "Add frame" button becomes the ApeFest toggle.
 // Set to false after ApeFest to restore "Add frame"; nothing else needs to change.
@@ -1262,7 +1262,7 @@ function App() {
     const stripTokenId = tokenId;
     const stripEndpoint = previewOnly ? 'get-asset-preview' : 'get-asset';
 
-    const shareText = useMemo(() => buildShareText({
+    const shareText = useMemo(() => (apefestActive ? buildApefestShareText(tokenId, !previewOnly) : buildShareText({
         tokenId,
         traits: {
             outfit: secondAsset,
@@ -1274,7 +1274,7 @@ function App() {
         },
         framed: vegasButtonClicked,
         minted: !previewOnly,
-    }), [tokenId, secondAsset, selectedAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, vegasButtonClicked, previewOnly]);
+    })), [apefestActive, tokenId, secondAsset, selectedAsset, thirdAsset, mouthAsset, hatAsset, eyesAsset, vegasButtonClicked, previewOnly]);
     const xShareUrl = useMemo(() => buildXIntentUrl(shareText), [shareText]);
 
     // Share = text + image, no URL (Phillipp). iOS share targets (incl. X) often drop

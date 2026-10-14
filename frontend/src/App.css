@@ -5913,3 +5913,43 @@ body.apefest-body .mini-bar { background-color: #000 !important; }
 @media (prefers-reduced-motion: reduce) {
   .apefest-button:not(.is-on) { animation: none; box-shadow: 0 0 8px rgba(225, 20, 30, 0.35); }
 }
+
+/* ===== ApeFest mode: per-tile effect (red duotone, soft glow, fine scanlines) ===== */
+.App.apefest-mode .asset-thumb-img,
+.App.apefest-mode .gallery-item.has-image .gallery-thumb {
+  position: relative;
+  box-shadow: 0 0 10px rgba(225, 20, 30, 0.22), inset 0 0 0 1px rgba(225, 20, 30, 0.35);
+}
+.App.apefest-mode .asset-thumb-img img,
+.App.apefest-mode .gallery-item.has-image .gallery-thumb img {
+  filter: grayscale(1) sepia(1) hue-rotate(-50deg) saturate(3.2) brightness(0.95) contrast(1.08);
+  transition: filter 0.2s ease;
+}
+.App.apefest-mode .asset-thumb-img::after,
+.App.apefest-mode .gallery-item.has-image .gallery-thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.22) 0 1px, transparent 1px 3px);
+  mix-blend-mode: multiply;
+}
+/* Selected / hovered tiles: true colour + red ring so the pick stands out */
+.App.apefest-mode .asset-thumb.is-active .asset-thumb-img img,
+.App.apefest-mode button.gallery-item.is-selected .gallery-thumb img,
+.App.apefest-mode .asset-thumb:not(:disabled):hover .asset-thumb-img img,
+.App.apefest-mode button.gallery-item:hover .gallery-thumb img {
+  filter: none;
+}
+.App.apefest-mode .asset-thumb.is-active .asset-thumb-img,
+.App.apefest-mode button.gallery-item.is-selected .gallery-thumb {
+  outline: 2px solid #ff2a36;
+  outline-offset: 2px;
+  box-shadow: 0 0 16px rgba(255, 42, 54, 0.55);
+}
+.App.apefest-mode .asset-thumb.is-active .asset-thumb-img::after,
+.App.apefest-mode button.gallery-item.is-selected .gallery-thumb::after { opacity: 0.4; }
+@media (prefers-reduced-motion: reduce) {
+  .App.apefest-mode .asset-thumb-img img,
+  .App.apefest-mode .gallery-item.has-image .gallery-thumb img { transition: none; }
+}

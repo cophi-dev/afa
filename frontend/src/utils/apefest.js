@@ -15,6 +15,13 @@ export const APEFEST_CRT = 1.8;
 export const APEFEST_SCAN = 2.5;
 export const APEFEST_JUMP = 1.0;
 // Page overlay scanline strength (Design: lighter than the image so the UI stays readable).
+// Share text while ApeFest mode is on (text + image, no link). Final copy from afa.
+// {id} = token id. Unminted apes get "Ape #N" instead of "AFA #N".
+export const APEFEST_SHARE_TEXT = 'Four days. One club.\nAFA #{id}, still here. @ApeFacingApes';
+export const buildApefestShareText = (tokenId, minted = true) => {
+  const text = APEFEST_SHARE_TEXT.replace(/\{id\}/g, String(tokenId ?? ''));
+  return minted ? text : text.replace(/\bAFA #/g, 'Ape #');
+};
 export const APEFEST_PAGE_SCAN = 1.2;
 
 // Text layout per format (Design). All values in output pixels.
