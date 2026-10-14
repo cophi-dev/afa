@@ -5,7 +5,7 @@ let font = null;
 const loadFont = () => {
   if (!font) {
     const opentype = require('opentype.js');
-    const buf = fs.readFileSync(path.join(process.cwd(), 'lib/fonts/Inter-SemiBold.ttf'));
+    const buf = fs.readFileSync(path.join(__dirname, 'fonts', 'Inter-SemiBold.ttf'));
     font = opentype.parse(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength));
   }
   return font;
