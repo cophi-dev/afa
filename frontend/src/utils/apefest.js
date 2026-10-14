@@ -22,6 +22,9 @@ export const APEFEST_SHARE_TEXT = 'Four days. One club.\nAFA #{id}, still here. 
 export const APEFEST_SHARE_TEXT_UNMINTED = 'Four days. One club.\nApe #{id}, not here yet. @ApeFacingApes';
 export const buildApefestShareText = (tokenId, minted = true) =>
   (minted ? APEFEST_SHARE_TEXT : APEFEST_SHARE_TEXT_UNMINTED).replace(/\{id\}/g, String(tokenId ?? ''));
+// Unminted apes: the existing server-blurred image gets the same ApeFest render on top (blur unchanged).
+// Bottom line becomes 'APE #N' (mono) with a small 'NOT YET MINTED' (50%) below; the claim stays.
+export const apefestUnmintedText = (tokenId) => ({ sub: `APE #${tokenId}`, note: 'NOT YET MINTED' });
 export const APEFEST_PAGE_SCAN = 1.2;
 
 // Text layout per format (Design). All values in output pixels.
@@ -94,7 +97,7 @@ function mulberry32(seed) {
 // Exposure: the reference used 1.0 (#2388) and 0.87 (#970/#4381); 0.93 stays within ~1.5/255 of all three.
 export const APEFEST_GAIN = 0.93;
 
-export async function renderApefest(image, format = 'square', { seed = 0, caption = 'STILL HERE.', sub = '10.17', gain, crt = APEFEST_CRT, scan = APEFEST_SCAN, jump = APEFEST_JUMP, text } = {}) {
+export async function renderApefest(image, format = 'square', { seed = 0, caption = 'STILL HERE.', sub = '10.17', note = null, gain, crt = APEFEST_CRT, scan = APEFEST_SCAN, jump = APEFEST_JUMP, text } = {}) {
     await loadApefestFonts();
     const { W, H, apeScale, apeX } = APEFEST_FORMATS[format];
     const T = { ...APEFEST_TEXT[format], ...(text || {}) };
@@ -292,6 +295,15 @@ export async function renderApefest(image, format = 'square', { seed = 0, captio
             ctx.font = `700 ${T.subSize}px "AFA Mono Digits", "DejaVu Sans Mono", Menlo, monospace`;
             ctx.textAlign = T.subAlign === 'center' ? 'center' : 'left';
             ctx.fillText(sub, T.subAlign === 'center' ? W / 2 : T.x, T.subBaseline);
+            ctx.restore();
+        }
+        if (note) {
+            // Second, smaller line under the sub (unminted: 'NOT YET MINTED'), 50% opacity.
+            ctx.save();
+            ctx.globalAlpha *= 0.5;
+            ctx.font = `700 ${Math.round(T.subSize * 0.62)}px "AFA Mono Digits", "DejaVu Sans Mono", Menlo, monospace`;
+            ctx.textAlign = T.subAlign === 'center' ? 'center' : 'left';
+            ctx.fillText(note, T.subAlign === 'center' ? W / 2 : T.x, T.subBaseline + Math.round(T.subSize * 1.15));
             ctx.restore();
         }
     };

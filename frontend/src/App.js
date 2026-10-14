@@ -5,7 +5,7 @@ import { debug, error as logError } from './utils/debug';
 import AssetStrip from './AssetStrip';
 import { buildShareText, buildXIntentUrl } from './utils/shareText';
 import { assetLabel } from './utils/assetLabels';
-import { renderApefest, canvasToBlob, loadImage, loadApefestFonts, APEFEST_CRT, APEFEST_PAGE_SCAN, APEFEST_JUMP, buildApefestShareText } from './utils/apefest';
+import { renderApefest, canvasToBlob, loadImage, loadApefestFonts, APEFEST_CRT, APEFEST_PAGE_SCAN, APEFEST_JUMP, buildApefestShareText, apefestUnmintedText } from './utils/apefest';
 
 // ApeFest (10.17): while true, the "Add frame" button becomes the ApeFest toggle.
 // Set to false after ApeFest to restore "Add frame"; nothing else needs to change.
@@ -844,7 +844,7 @@ function App() {
             apefestSrcRef.current = null;
             if (isApefest) {
                 const img = await loadImage(URL.createObjectURL(rawBlob));
-                const square = await renderApefest(img, 'square', { seed: Number(newTokenId) || 0 });
+                const square = await renderApefest(img, 'square', { seed: Number(newTokenId) || 0, ...(isPreviewOnly ? apefestUnmintedText(newTokenId) : {}) });
                 blob = await canvasToBlob(square);
                 apefestSrcRef.current = img;
                 if (requestId !== activeRenderRequestRef.current) return;
@@ -1236,7 +1236,7 @@ function App() {
         if (!apefestActive || !apefestSrcRef.current) return;
         setApefestBusy(true);
         try {
-            const wide = await renderApefest(apefestSrcRef.current, 'wide', { seed: Number(tokenId) || 0 });
+            const wide = await renderApefest(apefestSrcRef.current, 'wide', { seed: Number(tokenId) || 0, ...(previewOnly ? apefestUnmintedText(tokenId) : {}) });
             const blob = await canvasToBlob(wide);
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
