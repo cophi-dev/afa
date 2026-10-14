@@ -24,7 +24,7 @@ body {
   margin: 0;
   color: var(--text-color);
   background: radial-gradient(circle at top left, #1b1230 0, #050509 40%, #050509 100%);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  font-family: var(--font-body, 'Barlow', ui-sans-serif, system-ui, sans-serif);
 }
 
 .body-background-fade {
@@ -675,7 +675,7 @@ body {
   margin: 0;
   color: var(--text-color);
   background: radial-gradient(circle at top left, #1b1230 0, #050509 40%, #050509 100%);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  font-family: var(--font-body, 'Barlow', ui-sans-serif, system-ui, sans-serif);
 }
 
 .body-background-fade {
@@ -1561,8 +1561,7 @@ body {
   color: var(--text-color, #f5f5f7);
   background:
     radial-gradient(circle at top left, #1b1230 0, #050509 40%, #050509 100%);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text',
-    'Segoe UI', sans-serif;
+  font-family: var(--font-body, 'Barlow', ui-sans-serif, system-ui, sans-serif);
 }
 
 .body-background-fade {
@@ -3691,7 +3690,7 @@ button,
 input,
 select,
 textarea {
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-body, 'Barlow', ui-sans-serif, system-ui, sans-serif);
 }
 
 .App {
@@ -4097,7 +4096,7 @@ button.gallery-item.is-selected {
 
 .skip-link {
   border-radius: 999px;
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-body, 'Barlow', ui-sans-serif, system-ui, sans-serif);
 }
 
 @media (min-width: 980px) {
@@ -4223,7 +4222,7 @@ button.gallery-item.is-selected {
 
 /* ===== Design audit 14.10: hero, layout, loading, type, footer ===== */
 :root {
-  --font-display: 'Archivo Black', Inter, ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Saira Extra Condensed', 'Arial Narrow', ui-sans-serif, system-ui, sans-serif;
   --fs-xs: 0.75rem;
   --fs-sm: 0.875rem;
   --fs-md: 1rem;
@@ -4669,8 +4668,8 @@ button.gallery-item.is-selected {
   --accent: #f5c451;
   --accent-color: #f5c451;
   --surface-color: transparent;
-  --font-display: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-body: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Saira Extra Condensed', 'Arial Narrow', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Barlow', ui-sans-serif, system-ui, sans-serif;
 }
 
 html,
@@ -5626,6 +5625,58 @@ html, body { overflow-x: clip; overflow-y: visible; }
 @media (max-width: 767px) {
   .hero--try .hero-art { display: flex; flex-direction: column; align-items: center; }
   .hero--try .hero-stage, .hero--try .hero-caption { width: min(calc(100vw - 32px), 46svh); }
+}
+
+/* ===== Typography aligned with www.apefacingapes.com (preview, typography only) ===== */
+body { font-family: var(--font-body); font-weight: 400; font-size: 1rem; line-height: 1.5; }
+.MuiTypography-root, .MuiButtonBase-root, .MuiInputBase-root, .MuiChip-root { font-family: inherit; }
+/* Headlines: Saira Extra Condensed 700, normal case, no tracking */
+.hero-title, .gallery-heading, .gallery-title, .panel-summary, .site-bar-title, h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 0.95;
+  text-transform: none;
+}
+.hero-title { font-size: 72px; }
+@media (max-width: 640px) { .hero-title { font-size: 48px; line-height: 0.95; margin-bottom: 16px; } }
+/* Saira caps only for nav, eyebrows, status tags and the primary CTA */
+.site-bar a, .site-bar-nav a, .hero-cta, .suggestion-tag, .eyebrow {
+  font-family: var(--font-label);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 13px;
+}
+/* Picker buttons, trait chips, category labels, actions, asset names: Barlow 500 */
+button:not(.hero-cta), .claim-prompt-cta, .trait-chip-label, .dropdown-header, .gallery-sort-label,
+.token-search-label, .asset-thumb-label, .MuiButton-root {
+  font-family: var(--font-body);
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 15px;
+}
+@media (max-width: 640px) {
+  button:not(.hero-cta), .trait-chip-label, .dropdown-header, .asset-thumb-label { font-size: 14px; }
+}
+label { font-weight: 500; }
+/* Numbers and IDs */
+.gallery-id, .mint-count, .site-bar-count, [class*="counter"], [class*="-count"] {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+/* ===== Combo #20 + #18: hero A gets the #18 headline/label styles ===== */
+.hero--try .hero-title { font-family: var(--font-display); font-weight: 700; line-height: 0.95; letter-spacing: 0; font-size: 72px; }
+.hero-eyebrow { font-family: var(--font-label); font-weight: 600; letter-spacing: .1em; font-size: 13px; }
+.hero-caption-name, .mini-bar-name, .preview-label { font-family: var(--font-display); font-weight: 700; }
+.hero-caption-cat { font-family: var(--font-label); font-weight: 600; }
+.hero-caption-val, .mini-bar-trait, .hero--try .hero-lede, .hero--try .hero-secondary { font-family: var(--font-body); }
+@media (max-width: 767px) {
+  .hero--try .hero-title { font-size: 48px; margin-bottom: 0; }
 }
 /* 375x667: keep "Open your ape" fully above the fold */
 @media (max-width: 767px) and (max-height: 700px) {
