@@ -1,6 +1,22 @@
 import { runJob } from './apefestJob';
 import { LAUNCH_UNMINTED } from './apefestScene';
 
+// Uncompressed 24-bit BMP of the exact pixels: instant to build and decode (canvas.toBlob PNG
+// encoding of a 1000x1000 frame took 0.5-6.8 s at 4x CPU and was most of the cold preview time).
+// The PNG for download/share is encoded afterwards, off the critical path.
+export function makeBmp(px, W, H) {
+    const row = Math.ceil((W * 3) / 4) * 4; const size = 54 + row * H;
+    const buf = new ArrayBuffer(size); const dv = new DataView(buf); const u8 = new Uint8Array(buf);
+    dv.setUint16(0, 0x4d42, true); dv.setUint32(2, size, true); dv.setUint32(10, 54, true);
+    dv.setUint32(14, 40, true); dv.setInt32(18, W, true); dv.setInt32(22, H, true);
+    dv.setUint16(26, 1, true); dv.setUint16(28, 24, true); dv.setUint32(34, row * H, true);
+    for (let y = 0; y < H; y += 1) {
+        let o = 54 + (H - 1 - y) * row; let i = y * W * 4;
+        for (let x = 0; x < W; x += 1, i += 4, o += 3) { u8[o] = px[i + 2]; u8[o + 1] = px[i + 1]; u8[o + 2] = px[i]; }
+    }
+    return new Blob([buf], { type: 'image/bmp' });
+}
+
 // ---------- editor entry point ----------
 // Minted:   launch post frame; square text = afa's PIL layers (1:1 pixel-identical).
 // Unminted: afa reply pipeline (key_reply on the server blur + scene with soft glow), top text from
@@ -98,6 +114,7 @@ export async function renderApefestLaunch(blob, format = 'square', { unminted = 
     const px = await runAnywhere(job, transfer);
     const canvas = document.createElement('canvas');
     canvas.width = F.W; canvas.height = F.H;
+    canvas.apefestBmp = makeBmp(px, F.W, F.H);
     canvas.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(px.buffer, px.byteOffset, px.length), F.W, F.H), 0, 0);
     return canvas;
 }
