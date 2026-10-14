@@ -15,7 +15,7 @@ const APEFEST_ENABLED = true;
 const DEFAULT_API_URL = 'https://afa-editor.ew.r.appspot.com';
 const MINT_SITE_URL = 'https://www.apefacingapes.com';
 const GRID_VIEW_URL = 'https://afa-mint-progress.vercel.app';
-const PREVIEW_CONCURRENCY = 4;
+const PREVIEW_CONCURRENCY = 2;
 const PREVIEW_RETRIES = 2;
 const PREVIEW_RETRY_COOLDOWN_MS = 15000;
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -475,6 +475,8 @@ function MintedGallery({
 
 // Hard timeout per API call: a stalled render no longer hangs the loader (#4381 ~50s).
 const API_TIMEOUT_MS = 20000;
+const RENDER_CACHE = (typeof window !== 'undefined' && window.caches)
+    ? window.caches.open('afa-renders-v1').catch(() => null) : null;
 
 function App() {
     const apiBaseCandidates = useMemo(() => Array.from(new Set([
@@ -487,10 +489,19 @@ function App() {
 
         for (const baseUrl of apiBaseCandidates) {
             try {
-                const response = await fetchWithTimeout(`${baseUrl}${pathWithQuery}`, API_TIMEOUT_MS);
+                const url = `${baseUrl}${pathWithQuery}`;
+                // Renders are deterministic per URL but the server sends no-cache and re-renders each time
+                // (2-4s, ~400KB). Keep them in Cache Storage so repeat views/visits don't hit the server.
+                const cacheable = RENDER_CACHE && /^\/api\/get-asset(-preview)?\?/.test(pathWithQuery);
+                if (cacheable) {
+                    const hit = await RENDER_CACHE.then((c) => c && c.match(url)).catch(() => null);
+                    if (hit) return await parser(hit);
+                }
+                const response = await fetchWithTimeout(url, API_TIMEOUT_MS);
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}`);
                 }
+                if (cacheable) RENDER_CACHE.then((c) => c && c.put(url, response.clone())).catch(() => null);
                 return await parser(response);
             } catch (err) {
                 lastError = err;
