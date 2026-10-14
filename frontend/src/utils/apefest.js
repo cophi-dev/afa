@@ -33,7 +33,7 @@ export const APEFEST_PAGE_SCAN = 1.2;
 // wide:   claim + date left at shoulder height, ape in the right third.
 export const APEFEST_TEXT = {
     square: { align: 'center', capHeight: 40, capTop: 72, headGap: 50, headShift: 30, subSize: 22, subBaseline: 950, subAlign: 'center', subAlpha: 0.7 },
-    wide: { align: 'left', x: 96, capHeight: 36, capTop: 640, subSize: 22, subBaseline: 722, subAlign: 'left', subAlpha: 0.7 },
+    wide: { align: 'left', x: 96, capHeight: 40, capTop: 450, subSize: 24, subBaseline: 540, subAlign: 'left', subAlpha: 0.7 },
 };
 
 export const APEFEST_FORMATS = {
@@ -336,6 +336,14 @@ export async function renderApefest(image, format = 'square', { seed = 0, captio
     }
     ctx.putImageData(img, 0, 0);
 
+    drawApefestText(ctx, format, { caption, sub, note, text });
+    return out;
+}
+
+// Claim + date/sub/note over a rendered ApeFest frame (shared by the launch renderer for 16:9).
+export function drawApefestText(ctx, format = 'square', { caption = 'STILL HERE.', sub = '10.17', note = null, text } = {}) {
+    const T = { ...APEFEST_TEXT[format], ...(text || {}) };
+    const { width: W } = ctx.canvas;
     // Claim (Press Start 2P, sized to the cap height) + date (mono), red with a slight glow
     ctx.font = '100px "Press Start 2P", monospace';
     const capAt100 = ctx.measureText('H').actualBoundingBoxAscent || 87.5;
@@ -383,7 +391,6 @@ export async function renderApefest(image, format = 'square', { seed = 0, captio
     drawText();
     ctx.restore();
     drawText();
-    return out;
 }
 
 export const canvasToBlob = (canvas) => new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));

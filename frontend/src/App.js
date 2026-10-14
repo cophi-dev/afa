@@ -6,7 +6,8 @@ import { debug, error as logError } from './utils/debug';
 import AssetStrip from './AssetStrip';
 import { buildShareText, buildXIntentUrl } from './utils/shareText';
 import { assetLabel } from './utils/assetLabels';
-import { renderApefest, canvasToBlob, loadImage, loadApefestFonts, APEFEST_CRT, APEFEST_PAGE_SCAN, APEFEST_JUMP, buildApefestShareText, apefestUnmintedText } from './utils/apefest';
+import { renderApefestLaunch } from './utils/apefestLaunch';
+import { renderApefest, drawApefestText, canvasToBlob, loadImage, loadApefestFonts, APEFEST_CRT, APEFEST_PAGE_SCAN, APEFEST_JUMP, buildApefestShareText, apefestUnmintedText } from './utils/apefest';
 
 // ApeFest (10.17): while true, the "Add frame" button becomes the ApeFest toggle.
 // Set to false after ApeFest to restore "Add frame"; nothing else needs to change.
@@ -884,9 +885,13 @@ function App() {
             apefestSrcRef.current = null;
             if (isApefest) {
                 const img = await loadImage(URL.createObjectURL(rawBlob));
-                const square = await renderApefest(img, 'square', { seed: Number(newTokenId) || 0, ...(isPreviewOnly ? apefestUnmintedText(newTokenId) : {}) });
+                // Minted: exact launch-post render (afa's scene maths, bit-exact, in a worker).
+                // Unminted (blurred preview): editor look on top of the server blur.
+                const square = isPreviewOnly
+                    ? await renderApefest(img, 'square', { seed: Number(newTokenId) || 0, ...apefestUnmintedText(newTokenId) })
+                    : await renderApefestLaunch(rawBlob, 'square');
                 blob = await canvasToBlob(square);
-                apefestSrcRef.current = img;
+                apefestSrcRef.current = { img, blob: rawBlob };
                 if (requestId !== activeRenderRequestRef.current) return;
             }
             setSyncPendingTokenId('');
@@ -1281,7 +1286,13 @@ function App() {
         if (!apefestActive || !apefestSrcRef.current) return;
         setApefestBusy(true);
         try {
-            const wide = await renderApefest(apefestSrcRef.current, 'wide', { seed: Number(tokenId) || 0, ...(previewOnly ? apefestUnmintedText(tokenId) : {}) });
+            let wide;
+            if (previewOnly) {
+                wide = await renderApefest(apefestSrcRef.current.img, 'wide', { seed: Number(tokenId) || 0, ...apefestUnmintedText(tokenId) });
+            } else {
+                wide = await renderApefestLaunch(apefestSrcRef.current.blob, 'wide');
+                drawApefestText(wide.getContext('2d'), 'wide');
+            }
             const blob = await canvasToBlob(wide);
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
