@@ -1,10 +1,11 @@
-import { decodePng, renderSceneRGB, pilAlphaComposite, pilGaussianBlur, keyReply } from './apefestScene';
+import { decodePng, renderSceneRGB, pilAlphaComposite, pilGaussianBlur, keyReply, fitTop } from './apefestScene';
 
 // One render job (worker or main-thread fallback).
 export async function runJob({ src, raw, W, H, opts, layers, glowLayers, rawLayer, unminted }) {
     let ape;
     if (unminted) ape = keyReply(raw);
     else ape = await decodePng(src);
+    if (W === 1000 && H === 1000) ape = fitTop(ape, (opts && opts.apeScale) || 0.92, H);
     const out = renderSceneRGB(ape, W, H, opts);
     const decoded = [];
     for (const buf of layers || []) decoded.push((await decodePng(buf)).data);

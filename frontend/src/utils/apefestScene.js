@@ -399,3 +399,26 @@ export function keyReply(prev, { feather = 7, extraBlur = 12, gain = 1.15, shado
     return { w: S, h: S, data: out };
 }
 export const LAUNCH_UNMINTED = { crt: 1.8, soft: false, apeScale: 0.84, glow: 0.9, rimK: 0.4, rimR: 2.0, rimTopFade: true };
+
+// afa make_reply.py fit_top: the claim spans y~72..112; if the ape silhouette (ignoring cyan eye
+// beams, which may cross the claim) would start above TOP_MIN, move the ape layer down (bottom crops).
+export const TOP_MIN = 152;
+export function fitTop(ape, apeScale, H = 1000, thr = 20) {
+    const n = ape.h; const w = ape.w; const s = Math.trunc(H * apeScale); const d8 = ape.data;
+    let row0 = -1;
+    for (let y = 0; y < n && row0 < 0; y += 1) {
+        let cnt = 0;
+        for (let x = 0; x < w; x += 1) {
+            const i = (y * w + x) * 4; const r = d8[i]; const g = d8[i + 1]; const b = d8[i + 2];
+            const beam = g > 150 && b > 130 && r < 140 && g - r > 60;
+            if (d8[i + 3] > thr && !beam) cnt += 1;
+        }
+        if (cnt > 3) row0 = y;
+    }
+    const top = row0 >= 0 ? (H - s) + (row0 * s) / n : H;
+    if (top >= TOP_MIN) return ape;
+    const d = Math.ceil(((TOP_MIN - top) * n) / s);
+    const out = new Uint8Array(d8.length);
+    out.set(d8.subarray(0, Math.max(0, n - d) * w * 4), d * w * 4);
+    return { w, h: n, data: out };
+}
