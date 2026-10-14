@@ -41,7 +41,7 @@ export const shortName = (label) => SHORT_NAMES[label]
 // Per-category zoom + focal point so each tile shows the asset, not the ape.
 // origin is the transform-origin for scale(zoom) on a 1:1 render.
 const CROPS = {
-    outfit: { zoom: 2.2, origin: '50% 100%' },
+    outfit: { zoom: 2.3, origin: '50% 100%' },
     hat: { zoom: 2.4, origin: '50% 0%' },
     eyes: { zoom: 3.2, origin: '50% 36%' },
     mouth: { zoom: 3, origin: '50% 68%' },
@@ -53,35 +53,13 @@ const CROPS = {
 // Rule: the object fills >=60% of the tile and is not cut off; otherwise crop to its
 // bounding box + ~10% margin. Boxes measured from each asset's render diff (1000px canvas)
 // against the bare ape (hand: #1, hat/mouth/outfit: #21 plain face) or the category median
-// (eyes/extra). Face items stay centred. Outfits: width-fit, max 1.3x, bottom-anchored.
+// (eyes/extra). Face items stay centred. Outfits: 2.3x bottom-anchored (collar + chest in, face out; shoulders may clip), Singe Hoodie Glow full frame.
 // Very wide/thin items (Mindfully Bored Cap, Dookey Dash Hat, Apechain Grin, Big Smile,
 // Banana Punch GM) crop to their dense core so thin strands/lip lines may touch the edge.
 // Full-frame scenes (Dookie Dash, Clubhouse Sketch, ...) use zoom 1.
 const ASSET_CROPS = {
   outfit: {
-    'apefest_merch_2025': { zoom: 1.3, origin: '50% 100%' },
-    'vegas': { zoom: 1.3, origin: '50% 100%' },
-    'german_ape_club_clothes': { zoom: 1.3, origin: '50% 100%' },
-    'mindfully_bored_hoodie': { zoom: 1.3, origin: '50% 100%' },
-    'ape_solar_hoodie_black': { zoom: 1.3, origin: '50% 100%' },
-    'ape_solar_hoodie_blue': { zoom: 1.3, origin: '50% 100%' },
-    'apefest_merch': { zoom: 1.3, origin: '50% 100%' },
-    'tt_hoodie': { zoom: 1.3, origin: '50% 100%' },
-    'bimmer_jacket': { zoom: 1.3, origin: '50% 100%' },
-    'apechain_hoodie_black': { zoom: 1.3, origin: '50% 100%' },
-    'apechain_hoodie_orange': { zoom: 1.3, origin: '50% 100%' },
-    'apechain_hoodie_blue': { zoom: 1.3, origin: '50% 100%' },
-    'apefest_jacket': { zoom: 1.3, origin: '50% 100%' },
-    'cheetah_hoodie': { zoom: 1.3, origin: '50% 100%' },
-    'naked': { zoom: 1.3, origin: '50% 100%' },
-    'french_stripes': { zoom: 1.3, origin: '50% 100%' },
-    'cats_shirt': { zoom: 1.3, origin: '50% 100%' },
-    'singe_hoodie': { zoom: 1.3, origin: '50% 100%' },
     'singe_hoodie_glow': { zoom: 1, origin: '50% 100%' },
-    'applied_primate_coat': { zoom: 1.3, origin: '50% 100%' },
-    'btc_hoodie': { zoom: 1.3, origin: '50% 100%' },
-    'jacket': { zoom: 1.3, origin: '50% 100%' },
-    'blazer': { zoom: 1.3, origin: '50% 100%' },
   },
   hat: {
     'vegas': { zoom: 1.87, origin: '50% 0%' },
