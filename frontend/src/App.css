@@ -5608,3 +5608,22 @@ button.gallery-item.is-selected .gallery-meta {
 }
 /* All widths: overflow-x: hidden on html/body breaks position: sticky (site bar, mini bar offset). */
 html, body { overflow-x: clip; overflow-y: visible; }
+
+/* Design + afa fixes #20 (14.10) */
+.hero.hero--try { min-height: 0; padding-bottom: 24px; }
+.hero--try .hero-copy { align-content: start; grid-template-rows: auto auto auto auto auto auto; }
+.hero--try .hero-art { align-self: start; margin-top: 0; }
+.hero-stage { width: min(440px, 100%); }
+.hero-caption { width: min(440px, 100%); display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.hero-caption-left { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: rgba(255,255,255,.6); }
+.hero-caption .hero-style-link { flex: none; align-self: auto; font-size: .9rem; }
+.hero--try .hero-secondary { max-width: 30rem; line-height: 1.5; }
+.mini-bar { background: #0b0b0c; -webkit-backdrop-filter: none; backdrop-filter: none; border-bottom: 1px solid rgba(255,255,255,.08); }
+.preview-label { display: none; }
+@media (min-width: 768px) {
+  .App.has-token .preview-label { display: block; margin: 8px 0 0; font-family: 'Saira Extra Condensed', var(--font-display); font-size: 16px; color: rgba(255,255,255,.7); }
+}
+@media (max-width: 767px) {
+  .hero--try .hero-art { display: flex; flex-direction: column; align-items: center; }
+  .hero--try .hero-stage, .hero--try .hero-caption { width: min(calc(100vw - 32px), 46svh); }
+}

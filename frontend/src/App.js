@@ -205,18 +205,20 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook }) {
                             className={`hero-ape ${layers.front === 'b' ? 'is-front' : ''}`} />}
                     </div>
                     {heroId != null && (
-                        <div className="hero-caption" aria-live="off">
-                            <span className="hero-caption-name">AFA #{heroId}{reduceMotion ? ' · styled' : ''}</span>
-                            {!reduceMotion && current && (
-                                <span className="hero-caption-trait" key={stepIdx}>
-                                    <span className="hero-caption-cat">{catLabel[current.cat]}</span>{' '}
-                                    <span className="hero-caption-val">{assetLabel(current.cat, current.value) || current.value}</span>
-                                </span>
-                            )}
+                        <div className="hero-caption">
+                            <span className="hero-caption-left">
+                                <span className="hero-caption-name">AFA #{heroId}</span>
+                                {reduceMotion ? (
+                                    <span className="hero-caption-trait"> · styled</span>
+                                ) : (
+                                    <span className="hero-caption-trait" key={stepIdx}>
+                                        {' · '}<span className="hero-caption-cat">{current ? catLabel[current.cat] : 'Original'}</span>
+                                        {current && <>{' · '}<span className="hero-caption-val">{assetLabel(current.cat, current.value) || current.value}</span></>}
+                                    </span>
+                                )}
+                            </span>
+                            <button type="button" className="hero-style-link" onClick={openThis}>Style this ape →</button>
                         </div>
-                    )}
-                    {heroId != null && (
-                        <button type="button" className="hero-style-link" onClick={openThis}>Style this ape →</button>
                     )}
                 </div>
                 <form className="hero-form" onSubmit={submit} role="search">
@@ -230,7 +232,7 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook }) {
                     or try a random one
                 </button>
                 <p className="hero-secondary">
-                    Not minted yet?{' '}
+                    Not minted yet? Try it on anyway. Your Ape stays blurred until it's yours.{' '}
                     <a href={MINT_URL} target="_blank" rel="noopener noreferrer">Mint to reveal</a> →
                 </p>
             </div>
@@ -272,9 +274,6 @@ function Footer() {
                     Mint on apefacingapes.com
                 </a>
             </nav>
-            <p className="footer-legal">
-                © Ape Facing Apes. BAYC marks and assets licensed from Yuga Labs, Inc.
-            </p>
         </footer>
     );
 }
@@ -1363,6 +1362,9 @@ function App() {
             </div>
           </div>
 
+          {tokenId && (
+            <p className="preview-label">{previewOnly ? `Ape #${tokenId}` : `AFA #${tokenId}`}</p>
+          )}
           {tokenId && (previewOnly ? (
             <div className="preview-locked" role="note">
               <p className="preview-locked-title">Ape #{tokenId} is still looking the other way.</p>
