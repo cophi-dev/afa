@@ -10,3 +10,30 @@ test('always tags @ApeFacingApes, links with UTM, no hashtags', () => {
   }
   expect(buildXIntentUrl('a b')).toBe('https://x.com/intent/post?text=a%20b');
 });
+
+const lineFor = (traits) => buildShareText({ tokenId: 7, traits }, () => 0).split(' AFA #')[0];
+
+test('uses asset display names, not internal keys', () => {
+  expect(lineFor({ outfit: 'vegas' })).toBe('Dressed my ape in Vegas BAYC. It refuses to change back.');
+  expect(lineFor({ hat: 'vegas' })).toBe('New hat: Vegas BAYC. Same ape. Different energy.');
+  expect(lineFor({ eyes: 'vegas' })).toBe('Gave my ape Vegas BAYC. Now it sees things differently.');
+});
+
+test('a/an and gesture handling for hand items', () => {
+  const hand = Object.entries(require('./assetLabels').ASSET_LABELS.hand);
+  hand.forEach(([key, name]) => {
+    const line = lineFor({ hand: key });
+    expect(line).toContain(name);
+    expect(line).not.toMatch(/\ba [aeiou]/i);
+    expect(line).not.toMatch(/\ban [^aeiou]/i);
+    expect(line).not.toMatch(/\ba (Pray|Peace|Thumbs Up|GM\.|Fireworks)/);
+  });
+});
+
+test('every category resolves every key to its label', () => {
+  const { ASSET_LABELS } = require('./assetLabels');
+  Object.entries(ASSET_LABELS).forEach(([cat, map]) => Object.entries(map).forEach(([key, name]) => {
+    if (cat === 'outfit' && key && name === 'No Clothes') return;
+    expect(lineFor({ [cat]: key })).toContain(name);
+  }));
+});
