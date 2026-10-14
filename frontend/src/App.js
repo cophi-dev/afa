@@ -24,13 +24,17 @@ const MINT_GALLERY_SORT = {
     TOKEN_ID: 'tokenId',
 };
 
-function Banner() {
+function SiteBar() {
     return (
-        <div className="banner">
-            <a href={MINT_SITE_URL} target="_blank" rel="noopener noreferrer">
-                <img src="./logo.png" alt="Ape Facing Apes" width="2000" height="2000" className="banner-logo" />
+        <header className="site-bar">
+            <a href={MINT_SITE_URL} target="_blank" rel="noopener noreferrer" className="site-bar-brand">
+                <img src="./logo-mark.png" alt="Ape Facing Apes" width="240" height="207" className="site-bar-logo" />
+                <span className="site-bar-title">Editor</span>
             </a>
-        </div>
+            <a href={GRID_VIEW_URL} target="_blank" rel="noopener noreferrer" className="site-bar-link">
+                Mint Progress
+            </a>
+        </header>
     );
 }
 
@@ -38,9 +42,6 @@ function Hero({ heroImage, onPick }) {
     return (
         <section className="hero" aria-labelledby="hero-title">
             <div className="hero-copy">
-                <a href={MINT_SITE_URL} target="_blank" rel="noopener noreferrer" className="hero-logo-link">
-                    <img src="./logo.png" alt="Ape Facing Apes" width="2000" height="2000" className="hero-logo" />
-                </a>
                 <h1 id="hero-title" className="hero-title">Dress up your Ape Facing Ape.</h1>
                 <p className="hero-lede">
                     Ape Facing Apes are Bored Apes turned to face you. Pick a minted AFA, swap outfits, hats and effects, and download the result.
@@ -238,6 +239,18 @@ function App() {
     const [mintGallerySort, setMintGallerySort] = useState(MINT_GALLERY_SORT.MINT_DATE);
     const [mintPreviewUrls, setMintPreviewUrls] = useState({});
     const [mintPreviewFailed, setMintPreviewFailed] = useState({});
+    const [liveMintCount, setLiveMintCount] = useState(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        fetch(`${GRID_VIEW_URL}/api/mints`, { headers: { Accept: 'application/json' } })
+            .then((response) => (response.ok ? response.json() : null))
+            .then((data) => {
+                if (!cancelled && data && Number.isFinite(data.count)) setLiveMintCount(data.count);
+            })
+            .catch((error) => debug('Live mint count failed', error));
+        return () => { cancelled = true; };
+    }, []);
     const previewQueueRef = useRef([]);
     const previewActiveRef = useRef(0);
     const previewFailedAtRef = useRef({});
@@ -892,15 +905,14 @@ function App() {
     // Apply glamour class conditionally
     <div className={appClassName}>
       <a className="skip-link" href="#editor-controls">Skip to editor</a>
-      {tokenId ? (
-        <Banner />
-      ) : (
+      <SiteBar />
+      {!tokenId && (
         <Hero
           heroImage={sortedMintGalleryIds.length > 0 ? mintPreviewUrls[sortedMintGalleryIds[0]] : null}
           onPick={handlePickYourApe}
         />
       )}
-      <main className="studio">
+      <main className={`studio ${tokenId ? 'studio--editing' : 'studio--picking'}`}>
         <section className={`studio-preview ${tokenId ? 'has-token' : ''}`} aria-label="Preview">
           <div className="preview-card">
             <div id="asset-display" className={`${fade || ''} ${showLoader ? 'is-loading' : ''}`}>
@@ -1029,7 +1041,7 @@ function App() {
             <div className="panel-body">
               <p className="token-help-text">Type an ID or pick one below.</p>
               <MintedGallery
-                mintedCount={mintedTokens.size}
+                mintedCount={liveMintCount ?? mintedTokens.size}
                 isLoading={mintedTokenIds.length === 0}
                 sortedIds={sortedMintGalleryIds}
                 mintPreviewUrls={mintPreviewUrls}
