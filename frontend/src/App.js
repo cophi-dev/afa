@@ -1440,6 +1440,33 @@ function App() {
     // Apply glamour class conditionally
     <div className={appClassName} style={apefestActive ? { '--crt': APEFEST_CRT, '--scan': APEFEST_PAGE_SCAN, '--jump': APEFEST_JUMP } : undefined}>
       {apefestActive && (
+        // Tile duotone, same curve as the baked image: shadows #0b0b0c, mids #e1141e, highlights #ff5a4f.
+        // Picker variant adds ~15% luminance contrast so outlines/patterns stay readable.
+        <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true" focusable="false">
+          <filter id="apefest-duo" colorInterpolationFilters="sRGB">
+            <feColorMatrix type="matrix" values="0.2126 0.7152 0.0722 0 0  0.2126 0.7152 0.0722 0 0  0.2126 0.7152 0.0722 0 0  0 0 0 1 0" />
+            <feComponentTransfer>
+              <feFuncR type="table" tableValues="0.043 0.882 1" />
+              <feFuncG type="table" tableValues="0.043 0.078 0.353" />
+              <feFuncB type="table" tableValues="0.047 0.118 0.31" />
+            </feComponentTransfer>
+          </filter>
+          <filter id="apefest-duo-pick" colorInterpolationFilters="sRGB">
+            <feColorMatrix type="matrix" values="0.2126 0.7152 0.0722 0 0  0.2126 0.7152 0.0722 0 0  0.2126 0.7152 0.0722 0 0  0 0 0 1 0" />
+            <feComponentTransfer>
+              <feFuncR type="linear" slope="1.15" intercept="-0.075" />
+              <feFuncG type="linear" slope="1.15" intercept="-0.075" />
+              <feFuncB type="linear" slope="1.15" intercept="-0.075" />
+            </feComponentTransfer>
+            <feComponentTransfer>
+              <feFuncR type="table" tableValues="0.043 0.882 1" />
+              <feFuncG type="table" tableValues="0.043 0.078 0.353" />
+              <feFuncB type="table" tableValues="0.047 0.118 0.31" />
+            </feComponentTransfer>
+          </filter>
+        </svg>
+      )}
+      {apefestActive && (
         // Page CRT layer (same APEFEST_CRT as the baked image). Sits below the preview column
         // and the mini bar, so the image's own scanlines are never overlaid (no moiré, no double lines).
         <div className="apefest-overlay" aria-hidden="true">
