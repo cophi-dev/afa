@@ -5,7 +5,7 @@ import { debug, error as logError } from './utils/debug';
 import AssetStrip from './AssetStrip';
 import { buildShareText, buildXIntentUrl } from './utils/shareText';
 import { assetLabel } from './utils/assetLabels';
-import { renderApefest, canvasToBlob, loadImage, loadApefestFonts, APEFEST_CRT, APEFEST_SCAN, APEFEST_JUMP } from './utils/apefest';
+import { renderApefest, canvasToBlob, loadImage, loadApefestFonts, APEFEST_CRT, APEFEST_PAGE_SCAN, APEFEST_JUMP } from './utils/apefest';
 
 // ApeFest (10.17): while true, the "Add frame" button becomes the ApeFest toggle.
 // Set to false after ApeFest to restore "Add frame"; nothing else needs to change.
@@ -1438,7 +1438,7 @@ function App() {
 
   return (
     // Apply glamour class conditionally
-    <div className={appClassName} style={apefestActive ? { '--crt': APEFEST_CRT, '--scan': APEFEST_SCAN, '--jump': APEFEST_JUMP } : undefined}>
+    <div className={appClassName} style={apefestActive ? { '--crt': APEFEST_CRT, '--scan': APEFEST_PAGE_SCAN, '--jump': APEFEST_JUMP } : undefined}>
       {apefestActive && (
         // Page CRT layer (same APEFEST_CRT as the baked image). Sits below the preview column
         // and the mini bar, so the image's own scanlines are never overlaid (no moiré, no double lines).
