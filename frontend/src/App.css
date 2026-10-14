@@ -4618,3 +4618,40 @@ button.gallery-item.is-selected {
     align-self: center;
   }
 }
+
+/* ===== Picker collapse: editor tools first once an ape is selected ===== */
+.App.has-token .studio-controls .token-panel {
+  order: 20;
+}
+
+.App.has-token .studio-controls .action-dock {
+  order: -1;
+}
+
+.gallery-scroll,
+.has-token .gallery-scroll,
+.token-panel .gallery-scroll,
+.has-token .token-panel .gallery-scroll {
+  max-height: none;
+  min-height: 0;
+  overflow: visible;
+}
+
+.gallery-toggle {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  min-height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 196, 81, 0.55);
+  background: rgba(245, 196, 81, 0.08);
+  color: #f5c451;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.gallery-toggle:hover,
+.gallery-toggle:focus-visible {
+  background: rgba(245, 196, 81, 0.16);
+}

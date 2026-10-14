@@ -137,7 +137,16 @@ function MintedGallery({
     sort,
     onSort,
     search,
+    collapsedLimit = 12,
 }) {
+    const [showAll, setShowAll] = useState(false);
+    const query = '';
+    useEffect(() => { setShowAll(false); }, [collapsedLimit, tokenId]);
+    const filteredIds = query.trim()
+        ? sortedIds.filter((id) => String(id).startsWith(query.trim()))
+        : sortedIds;
+    const visibleIds = showAll || query.trim() ? filteredIds : filteredIds.slice(0, collapsedLimit);
+    const hiddenCount = filteredIds.length - visibleIds.length;
     return (
         <section className="gallery" aria-label="Minted AFAs">
             <div className="gallery-toolbar">
@@ -176,7 +185,7 @@ function MintedGallery({
             ) : (
                 <div className="gallery-scroll">
                     <div className="gallery-grid">
-                        {sortedIds.map((id) => (
+                        {visibleIds.map((id) => (
                             <MintedGalleryItem
                                 key={id}
                                 id={id}
@@ -188,6 +197,16 @@ function MintedGallery({
                             />
                         ))}
                     </div>
+                    {(hiddenCount > 0 || showAll) && !query.trim() && (
+                        <button
+                            type="button"
+                            className="gallery-toggle"
+                            onClick={() => setShowAll((value) => !value)}
+                            aria-expanded={showAll}
+                        >
+                            {showAll ? 'Show fewer' : `Show all ${sortedIds.length} minted apes`}
+                        </button>
+                    )}
                 </div>
             )}
         </section>
@@ -1046,6 +1065,7 @@ function App() {
                 sortedIds={sortedMintGalleryIds}
                 mintPreviewUrls={mintPreviewUrls}
                 mintPreviewFailed={mintPreviewFailed}
+                collapsedLimit={tokenId ? 6 : 12}
                 tokenId={tokenId}
                 onSelect={handleTokenSubmit}
                 onBecomeVisible={handleMintPreviewVisible}
