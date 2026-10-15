@@ -4,7 +4,46 @@ import { renderApefestTile } from './utils/apefestLaunch';
 
 // Picker crops zoom into the brightest (key-lit) part of the frame; a lower scene gain keeps the
 // cropped tile at the same brightness/saturation as the full list tiles (Design 15.10).
-const PICKER_TILE_OPTS = { gain: 0.8 };
+// Per-category scene gain, measured so the visible crop matches the list tiles' mean luminance.
+export const PICKER_GAIN = { outfit: 1.46, mouth: 0.75, hat: 0.74, eyes: 0.4, hand: 1.19, extra: 0.8 };
+
+// Uniform framing in ApeFest mode: item bbox = (asset render - bare ape) on a 96px sample,
+// mapped into the launch frame (ape scaled 0.96, bottom-centred), item fills ~60% of the tile.
+const FRAME_FILL = 0.6;
+const APE_S = 0.96;
+const baseCache = new Map();
+async function sample96(blob) {
+    const bmp = await createImageBitmap(blob, { resizeWidth: 96, resizeHeight: 96, resizeQuality: 'medium' });
+    const c = document.createElement('canvas'); c.width = 96; c.height = 96;
+    const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(bmp, 0, 0);
+    return x.getImageData(0, 0, 96, 96).data;
+}
+async function itemFrame(itemBlob, baseBlob) {
+    const [a, b] = await Promise.all([sample96(itemBlob), sample96(baseBlob)]);
+    let x0 = 96; let y0 = 96; let x1 = -1; let y1 = -1;
+    for (let y = 0; y < 96; y += 1) {
+        for (let x = 0; x < 96; x += 1) {
+            const i = (y * 96 + x) * 4;
+            const d = Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]) + 2 * Math.abs(a[i + 3] - b[i + 3]);
+            if (d > 90) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+        }
+    }
+    if (x1 < 0) return null;
+    const m = (v) => v / 96;
+    const fx = (v) => (1 - APE_S) / 2 + APE_S * m(v); const fy = (v) => (1 - APE_S) + APE_S * m(v);
+    const bx0 = fx(x0); const bx1 = fx(x1 + 1); const by0 = fy(y0); const by1 = fy(y1 + 1);
+    const side = Math.max(bx1 - bx0, by1 - by0);
+    const zoom = Math.min(4, Math.max(1, FRAME_FILL / side));
+    return { zoom, cx: (bx0 + bx1) / 2, cy: (by0 + by1) / 2 };
+}
+const festBlobCache = new Map();
+let frameChain = Promise.resolve();
+const queueFrame = (fn) => {
+    const run = frameChain.then(() => new Promise((r) => setTimeout(r, 0))).then(fn);
+    frameChain = run.catch(() => null);
+    return run;
+};
+const frameStyle = (f) => ({ transformOrigin: '50% 50%', transform: `scale(${f.zoom.toFixed(3)}) translate(${((0.5 - f.cx) * 100).toFixed(2)}%, ${((0.5 - f.cy) * 100).toFixed(2)}%)` });
 
 // Shared, small-concurrency queue + cache for asset preview renders.
 const cache = new Map();
@@ -164,7 +203,7 @@ const loadPreview = (key, fetcher, priority = false) => {
     return promise;
 };
 
-function AssetThumb({ option, index, active, disabled, onPick, fetchPreview, cacheKey, crop, rootRef, fetchFest = null }) {
+function AssetThumb({ option, index, active, disabled, onPick, fetchPreview, cacheKey, crop, rootRef, fetchFest = null, fetchBase = null }) {
     const ref = useRef(null);
     const [url, setUrl] = useState(() => cache.get(cacheKey) || null);
     const [failed, setFailed] = useState(false);
@@ -195,10 +234,16 @@ function AssetThumb({ option, index, active, disabled, onPick, fetchPreview, cac
     // ApeFest (minted only): same small launch frame as the list tiles, rendered in the worker from the
     // transparent thumbnail once the normal tile is loaded (so it stays lazy), queued + cached.
     const [festUrl, setFestUrl] = useState(null);
+    const [frame, setFrame] = useState(null);
     useEffect(() => {
         if (!fetchFest || !url) { setFestUrl(null); return undefined; }
         let alive = true;
-        renderApefestTile(`fest|${cacheKey}`, fetchFest, 384, PICKER_TILE_OPTS).then((u) => { if (alive) setFestUrl(u); }).catch(() => {});
+        // One fetch per asset for both the render and the framing; framing runs queued, one per task.
+        if (!festBlobCache.has(cacheKey)) festBlobCache.set(cacheKey, fetchFest().catch((e) => { festBlobCache.delete(cacheKey); throw e; }));
+        const getBlob = () => festBlobCache.get(cacheKey);
+        const tile = renderApefestTile(`fest|${cacheKey}`, getBlob, 384, { gain: PICKER_GAIN[crop] ?? 0.8 });
+        const fr = fetchBase ? Promise.all([getBlob(), fetchBase()]).then(([i, b]) => queueFrame(() => itemFrame(i, b))).catch(() => null) : Promise.resolve(null);
+        Promise.all([tile, fr]).then(([u, f]) => { if (alive) { setFrame(f); setFestUrl(u); } }).catch(() => {});
         return () => { alive = false; };
     }, [fetchFest ? cacheKey : null, url]); // eslint-disable-line react-hooks/exhaustive-deps
     const c = cropFor(crop, option.value);
@@ -215,7 +260,7 @@ function AssetThumb({ option, index, active, disabled, onPick, fetchPreview, cac
         >
             <span className={`asset-thumb-img ${url ? '' : 'is-loading'} ${failed ? 'is-failed' : ''}`}>
                 {url && <img src={url} alt="" width="72" height="72" className={festUrl ? 'has-fest' : undefined} style={{ transform: `scale(${c.zoom})`, transformOrigin: c.origin }} />}
-                {festUrl && <img src={festUrl} alt="" width="72" height="72" className="asset-thumb-fest" style={{ transform: `scale(${c.zoom})`, transformOrigin: c.origin }} />}
+                {festUrl && <img src={festUrl} alt="" width="72" height="72" className="asset-thumb-fest" data-cat={crop} style={frame ? frameStyle(frame) : { transform: `scale(${c.zoom})`, transformOrigin: c.origin }} />}
             </span>
             <span className="asset-thumb-label">{shortName(option.label)}</span>
         </button>
@@ -281,6 +326,14 @@ export default function AssetStrip({ selectRef, param, tokenId, value, onPick, d
                         fetchFest={apefest && endpoint === 'get-asset' ? () => {
                             const q = new URLSearchParams(query); q.set('thirdAssetType', 'transparent');
                             return fetchAssetBlob(`/api/get-asset?${q.toString()}`);
+                        } : null}
+                        fetchBase={apefest && endpoint === 'get-asset' ? () => {
+                            const k = String(tokenId);
+                            if (!baseCache.has(k)) {
+                                const q = new URLSearchParams({ tokenId, assetType: 'AFA', thirdAssetType: 'transparent', size: '384' });
+                                baseCache.set(k, fetchAssetBlob(`/api/get-asset?${q.toString()}`).catch((e) => { baseCache.delete(k); throw e; }));
+                            }
+                            return baseCache.get(k);
                         } : null}
                     />
                 );
