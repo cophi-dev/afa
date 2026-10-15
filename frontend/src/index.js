@@ -4,6 +4,9 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { startFaviconAnimation } from './utils/faviconAnimator';
+import { sessionSource } from './utils/source';
+
+sessionSource(); // pin the landing source for this tab before the app touches the URL
 
 startFaviconAnimation();
 

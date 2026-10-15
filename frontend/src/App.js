@@ -4,6 +4,7 @@ import './App.css';
 import { getAllTransactions, getMintedTokenIdsNewestFirst, checkTokenMintStatus } from './services/etherscanService';
 import { debug, error as logError } from './utils/debug';
 import AssetStrip from './AssetStrip';
+import { track } from './utils/track';
 import { buildShareText, buildXIntentUrl } from './utils/shareText';
 import { assetLabel } from './utils/assetLabels';
 import { renderApefestLaunch } from './utils/apefestLaunch';
@@ -268,7 +269,7 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook }) {
                 </button>
                 <p className="hero-secondary">
                     Not minted yet? Try it on anyway. Your Ape stays blurred until it's yours.{' '}
-                    <a href={MINT_URL} target="_blank" rel="noopener noreferrer">Mint to reveal</a> →
+                    <a href={MINT_URL} target="_blank" rel="noopener noreferrer" onClick={() => track('mint_cta_click')}>Mint to reveal</a> →
                 </p>
             </div>
         </section>
@@ -1101,6 +1102,7 @@ function App() {
             previewOnlyRef.current = true;
             setPreviewOnly(true);
             setTokenId(value);
+            track('ape_select', 'unminted');
             setShowSuggestions(false);
             return true;
         }
@@ -1112,6 +1114,7 @@ function App() {
         setSyncPendingTokenId('');
         setTokenId(value);
         setShowSuggestions(false);
+        track('ape_select', 'minted');
         return true;
     }, [resetTraitSelections, verifyTokenMinted]);
 
@@ -1293,6 +1296,7 @@ function App() {
     // Extra download for X: 1600x900 (primary output stays 1000x1000).
     const handleDownloadWide = async () => {
         if (!apefestActive || !apefestSrcRef.current) return;
+        track('download', 'wide');
         setApefestBusy(true);
         try {
             let wide;
@@ -1319,6 +1323,7 @@ function App() {
 
     const handleDownload = async () => {
         if ((previewOnly && !apefestActive) || !currentImageUrl.startsWith('blob:')) return;
+        track('download', 'square');
         const link = document.createElement('a');
         let href = currentImageUrl;
         if (apefestActive && apefestPngRef.current) {
@@ -1378,6 +1383,7 @@ function App() {
     };
 
     const handleShareOnX = async (event) => {
+        track('share', 'x');
         const isTouch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
         if (!isTouch || !navigator.share) return; // desktop: plain X intent link (text only)
         event.preventDefault();
@@ -1390,6 +1396,7 @@ function App() {
     };
 
     const handleShare = async () => {
+        track('share', 'link');
         try {
             if (await shareImageWithText()) return;
             if (await copyShareText()) setShareNote('Text copied, paste it into your post');
@@ -1639,7 +1646,7 @@ function App() {
               <p className="preview-locked-title">Ape #{tokenId} is still looking the other way.</p>
               <p className="preview-locked-note">Not minted yet? Try it on anyway. Your Ape stays blurred until it's yours.</p>
               <div className="preview-actions">
-                <a className="preview-mint-link" href={MINT_URL} target="_blank" rel="noopener noreferrer">
+                <a className="preview-mint-link" href={MINT_URL} target="_blank" rel="noopener noreferrer" onClick={() => track('mint_cta_click', tokenId)}>
                   Mint to reveal →
                 </a>
                 <button type="button" className="preview-share" disabled title="Available after mint">Download</button>
@@ -1668,7 +1675,7 @@ function App() {
                 </button>
               )}
               {previewOnly && (
-                <a className="preview-mint-link" href={MINT_URL} target="_blank" rel="noopener noreferrer">
+                <a className="preview-mint-link" href={MINT_URL} target="_blank" rel="noopener noreferrer" onClick={() => track('mint_cta_click', tokenId)}>
                   Mint to reveal →
                 </a>
               )}
@@ -1725,6 +1732,7 @@ function App() {
                 href={MINT_URL}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => track('mint_cta_click', tokenId)}
                 className="claim-prompt-cta"
               >
                 Mint to reveal
@@ -1758,7 +1766,7 @@ function App() {
                 {APEFEST_ENABLED ? (
                   <button
                     type="button"
-                    onClick={() => setApefest((v) => !v)}
+                    onClick={() => { track('apefest_toggle', apefestActive ? 'off' : 'on'); setApefest((v) => !v); }}
                     className={`action-button apefest-button ${apefestActive ? 'is-on' : ''}`}
                     aria-pressed={apefestActive}
                     title="Red CRT look for ApeFest. Your traits stay on."
