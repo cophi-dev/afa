@@ -13,6 +13,24 @@ import { drawApefestText, canvasToBlob, loadImage, loadApefestFonts, APEFEST_CRT
 // ApeFest (10.17): while true, the "Add frame" button becomes the ApeFest toggle.
 // Set to false after ApeFest to restore "Add frame"; nothing else needs to change.
 const APEFEST_ENABLED = true;
+// ApeFest default period. Official ApeFest 2026 weekend: Oct 15-18 (apefest.com, @BoredApeYC).
+// Rollback 2 days after the end: from 20.10.2026 00:00 Berlin the hero shows the normal look again,
+// 'OPEN YOUR APE' is back and the mode is opt-in only (toggle). Overrides for testing:
+// ?apefestDefault=on|off, or env REACT_APP_APEFEST_DEFAULT=on|off.
+export const APEFEST_DEFAULT_UNTIL = '2026-10-20T00:00:00+02:00';
+function readApefestDefault() {
+    const norm = (v) => (v === 'on' || v === 'off' ? v : null);
+    try {
+        const q = norm(new URLSearchParams(window.location.search).get('apefestDefault'));
+        if (q) return q === 'on';
+    } catch (e) { /* no window */ }
+    const env = norm(process.env.REACT_APP_APEFEST_DEFAULT);
+    if (env) return env === 'on';
+    return Date.now() < Date.parse(APEFEST_DEFAULT_UNTIL);
+}
+const APEFEST_DEFAULT_ON = APEFEST_ENABLED && readApefestDefault();
+// After the rollback the opt-in uses its own key, so the auto-on '1' from ApeFest week doesn't carry over.
+const APEFEST_STORE_KEY = APEFEST_DEFAULT_ON ? 'afa.apefest' : 'afa.apefest.optin';
 
 const DEFAULT_API_URL = 'https://afa-editor.ew.r.appspot.com';
 const MINT_SITE_URL = 'https://www.apefacingapes.com';
@@ -102,7 +120,20 @@ const preloadImage = async (url) => {
     }
 };
 
-function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook }) {
+// Hero in ApeFest mode (Phillipp 15.10): every frame gets the launch look. Server asset with a
+// transparent background -> launch render in the worker -> exact pixels as BMP blob URL (no PNG encode).
+// The worker is serial; renders queue up while the previous cycle is on screen.
+const heroApefestFrame = async (url) => {
+    const u = new URL(url, window.location.href);
+    u.searchParams.set('thirdAssetType', 'transparent');
+    const res = await fetch(u.toString());
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const canvas = await renderApefestLaunch(await res.blob(), 'square');
+    const blob = canvas.apefestBmp || await canvasToBlob(canvas);
+    return URL.createObjectURL(blob);
+};
+
+function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook, onExplore, apefest = false, explore = false }) {
     const [value, setValue] = useState('');
     const [heroId, setHeroId] = useState(null);
     useEffect(() => {
@@ -129,13 +160,18 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook }) {
     const nextCycleRef = useRef(null);
     const baseSrcRef = useRef(null);
     const prevStepsRef = useRef(null);
+    const baseReadyRef = useRef(null);
     const prepareCycle = useCallback(() => {
         const next = buildHeroSteps();
-        const done = Promise.all(next.map((st) => preloadImage(urlFor(st.look))))
+        const load = apefest
+            ? (url) => heroApefestFrame(url).catch(() => preloadImage(url))
+            : preloadImage;
+        const done = (apefest && baseReadyRef.current ? baseReadyRef.current : Promise.resolve())
+            .then(() => Promise.all(next.map((st) => load(urlFor(st.look)))))
             .then((srcs) => next.map((st, i) => ({ ...st, src: srcs[i] })));
         nextCycleRef.current = done;
         return done;
-    }, [urlFor]);
+    }, [urlFor, apefest]);
     const startCycle = useCallback(async () => {
         const pending = nextCycleRef.current || prepareCycle();
         nextCycleRef.current = null;
@@ -152,12 +188,27 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook }) {
     useEffect(() => {
         if (heroId == null) return;
         setStepIdx(-1);
-        baseSrcRef.current = urlFor(null);
-        setLayers({ a: baseSrcRef.current, b: null, front: 'a' });
         nextCycleRef.current = null;
-        preloadImage(urlFor(null)).then((src) => { baseSrcRef.current = src; });
+        let cancelled = false;
+        if (apefest) {
+            // ApeFest: never show the plain ape; the base frame renders first, the cycle after it.
+            baseSrcRef.current = null;
+            setLayers({ a: null, b: null, front: 'a' });
+            baseReadyRef.current = heroApefestFrame(urlFor(null))
+                .catch(() => preloadImage(urlFor(null)))
+                .then((src) => {
+                    baseSrcRef.current = src;
+                    if (!cancelled) setLayers((prev) => (prev.a || prev.b ? prev : { a: src, b: null, front: 'a' }));
+                });
+        } else {
+            baseReadyRef.current = null;
+            baseSrcRef.current = urlFor(null);
+            setLayers({ a: baseSrcRef.current, b: null, front: 'a' });
+            preloadImage(urlFor(null)).then((src) => { baseSrcRef.current = src; });
+        }
         startCycle();
-    }, [heroId, urlFor, startCycle]);
+        return () => { cancelled = true; };
+    }, [heroId, urlFor, startCycle, apefest]);
 
     // Reduced motion: show the full look statically.
     useEffect(() => {
@@ -214,6 +265,12 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook }) {
     const submit = (e) => {
         e.preventDefault();
         const id = value.replace(/[^0-9]/g, '').slice(0, 4);
+        if (explore) {
+            // ApeFest CTA: typed ID, otherwise the ape currently shown in the hero.
+            if (id) onExplore(id, null);
+            else if (heroId != null) { setStopped(true); onExplore(String(heroId), currentLook); }
+            return;
+        }
         if (id) onSubmitId(id);
         else document.getElementById('hero-token-id')?.focus();
     };
@@ -234,6 +291,7 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook }) {
                 <div className="hero-art">
                     <div className="hero-stage" ref={stageRef} onClick={onStageClick}
                         onMouseEnter={() => { hoverRef.current = true; }} onMouseLeave={() => { hoverRef.current = false; }}
+                        data-apefest={apefest ? 'on' : undefined}
                         role="img" aria-label={heroId != null ? `AFA #${heroId} trying on traits` : 'Loading ape'}>
                         {layers.a && <img src={layers.a} alt="" width="480" height="480" decoding="sync"
                             className={`hero-ape ${layers.front === 'a' ? 'is-front' : ''}`} />}
@@ -262,7 +320,9 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook }) {
                     <input id="hero-token-id" className="hero-input" inputMode="numeric" autoComplete="off"
                         placeholder="Ape ID, e.g. 2388" value={value}
                         onChange={(e) => setValue(e.target.value.replace(/[^0-9]/g, '').slice(0, 4))} />
-                    <button type="submit" className="hero-cta">Open your ape</button>
+                    {explore
+                        ? <button type="submit" className="hero-cta hero-cta--apefest">Explore ApeFest mode</button>
+                        : <button type="submit" className="hero-cta">Open your ape</button>}
                 </form>
                 <button type="button" className="hero-random" onClick={tryRandom} disabled={!mintedIds.length}>
                     or try a random one
@@ -578,11 +638,12 @@ function App() {
     const [apefest, setApefest] = useState(() => {
         try {
             if (new URLSearchParams(window.location.search).get('mode') === 'apefest') return true;
-            return window.localStorage.getItem('afa.apefest') !== '0';
-        } catch (e) { return true; }
+            const stored = window.localStorage.getItem(APEFEST_STORE_KEY);
+            return APEFEST_DEFAULT_ON ? stored !== '0' : stored === '1';
+        } catch (e) { return APEFEST_DEFAULT_ON; }
     });
     useEffect(() => {
-        try { window.localStorage.setItem('afa.apefest', apefest ? '1' : '0'); } catch (e) { /* storage blocked */ }
+        try { window.localStorage.setItem(APEFEST_STORE_KEY, apefest ? '1' : '0'); } catch (e) { /* storage blocked */ }
     }, [apefest]);
     const apefestRef = useRef(APEFEST_ENABLED && apefest);
     const apefestSrcRef = useRef(null);
@@ -1129,6 +1190,14 @@ function App() {
         if (look.mouth) setMouthAsset(look.mouth);
     }, [handleTokenSubmit]);
 
+    // Hero 'EXPLORE APEFEST MODE': open the ape with ApeFest mode on.
+    const handleExplore = useCallback((id, look) => {
+        track('apefest_toggle', 'on');
+        apefestRef.current = APEFEST_ENABLED;
+        setApefest(true);
+        handleOpenLook(id, look);
+    }, [handleOpenLook]);
+
     const handleSuggestionClick = (value) => {
         // Suggestions are derived from minted token data, so select immediately.
         handleTokenSubmit(value);
@@ -1594,6 +1663,9 @@ function App() {
           mintedIds={mintedTokenIds}
           onSubmitId={handleTokenSubmit}
           onOpenLook={handleOpenLook}
+          apefest={APEFEST_DEFAULT_ON && apefest}
+          explore={APEFEST_DEFAULT_ON}
+          onExplore={handleExplore}
         />
       )}
       {tokenId && (
