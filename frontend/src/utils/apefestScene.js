@@ -249,14 +249,15 @@ export function renderSceneRGB(ape, W = 1000, H = 1000, opts = {}) {
     const N = W * H;
     const cv = new Float64Array(N * 3);
     const cx = W * o.apeX; const cy = H * 0.46;
-    const base = [4 / 255, 2 / 255, 3 / 255]; const coreC = [1, 0.3, 0.25];
+    const base = o.bgBase || [4 / 255, 2 / 255, 3 / 255]; const coreC = [1, 0.3, 0.25];
+    const bgG = o.bgGlow == null ? 1 : o.bgGlow; // tiles: 0 = uniform background
     for (let Y = 0; Y < H; Y += 1) {
         for (let X = 0; X < W; X += 1) {
             const d = Math.hypot((X - cx) / (m * 0.42), (Y - cy) / (m * 0.40));
             const d2 = d ** 2;
             const g1 = Math.exp(-d2 * 1.3); const g2 = Math.exp(-d2 * 5);
             const p = (Y * W + X) * 3;
-            for (let c = 0; c < 3; c += 1) cv[p + c] = base[c] + (g1 * red[c] * 0.55 + g2 * coreC[c] * 0.18) * o.glow;
+            for (let c = 0; c < 3; c += 1) cv[p + c] = base[c] + (g1 * red[c] * 0.55 + g2 * coreC[c] * 0.18) * o.glow * bgG;
         }
     }
     const ox = Math.trunc(cx - s / 2); const oy = H - s;
@@ -315,7 +316,7 @@ export function renderSceneRGB(ape, W = 1000, H = 1000, opts = {}) {
     const out = new Uint8Array(N * 4);
     for (let Y = 0; Y < H; Y += 1) {
         for (let X = 0; X < W; X += 1) {
-            const v = Math.min(Math.max(1 - ((X - W / 2) / (W * 0.75)) ** 2 - ((Y - H / 2) / (H * 0.75)) ** 2, 0), 1) ** 0.6;
+            const v = o.vignette === false ? 1 : Math.min(Math.max(1 - ((X - W / 2) / (W * 0.75)) ** 2 - ((Y - H / 2) / (H * 0.75)) ** 2, 0), 1) ** 0.6;
             const p = (Y * W + X) * 3; const q = (Y * W + X) * 4;
             for (let c = 0; c < 3; c += 1) out[q + c] = Math.trunc(Math.min(Math.max(c3[p + c] * v, 0), 1) * 255);
             out[q + 3] = 255;

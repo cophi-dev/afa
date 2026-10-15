@@ -7,7 +7,7 @@ import AssetStrip from './AssetStrip';
 import { track } from './utils/track';
 import { buildShareText, buildXIntentUrl } from './utils/shareText';
 import { assetLabel } from './utils/assetLabels';
-import { renderApefestLaunch } from './utils/apefestLaunch';
+import { renderApefestLaunch, renderApefestTile } from './utils/apefestLaunch';
 import { drawApefestText, canvasToBlob, loadImage, loadApefestFonts, APEFEST_CRT, APEFEST_PAGE_SCAN, APEFEST_JUMP, buildApefestShareText, apefestUnmintedText } from './utils/apefest';
 
 // ApeFest (10.17): while true, the "Add frame" button becomes the ApeFest toggle.
@@ -341,67 +341,6 @@ const TRAIT_CATEGORIES = [
 ];
 
 // Mobile (<768) mini preview bar: appears under the site bar once <20% of the big preview is visible.
-// ApeFest list (Phillipp 15.10: light-background tiles came out near-black): the old mean-luminance
-// normalisation was dominated by the background, so apes on light backgrounds were darkened (k~0.73).
-// Now like the launch pipeline: key the background (corner colour) to black and normalise the APE
-// only (80th percentile -> TILE_APE_P80), giving a grey image the duotone maps evenly. Runs once per
-// tile, queued one per task so a burst of loads never blocks a frame.
-const TILE_APE_P80 = 0.95;
-const tileQueue = [];
-let tileQueueBusy = false;
-function runTileQueue() {
-    if (tileQueueBusy) return;
-    const job = tileQueue.shift();
-    if (!job) return;
-    tileQueueBusy = true;
-    setTimeout(() => {
-        Promise.resolve().then(job).catch(() => null).then(() => { tileQueueBusy = false; runTileQueue(); });
-    }, 0);
-}
-function processTileForApefest(img) {
-    const W = Math.min(256, img.naturalWidth || 256);
-    const c = document.createElement('canvas'); c.width = W; c.height = W;
-    const x = c.getContext('2d', { willReadFrequently: true });
-    x.drawImage(img, 0, 0, W, W);
-    const im = x.getImageData(0, 0, W, W); const d = im.data;
-    // Background model per row (handles vertical gradients like #7978): edge pixels of each row,
-    // accepted only if close to the corner colour or the row above; else the row above is reused.
-    const cs = Math.max(2, Math.round(W * 0.06));
-    const med = (arr) => { arr.sort((m, q) => m - q); return arr[arr.length >> 1]; };
-    const px = (xx, yy) => { const i = (yy * W + xx) * 4; return [d[i], d[i + 1], d[i + 2]]; };
-    const corner = [0, 1, 2].map((ch) => { const v = []; for (let yy = 0; yy < cs; yy += 1) for (let xx = 0; xx < cs; xx += 1) { v.push(px(xx, yy)[ch]); v.push(px(W - 1 - xx, yy)[ch]); } return med(v); });
-    const dist3 = (p1, p2) => (Math.abs(p1[0] - p2[0]) + Math.abs(p1[1] - p2[1]) + Math.abs(p1[2] - p2[2])) / 765;
-    const rowBg = new Array(W);
-    let prev = corner;
-    for (let yy = 0; yy < W; yy += 1) {
-        const l = [0, 1, 2].map((ch) => med([0, 1, 2].map((xx) => px(xx, yy)[ch])));
-        const r = [0, 1, 2].map((ch) => med([0, 1, 2].map((xx) => px(W - 1 - xx, yy)[ch])));
-        const okL = dist3(l, prev) < 0.06; const okR = dist3(r, prev) < 0.06;
-        let cur = prev;
-        if (okL && okR) cur = [0, 1, 2].map((ch) => (l[ch] + r[ch]) / 2);
-        else if (okL) cur = l; else if (okR) cur = r;
-        rowBg[yy] = cur; prev = cur;
-    }
-    const n = W * W; const lum = new Float32Array(n); const mask = new Float32Array(n); const hist = new Uint32Array(256); let cnt = 0;
-    for (let k = 0, i = 0; k < n; k += 1, i += 4) {
-        const bg = rowBg[(k / W) | 0];
-        const dist = (Math.abs(d[i] - bg[0]) + Math.abs(d[i + 1] - bg[1]) + Math.abs(d[i + 2] - bg[2])) / 765;
-        const m = Math.min(1, Math.max(0, (dist - 0.03) / 0.07));
-        const L = (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
-        lum[k] = L; mask[k] = m;
-        if (m > 0.5) { hist[Math.min(255, Math.round(L * 255))] += 1; cnt += 1; }
-    }
-    let p80 = 0.7;
-    if (cnt > n * 0.05) { let acc = 0; for (let v = 0; v < 256; v += 1) { acc += hist[v]; if (acc >= cnt * 0.8) { p80 = v / 255; break; } } }
-    const kf = Math.min(1.8, Math.max(0.8, TILE_APE_P80 / Math.max(0.05, p80)));
-    for (let k = 0, i = 0; k < n; k += 1, i += 4) {
-        const g = Math.round(255 * Math.min(1, lum[k] * kf) * mask[k]);
-        d[i] = g; d[i + 1] = g; d[i + 2] = g; d[i + 3] = 255;
-    }
-    x.putImageData(im, 0, 0);
-    return new Promise((res) => c.toBlob((b) => res(b ? URL.createObjectURL(b) : null), 'image/webp', 0.9));
-}
-
 function MiniPreviewBar({ visible, tokenId, imageUrl, previewOnly, lastTrait, onJump }) {
     const name = previewOnly ? `Ape #${tokenId}` : `AFA #${tokenId}`;
     return (
@@ -435,7 +374,7 @@ function Footer() {
     );
 }
 
-function MintedGalleryItem({ id, imageUrl, isFailed, isSelected, onSelect, onBecomeVisible }) {
+function MintedGalleryItem({ id, imageUrl, isFailed, isSelected, onSelect, onBecomeVisible, apefestTileUrl = null }) {
     const ref = useRef(null);
 
     useEffect(() => {
@@ -465,15 +404,14 @@ function MintedGalleryItem({ id, imageUrl, isFailed, isSelected, onSelect, onBec
         return () => clearTimeout(t);
     }, [isFailed, id, onBecomeVisible]);
 
+    // ApeFest: small launch frame from the transparent thumbnail (worker, queued, cached).
     const [festUrl, setFestUrl] = useState(null);
-    useEffect(() => () => { if (festUrl) URL.revokeObjectURL(festUrl); }, [festUrl]);
-    const onThumbLoad = (e) => {
-        const img = e.currentTarget;
-        if (img.dataset.fest === img.src) return;
-        img.dataset.fest = img.src;
-        tileQueue.push(() => processTileForApefest(img).then((u) => { if (u) setFestUrl(u); }));
-        runTileQueue();
-    };
+    useEffect(() => {
+        if (!apefestTileUrl || !imageUrl) { setFestUrl(null); return undefined; }
+        let alive = true;
+        renderApefestTile(apefestTileUrl).then((u) => { if (alive) setFestUrl(u); }).catch(() => {});
+        return () => { alive = false; };
+    }, [apefestTileUrl, imageUrl]);
 
     return (
         <button
@@ -487,7 +425,7 @@ function MintedGalleryItem({ id, imageUrl, isFailed, isSelected, onSelect, onBec
             <div className="gallery-thumb" aria-hidden={imageUrl ? undefined : true}>
                 {imageUrl ? (
                     <>
-                        <img src={imageUrl} alt={`AFA #${id}`} width="1000" height="1000" decoding="async" onLoad={onThumbLoad}
+                        <img src={imageUrl} alt={`AFA #${id}`} width="1000" height="1000" decoding="async" 
                             className={festUrl ? 'has-fest' : undefined} />
                         {festUrl && <img src={festUrl} alt="" aria-hidden="true" width="1000" height="1000" decoding="async" className="gallery-thumb-fest" />}
                     </>
@@ -516,6 +454,7 @@ function MintedGallery({
     onSort,
     search,
     collapsedLimit = 12,
+    apefestTileBase = null,
 }) {
     const [showAll, setShowAll] = useState(false);
     const query = '';
@@ -572,6 +511,7 @@ function MintedGallery({
                                 isSelected={String(tokenId) === String(id)}
                                 onSelect={onSelect}
                                 onBecomeVisible={onBecomeVisible}
+                                apefestTileUrl={apefestTileBase ? `${apefestTileBase}/api/get-asset?tokenId=${id}&assetType=AFA&thirdAssetType=transparent&size=256` : null}
                             />
                         ))}
                     </div>
@@ -1928,6 +1868,7 @@ function App() {
                 mintPreviewUrls={mintPreviewUrls}
                 mintPreviewFailed={mintPreviewFailed}
                 collapsedLimit={tokenId ? 6 : 12}
+                apefestTileBase={apefestActive ? apiBaseCandidates[0] : null}
                 tokenId={tokenId}
                 onSelect={handleTokenSubmit}
                 onBecomeVisible={handleMintPreviewVisible}
