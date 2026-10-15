@@ -7,7 +7,7 @@ import AssetStrip from './AssetStrip';
 import { track } from './utils/track';
 import { buildShareText, buildXIntentUrl } from './utils/shareText';
 import { assetLabel } from './utils/assetLabels';
-import { renderApefestLaunch } from './utils/apefestLaunch';
+import { renderApefestLaunch, renderApefestTile } from './utils/apefestLaunch';
 import { drawApefestText, canvasToBlob, loadImage, loadApefestFonts, APEFEST_CRT, APEFEST_PAGE_SCAN, APEFEST_JUMP, buildApefestShareText, apefestUnmintedText } from './utils/apefest';
 
 // ApeFest (10.17): while true, the "Add frame" button becomes the ApeFest toggle.
@@ -341,25 +341,6 @@ const TRAIT_CATEGORIES = [
 ];
 
 // Mobile (<768) mini preview bar: appears under the site bar once <20% of the big preview is visible.
-// ApeFest list: per-tile luminance normalisation before the duotone, so every background lands
-// evenly (~#2a0608-#4a0a0e). Mean luminance from a 16px sample -> CSS var used only in ApeFest mode.
-const TILE_TARGET_LUM = 0.55;
-function normaliseTile(e) {
-    const img = e.currentTarget;
-    try {
-        const c = document.createElement('canvas');
-        c.width = 16; c.height = 16;
-        const x = c.getContext('2d', { willReadFrequently: true });
-        x.drawImage(img, 0, 0, 16, 16);
-        const d = x.getImageData(0, 0, 16, 16).data;
-        let sum = 0;
-        for (let i = 0; i < d.length; i += 4) sum += (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
-        const mean = sum / 256;
-        const k = Math.min(1.3, Math.max(0.6, TILE_TARGET_LUM / Math.max(0.05, mean)));
-        img.style.setProperty('--tile-norm', k.toFixed(3));
-    } catch (err) { /* tainted or not decoded: keep 1 */ }
-}
-
 function MiniPreviewBar({ visible, tokenId, imageUrl, previewOnly, lastTrait, onJump }) {
     const name = previewOnly ? `Ape #${tokenId}` : `AFA #${tokenId}`;
     return (
@@ -393,7 +374,7 @@ function Footer() {
     );
 }
 
-function MintedGalleryItem({ id, imageUrl, isFailed, isSelected, onSelect, onBecomeVisible }) {
+function MintedGalleryItem({ id, imageUrl, isFailed, isSelected, onSelect, onBecomeVisible, apefestTileUrl = null }) {
     const ref = useRef(null);
 
     useEffect(() => {
@@ -423,18 +404,31 @@ function MintedGalleryItem({ id, imageUrl, isFailed, isSelected, onSelect, onBec
         return () => clearTimeout(t);
     }, [isFailed, id, onBecomeVisible]);
 
+    // ApeFest: small launch frame from the transparent thumbnail (worker, queued, cached).
+    const [festUrl, setFestUrl] = useState(null);
+    useEffect(() => {
+        if (!apefestTileUrl || !imageUrl) { setFestUrl(null); return undefined; }
+        let alive = true;
+        renderApefestTile(apefestTileUrl).then((u) => { if (alive) setFestUrl(u); }).catch(() => {});
+        return () => { alive = false; };
+    }, [apefestTileUrl, imageUrl]);
+
     return (
         <button
             ref={ref}
             type="button"
-            className={`gallery-item ${imageUrl ? 'has-image' : 'is-pending'} ${isFailed ? 'is-failed' : ''} ${isSelected ? 'is-selected' : ''}`}
+            className={`gallery-item ${imageUrl ? 'has-image' : 'is-pending'} ${isFailed ? 'is-failed' : ''} ${isSelected ? 'is-selected' : ''} ${festUrl ? 'is-fest' : ''}`}
             onClick={() => onSelect(id)}
             aria-pressed={isSelected}
         >
             <span className="visually-hidden">Select AFA </span>
             <div className="gallery-thumb" aria-hidden={imageUrl ? undefined : true}>
                 {imageUrl ? (
-                    <img src={imageUrl} alt={`AFA #${id}`} width="1000" height="1000" decoding="async" onLoad={normaliseTile} />
+                    <>
+                        <img src={imageUrl} alt={`AFA #${id}`} width="1000" height="1000" decoding="async" 
+                            className={festUrl ? 'has-fest' : undefined} />
+                        {festUrl && <img src={festUrl} alt="" aria-hidden="true" width="1000" height="1000" decoding="async" className="gallery-thumb-fest" />}
+                    </>
                 ) : (
                     <div className={`gallery-skeleton ${isFailed ? 'is-failed' : ''}`}>
                     </div>
@@ -460,6 +454,7 @@ function MintedGallery({
     onSort,
     search,
     collapsedLimit = 12,
+    apefestTileBase = null,
 }) {
     const [showAll, setShowAll] = useState(false);
     const query = '';
@@ -516,6 +511,7 @@ function MintedGallery({
                                 isSelected={String(tokenId) === String(id)}
                                 onSelect={onSelect}
                                 onBecomeVisible={onBecomeVisible}
+                                apefestTileUrl={apefestTileBase ? `${apefestTileBase}/api/get-asset?tokenId=${id}&assetType=AFA&thirdAssetType=transparent&size=256` : null}
                             />
                         ))}
                     </div>
@@ -1872,6 +1868,7 @@ function App() {
                 mintPreviewUrls={mintPreviewUrls}
                 mintPreviewFailed={mintPreviewFailed}
                 collapsedLimit={tokenId ? 6 : 12}
+                apefestTileBase={apefestActive ? apiBaseCandidates[0] : null}
                 tokenId={tokenId}
                 onSelect={handleTokenSubmit}
                 onBecomeVisible={handleMintPreviewVisible}

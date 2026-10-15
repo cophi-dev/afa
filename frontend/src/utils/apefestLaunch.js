@@ -118,3 +118,43 @@ export async function renderApefestLaunch(blob, format = 'square', { unminted = 
     canvas.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(px.buffer, px.byteOffset, px.length), F.W, F.H), 0, 0);
     return canvas;
 }
+
+// ---------- list tiles (Phillipp 15.10): small launch frame, no text, uniform #0b0b0c ----------
+// Same scene maths as the big preview on the transparent 256px thumbnail, in the worker,
+// one tile at a time, cached per URL (BMP blob URL, never revoked while the page lives).
+export const TILE_SIZE = 256;
+// bgGlow 0.25 = head glow at ~25% of the big preview (Design 15.10); flattened to exactly #0b0b0c.
+const TILE_OPTS = { bgGlow: 0.25, bgBase: [11 / 255, 11 / 255, 12 / 255], vignette: false, apeScale: 0.96, tileFlat: [11, 11, 12] };
+const tileCache = new Map();
+const tileQueue = [];
+let tileBusy = false;
+function pumpTiles() {
+    if (tileBusy || !tileQueue.length) return;
+    tileBusy = true;
+    const { run, resolve, reject } = tileQueue.shift();
+    run().then(resolve, reject).finally(() => { tileBusy = false; setTimeout(pumpTiles, 0); });
+}
+export function renderApefestTile(url) {
+    if (tileCache.has(url)) return tileCache.get(url);
+    const p = new Promise((resolve, reject) => {
+        tileQueue.push({
+            resolve, reject,
+            run: async () => {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(`tile ${res.status}`);
+                const blob = await res.blob();
+                const offscreen = typeof OffscreenCanvas !== 'undefined';
+                const job = { W: TILE_SIZE, H: TILE_SIZE, opts: TILE_OPTS, layers: [], glowLayers: [] };
+                if (offscreen) job.tileBlob = blob; else job.rgba = await decodeAny(blob);
+                const px = await runAnywhere(job, offscreen ? [] : [job.rgba.data.buffer]);
+                return URL.createObjectURL(makeBmp(px, TILE_SIZE, TILE_SIZE));
+            },
+        });
+        pumpTiles();
+    });
+    p.catch(() => tileCache.delete(url));
+    tileCache.set(url, p);
+    return p;
+}
+// Cancel queued (not started) tiles, e.g. on mode switch off.
+export function clearApefestTileQueue() { tileQueue.splice(0).forEach((j) => j.reject(new Error('cancelled'))); }
