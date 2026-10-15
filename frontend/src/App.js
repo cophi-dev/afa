@@ -364,17 +364,27 @@ function processTileForApefest(img) {
     const x = c.getContext('2d', { willReadFrequently: true });
     x.drawImage(img, 0, 0, W, W);
     const im = x.getImageData(0, 0, W, W); const d = im.data;
+    // Background model per row (handles vertical gradients like #7978): edge pixels of each row,
+    // accepted only if close to the corner colour or the row above; else the row above is reused.
     const cs = Math.max(2, Math.round(W * 0.06));
-    const bgs = [[], [], []];
-    for (const [ox, oy] of [[0, 0], [W - cs, 0]]) {
-        for (let yy = oy; yy < oy + cs; yy += 1) for (let xx = ox; xx < ox + cs; xx += 1) {
-            const i = (yy * W + xx) * 4; bgs[0].push(d[i]); bgs[1].push(d[i + 1]); bgs[2].push(d[i + 2]);
-        }
+    const med = (arr) => { arr.sort((m, q) => m - q); return arr[arr.length >> 1]; };
+    const px = (xx, yy) => { const i = (yy * W + xx) * 4; return [d[i], d[i + 1], d[i + 2]]; };
+    const corner = [0, 1, 2].map((ch) => { const v = []; for (let yy = 0; yy < cs; yy += 1) for (let xx = 0; xx < cs; xx += 1) { v.push(px(xx, yy)[ch]); v.push(px(W - 1 - xx, yy)[ch]); } return med(v); });
+    const dist3 = (p1, p2) => (Math.abs(p1[0] - p2[0]) + Math.abs(p1[1] - p2[1]) + Math.abs(p1[2] - p2[2])) / 765;
+    const rowBg = new Array(W);
+    let prev = corner;
+    for (let yy = 0; yy < W; yy += 1) {
+        const l = [0, 1, 2].map((ch) => med([0, 1, 2].map((xx) => px(xx, yy)[ch])));
+        const r = [0, 1, 2].map((ch) => med([0, 1, 2].map((xx) => px(W - 1 - xx, yy)[ch])));
+        const okL = dist3(l, prev) < 0.06; const okR = dist3(r, prev) < 0.06;
+        let cur = prev;
+        if (okL && okR) cur = [0, 1, 2].map((ch) => (l[ch] + r[ch]) / 2);
+        else if (okL) cur = l; else if (okR) cur = r;
+        rowBg[yy] = cur; prev = cur;
     }
-    const med = (a) => { a.sort((m, n) => m - n); return a[a.length >> 1]; };
-    const bg = bgs.map(med);
     const n = W * W; const lum = new Float32Array(n); const mask = new Float32Array(n); const hist = new Uint32Array(256); let cnt = 0;
     for (let k = 0, i = 0; k < n; k += 1, i += 4) {
+        const bg = rowBg[(k / W) | 0];
         const dist = (Math.abs(d[i] - bg[0]) + Math.abs(d[i + 1] - bg[1]) + Math.abs(d[i + 2] - bg[2])) / 765;
         const m = Math.min(1, Math.max(0, (dist - 0.03) / 0.07));
         const L = (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
