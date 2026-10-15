@@ -6020,3 +6020,9 @@ body.apefest-body .mini-bar { background-color: #000 !important; }
 .hero--try .hero-cta.hero-cta--apefest:hover { color: #fff; box-shadow: 0 0 27px rgba(225, 20, 30, .525); }
 .hero--try .hero-cta.hero-cta--apefest:focus-visible { outline: 2px solid #ff5a4f; outline-offset: 3px; color: #fff; }
 @media (max-width: 760px) { .hero--try .hero-cta.hero-cta--apefest { font-size: 11px; } }
+
+/* ApeFest asset picker (minted): launch-frame thumbnails, no duotone, flat #0b0b0c, same crop. */
+.asset-thumb-fest { display: none; }
+.App.apefest-mode .asset-thumb.is-fest .asset-thumb-img { background: #0b0b0c; }
+.App.apefest-mode .asset-thumb.is-fest .asset-thumb-img img.has-fest { visibility: hidden; }
+.App.apefest-mode .asset-thumb.is-fest .asset-thumb-img img.asset-thumb-fest { display: block; position: absolute; inset: 0; width: 100%; height: 100%; filter: none; }

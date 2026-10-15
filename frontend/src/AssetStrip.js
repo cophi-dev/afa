@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { backgroundHeld, onBackgroundRelease } from './utils/apiLane';
+import { renderApefestTile } from './utils/apefestLaunch';
 
 // Shared, small-concurrency queue + cache for asset preview renders.
 const cache = new Map();
@@ -151,7 +152,7 @@ const loadPreview = (key, fetcher, priority = false) => {
     return promise;
 };
 
-function AssetThumb({ option, index, active, disabled, onPick, fetchPreview, cacheKey, crop, rootRef }) {
+function AssetThumb({ option, index, active, disabled, onPick, fetchPreview, cacheKey, crop, rootRef, fetchFest = null }) {
     const ref = useRef(null);
     const [url, setUrl] = useState(() => cache.get(cacheKey) || null);
     const [failed, setFailed] = useState(false);
@@ -179,18 +180,30 @@ function AssetThumb({ option, index, active, disabled, onPick, fetchPreview, cac
         return () => { cancelled = true; observer.disconnect(); };
     }, [cacheKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
+    // ApeFest (minted only): same small launch frame as the list tiles, rendered in the worker from the
+    // transparent thumbnail once the normal tile is loaded (so it stays lazy), queued + cached.
+    const [festUrl, setFestUrl] = useState(null);
+    useEffect(() => {
+        if (!fetchFest || !url) { setFestUrl(null); return undefined; }
+        let alive = true;
+        renderApefestTile(`fest|${cacheKey}`, fetchFest, 384).then((u) => { if (alive) setFestUrl(u); }).catch(() => {});
+        return () => { alive = false; };
+    }, [fetchFest ? cacheKey : null, url]); // eslint-disable-line react-hooks/exhaustive-deps
+    const c = cropFor(crop, option.value);
+
     return (
         <button
             ref={ref}
             type="button"
-            className={`asset-thumb ${active ? 'is-active' : ''}`}
+            className={`asset-thumb ${active ? 'is-active' : ''} ${festUrl ? 'is-fest' : ''}`}
             onClick={() => onPick(option.value)}
             disabled={disabled}
             aria-pressed={active}
             title={option.label}
         >
             <span className={`asset-thumb-img ${url ? '' : 'is-loading'} ${failed ? 'is-failed' : ''}`}>
-                {url && <img src={url} alt="" width="72" height="72" style={{ transform: `scale(${cropFor(crop, option.value).zoom})`, transformOrigin: cropFor(crop, option.value).origin }} />}
+                {url && <img src={url} alt="" width="72" height="72" className={festUrl ? 'has-fest' : undefined} style={{ transform: `scale(${c.zoom})`, transformOrigin: c.origin }} />}
+                {festUrl && <img src={festUrl} alt="" width="72" height="72" className="asset-thumb-fest" style={{ transform: `scale(${c.zoom})`, transformOrigin: c.origin }} />}
             </span>
             <span className="asset-thumb-label">{shortName(option.label)}</span>
         </button>
@@ -198,7 +211,7 @@ function AssetThumb({ option, index, active, disabled, onPick, fetchPreview, cac
 }
 
 /** Horizontal, swipeable thumbnail row mirroring an existing <select>. */
-export default function AssetStrip({ selectRef, param, tokenId, value, onPick, disabled, fetchAssetBlob, crop = 'extra', endpoint = 'get-asset' }) {
+export default function AssetStrip({ selectRef, param, tokenId, value, onPick, disabled, fetchAssetBlob, crop = 'extra', endpoint = 'get-asset', apefest = false }) {
     const [options, setOptions] = useState([]);
     const rootRef = useRef(null);
     const [title, setTitle] = useState('');
@@ -253,6 +266,10 @@ export default function AssetStrip({ selectRef, param, tokenId, value, onPick, d
                         crop={crop}
                         rootRef={rootRef}
                         fetchPreview={() => fetchAssetBlob(`/api/${endpoint}?${query.toString()}`)}
+                        fetchFest={apefest && endpoint === 'get-asset' ? () => {
+                            const q = new URLSearchParams(query); q.set('thirdAssetType', 'transparent');
+                            return fetchAssetBlob(`/api/get-asset?${q.toString()}`);
+                        } : null}
                     />
                 );
             })}

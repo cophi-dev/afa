@@ -134,20 +134,26 @@ function pumpTiles() {
     const { run, resolve, reject } = tileQueue.shift();
     run().then(resolve, reject).finally(() => { tileBusy = false; setTimeout(pumpTiles, 0); });
 }
-export function renderApefestTile(url) {
+// key: cache key; fetchBlob: optional () => Promise<Blob> (default fetch(key)); size: output edge.
+export function renderApefestTile(key, fetchBlob = null, size = TILE_SIZE) {
+    const url = key;
     if (tileCache.has(url)) return tileCache.get(url);
     const p = new Promise((resolve, reject) => {
         tileQueue.push({
             resolve, reject,
             run: async () => {
-                const res = await fetch(url);
-                if (!res.ok) throw new Error(`tile ${res.status}`);
-                const blob = await res.blob();
+                let blob;
+                if (fetchBlob) blob = await fetchBlob();
+                else {
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error(`tile ${res.status}`);
+                    blob = await res.blob();
+                }
                 const offscreen = typeof OffscreenCanvas !== 'undefined';
-                const job = { W: TILE_SIZE, H: TILE_SIZE, opts: TILE_OPTS, layers: [], glowLayers: [] };
+                const job = { W: size, H: size, opts: TILE_OPTS, layers: [], glowLayers: [] };
                 if (offscreen) job.tileBlob = blob; else job.rgba = await decodeAny(blob);
                 const px = await runAnywhere(job, offscreen ? [] : [job.rgba.data.buffer]);
-                return URL.createObjectURL(makeBmp(px, TILE_SIZE, TILE_SIZE));
+                return URL.createObjectURL(makeBmp(px, size, size));
             },
         });
         pumpTiles();
