@@ -102,7 +102,20 @@ const preloadImage = async (url) => {
     }
 };
 
-function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook }) {
+// Hero in ApeFest mode (Phillipp 15.10): every frame gets the launch look. Server asset with a
+// transparent background -> launch render in the worker -> exact pixels as BMP blob URL (no PNG encode).
+// The worker is serial; renders queue up while the previous cycle is on screen.
+const heroApefestFrame = async (url) => {
+    const u = new URL(url, window.location.href);
+    u.searchParams.set('thirdAssetType', 'transparent');
+    const res = await fetch(u.toString());
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const canvas = await renderApefestLaunch(await res.blob(), 'square');
+    const blob = canvas.apefestBmp || await canvasToBlob(canvas);
+    return URL.createObjectURL(blob);
+};
+
+function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook, apefest = false }) {
     const [value, setValue] = useState('');
     const [heroId, setHeroId] = useState(null);
     useEffect(() => {
@@ -129,13 +142,18 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook }) {
     const nextCycleRef = useRef(null);
     const baseSrcRef = useRef(null);
     const prevStepsRef = useRef(null);
+    const baseReadyRef = useRef(null);
     const prepareCycle = useCallback(() => {
         const next = buildHeroSteps();
-        const done = Promise.all(next.map((st) => preloadImage(urlFor(st.look))))
+        const load = apefest
+            ? (url) => heroApefestFrame(url).catch(() => preloadImage(url))
+            : preloadImage;
+        const done = (apefest && baseReadyRef.current ? baseReadyRef.current : Promise.resolve())
+            .then(() => Promise.all(next.map((st) => load(urlFor(st.look)))))
             .then((srcs) => next.map((st, i) => ({ ...st, src: srcs[i] })));
         nextCycleRef.current = done;
         return done;
-    }, [urlFor]);
+    }, [urlFor, apefest]);
     const startCycle = useCallback(async () => {
         const pending = nextCycleRef.current || prepareCycle();
         nextCycleRef.current = null;
@@ -152,12 +170,27 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook }) {
     useEffect(() => {
         if (heroId == null) return;
         setStepIdx(-1);
-        baseSrcRef.current = urlFor(null);
-        setLayers({ a: baseSrcRef.current, b: null, front: 'a' });
         nextCycleRef.current = null;
-        preloadImage(urlFor(null)).then((src) => { baseSrcRef.current = src; });
+        let cancelled = false;
+        if (apefest) {
+            // ApeFest: never show the plain ape; the base frame renders first, the cycle after it.
+            baseSrcRef.current = null;
+            setLayers({ a: null, b: null, front: 'a' });
+            baseReadyRef.current = heroApefestFrame(urlFor(null))
+                .catch(() => preloadImage(urlFor(null)))
+                .then((src) => {
+                    baseSrcRef.current = src;
+                    if (!cancelled) setLayers((prev) => (prev.a || prev.b ? prev : { a: src, b: null, front: 'a' }));
+                });
+        } else {
+            baseReadyRef.current = null;
+            baseSrcRef.current = urlFor(null);
+            setLayers({ a: baseSrcRef.current, b: null, front: 'a' });
+            preloadImage(urlFor(null)).then((src) => { baseSrcRef.current = src; });
+        }
         startCycle();
-    }, [heroId, urlFor, startCycle]);
+        return () => { cancelled = true; };
+    }, [heroId, urlFor, startCycle, apefest]);
 
     // Reduced motion: show the full look statically.
     useEffect(() => {
@@ -234,6 +267,7 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook }) {
                 <div className="hero-art">
                     <div className="hero-stage" ref={stageRef} onClick={onStageClick}
                         onMouseEnter={() => { hoverRef.current = true; }} onMouseLeave={() => { hoverRef.current = false; }}
+                        data-apefest={apefest ? 'on' : undefined}
                         role="img" aria-label={heroId != null ? `AFA #${heroId} trying on traits` : 'Loading ape'}>
                         {layers.a && <img src={layers.a} alt="" width="480" height="480" decoding="sync"
                             className={`hero-ape ${layers.front === 'a' ? 'is-front' : ''}`} />}
@@ -1594,6 +1628,7 @@ function App() {
           mintedIds={mintedTokenIds}
           onSubmitId={handleTokenSubmit}
           onOpenLook={handleOpenLook}
+          apefest={APEFEST_ENABLED && apefest}
         />
       )}
       {tokenId && (

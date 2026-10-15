@@ -5985,3 +5985,6 @@ body.apefest-body .mini-bar { background-color: #000 !important; }
   align-self: flex-start;
   margin-top: 2px;
 }
+
+/* Hero in ApeFest mode: launch-look frames on the launch black, no loading flash. */
+.hero-stage[data-apefest="on"] { background: #0b0b0c; }
