@@ -417,7 +417,7 @@ function MintedGalleryItem({ id, imageUrl, isFailed, isSelected, onSelect, onBec
         <button
             ref={ref}
             type="button"
-            className={`gallery-item ${imageUrl ? 'has-image' : 'is-pending'} ${isFailed ? 'is-failed' : ''} ${isSelected ? 'is-selected' : ''}`}
+            className={`gallery-item ${imageUrl ? 'has-image' : 'is-pending'} ${isFailed ? 'is-failed' : ''} ${isSelected ? 'is-selected' : ''} ${festUrl ? 'is-fest' : ''}`}
             onClick={() => onSelect(id)}
             aria-pressed={isSelected}
         >

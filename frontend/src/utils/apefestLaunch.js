@@ -123,7 +123,8 @@ export async function renderApefestLaunch(blob, format = 'square', { unminted = 
 // Same scene maths as the big preview on the transparent 256px thumbnail, in the worker,
 // one tile at a time, cached per URL (BMP blob URL, never revoked while the page lives).
 export const TILE_SIZE = 256;
-const TILE_OPTS = { bgGlow: 0, bgBase: [11 / 255, 11 / 255, 12 / 255], vignette: false, apeScale: 0.96 };
+// bgGlow 0.25 = head glow at ~25% of the big preview (Design 15.10); flattened to exactly #0b0b0c.
+const TILE_OPTS = { bgGlow: 0.25, bgBase: [11 / 255, 11 / 255, 12 / 255], vignette: false, apeScale: 0.96, tileFlat: [11, 11, 12] };
 const tileCache = new Map();
 const tileQueue = [];
 let tileBusy = false;

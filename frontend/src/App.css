@@ -5929,7 +5929,11 @@ body.apefest-body .mini-bar { background-color: #000 !important; }
 .App.apefest-mode .gallery-thumb .gallery-thumb-fest { display: block; position: absolute; inset: 0; width: 100%; height: 100%; }
 /* Launch-frame tiles carry their own scene scanlines: no duotone filter, no extra overlay lines. */
 .App.apefest-mode .gallery-item.has-image .gallery-thumb img.gallery-thumb-fest { filter: none; }
-.App.apefest-mode .gallery-item.has-image .gallery-thumb:has(.gallery-thumb-fest)::after { display: none; }
+.App.apefest-mode .gallery-item.has-image.is-fest .gallery-thumb::after { display: none; }
+/* No tile edges/seams on launch tiles: flat #0b0b0c frame, no red rim (the selected ring stays). */
+.App.apefest-mode .gallery-item.has-image.is-fest,
+.App.apefest-mode .gallery-item.has-image.is-fest .gallery-thumb { background: #0b0b0c !important; }
+.App.apefest-mode .gallery-item.has-image.is-fest:not(.is-selected) .gallery-thumb { box-shadow: none; }
 /* Design 15.10: the red page glow stays behind the hero but not on the list. The grid sits above the
    CRT overlay (z 40; tiles bring their own scanlines), its gaps fade to #0b0b0c over 200px. */
 .App.apefest-mode .gallery-grid {
