@@ -258,7 +258,7 @@ function AssetThumb({ option, index, active, disabled, onPick, fetchPreview, cac
             aria-pressed={active}
             title={option.label}
         >
-            <span className={`asset-thumb-img ${url ? '' : 'is-loading'} ${failed ? 'is-failed' : ''}`}>
+            <span data-cat={crop} className={`asset-thumb-img ${url ? '' : 'is-loading'} ${failed ? 'is-failed' : ''}`}>
                 {url && <img src={url} alt="" width="72" height="72" className={festUrl ? 'has-fest' : undefined} style={{ transform: `scale(${c.zoom})`, transformOrigin: c.origin }} />}
                 {festUrl && <img src={festUrl} alt="" width="72" height="72" className="asset-thumb-fest" data-cat={crop} style={frame ? frameStyle(frame) : { transform: `scale(${c.zoom})`, transformOrigin: c.origin }} />}
             </span>

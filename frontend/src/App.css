@@ -5986,6 +5986,14 @@ body.apefest-body .mini-bar { background-color: #000 !important; }
 
 /* Unminted ape: picker tiles are the server-blurred assets (never sharp); brighter blur curve, always filtered. */
 .App.apefest-mode.is-unminted .asset-thumb-img img { filter: url(#apefest-duo-blur) !important; }
+/* Unminted picker parity (Design 15.10): darken the existing blur only (no extra detail) so unminted
+   tiles match the minted picker's mean luminance; per-category factors measured on #2388 vs #1234. */
+.App.apefest-mode.is-unminted .asset-thumb-img[data-cat] img { filter: url(#apefest-duo-blur) brightness(var(--unminted-k, 0.54)) !important; }
+.App.apefest-mode.is-unminted .asset-thumb-img[data-cat="outfit"] { --unminted-k: 0.52; }
+.App.apefest-mode.is-unminted .asset-thumb-img[data-cat="mouth"] { --unminted-k: 0.57; }
+.App.apefest-mode.is-unminted .asset-thumb-img[data-cat="hat"] { --unminted-k: 0.60; }
+.App.apefest-mode.is-unminted .asset-thumb-img[data-cat="eyes"] { --unminted-k: 0.49; }
+.App.apefest-mode.is-unminted .asset-thumb-img[data-cat="hand"] { --unminted-k: 0.51; }
 
 /* Perf/bugfix: ApeFest loading tiles keep a visible shimmer (were flat dark squares while queued). */
 .App.apefest-mode .asset-thumb-img.is-loading { background: #1a0d0f; }
