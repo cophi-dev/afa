@@ -135,7 +135,7 @@ function pumpTiles() {
     run().then(resolve, reject).finally(() => { tileBusy = false; setTimeout(pumpTiles, 0); });
 }
 // key: cache key; fetchBlob: optional () => Promise<Blob> (default fetch(key)); size: output edge.
-export function renderApefestTile(key, fetchBlob = null, size = TILE_SIZE) {
+export function renderApefestTile(key, fetchBlob = null, size = TILE_SIZE, extraOpts = null) {
     const url = key;
     if (tileCache.has(url)) return tileCache.get(url);
     const p = new Promise((resolve, reject) => {
@@ -150,7 +150,7 @@ export function renderApefestTile(key, fetchBlob = null, size = TILE_SIZE) {
                     blob = await res.blob();
                 }
                 const offscreen = typeof OffscreenCanvas !== 'undefined';
-                const job = { W: size, H: size, opts: TILE_OPTS, layers: [], glowLayers: [] };
+                const job = { W: size, H: size, opts: extraOpts ? { ...TILE_OPTS, ...extraOpts } : TILE_OPTS, layers: [], glowLayers: [] };
                 if (offscreen) job.tileBlob = blob; else job.rgba = await decodeAny(blob);
                 const px = await runAnywhere(job, offscreen ? [] : [job.rgba.data.buffer]);
                 return URL.createObjectURL(makeBmp(px, size, size));

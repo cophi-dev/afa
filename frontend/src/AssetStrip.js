@@ -2,6 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { backgroundHeld, onBackgroundRelease } from './utils/apiLane';
 import { renderApefestTile } from './utils/apefestLaunch';
 
+// Picker crops zoom into the brightest (key-lit) part of the frame; a lower scene gain keeps the
+// cropped tile at the same brightness/saturation as the full list tiles (Design 15.10).
+const PICKER_TILE_OPTS = { gain: 0.8 };
+
 // Shared, small-concurrency queue + cache for asset preview renders.
 const cache = new Map();
 const pending = new Map();
@@ -120,7 +124,15 @@ const ASSET_CROPS = {
     'unclogged': { zoom: 1.13, origin: '34% 100%' },
   },
 };
-const cropFor = (crop, value) => (ASSET_CROPS[crop] && ASSET_CROPS[crop][value]) || CROPS[crop] || CROPS.extra;
+const baseCrop = (crop, value) => (ASSET_CROPS[crop] && ASSET_CROPS[crop][value]) || CROPS[crop] || CROPS.extra;
+// Design 15.10: Hand items ~50% less zoom (excess over 1x halved), focal point pulled halfway to the
+// centre so the item sits centred with room around it.
+const pullHalf = (o) => o.split(' ').map((v) => `${(parseFloat(v) + 50) / 2}%`).join(' ');
+const cropFor = (crop, value) => {
+    const c = baseCrop(crop, value);
+    if (crop !== 'hand') return c;
+    return { zoom: 1 + (c.zoom - 1) * 0.5, origin: pullHalf(c.origin) };
+};
 
 const loadPreview = (key, fetcher, priority = false) => {
     if (cache.has(key)) return Promise.resolve(cache.get(key));
@@ -186,7 +198,7 @@ function AssetThumb({ option, index, active, disabled, onPick, fetchPreview, cac
     useEffect(() => {
         if (!fetchFest || !url) { setFestUrl(null); return undefined; }
         let alive = true;
-        renderApefestTile(`fest|${cacheKey}`, fetchFest, 384).then((u) => { if (alive) setFestUrl(u); }).catch(() => {});
+        renderApefestTile(`fest|${cacheKey}`, fetchFest, 384, PICKER_TILE_OPTS).then((u) => { if (alive) setFestUrl(u); }).catch(() => {});
         return () => { alive = false; };
     }, [fetchFest ? cacheKey : null, url]); // eslint-disable-line react-hooks/exhaustive-deps
     const c = cropFor(crop, option.value);
