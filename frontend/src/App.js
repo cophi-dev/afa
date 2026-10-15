@@ -13,6 +13,24 @@ import { drawApefestText, canvasToBlob, loadImage, loadApefestFonts, APEFEST_CRT
 // ApeFest (10.17): while true, the "Add frame" button becomes the ApeFest toggle.
 // Set to false after ApeFest to restore "Add frame"; nothing else needs to change.
 const APEFEST_ENABLED = true;
+// ApeFest default period. Official ApeFest 2026 weekend: Oct 15-18 (apefest.com, @BoredApeYC).
+// Rollback 2 days after the end: from 20.10.2026 00:00 Berlin the hero shows the normal look again,
+// 'OPEN YOUR APE' is back and the mode is opt-in only (toggle). Overrides for testing:
+// ?apefestDefault=on|off, or env REACT_APP_APEFEST_DEFAULT=on|off.
+export const APEFEST_DEFAULT_UNTIL = '2026-10-20T00:00:00+02:00';
+function readApefestDefault() {
+    const norm = (v) => (v === 'on' || v === 'off' ? v : null);
+    try {
+        const q = norm(new URLSearchParams(window.location.search).get('apefestDefault'));
+        if (q) return q === 'on';
+    } catch (e) { /* no window */ }
+    const env = norm(process.env.REACT_APP_APEFEST_DEFAULT);
+    if (env) return env === 'on';
+    return Date.now() < Date.parse(APEFEST_DEFAULT_UNTIL);
+}
+const APEFEST_DEFAULT_ON = APEFEST_ENABLED && readApefestDefault();
+// After the rollback the opt-in uses its own key, so the auto-on '1' from ApeFest week doesn't carry over.
+const APEFEST_STORE_KEY = APEFEST_DEFAULT_ON ? 'afa.apefest' : 'afa.apefest.optin';
 
 const DEFAULT_API_URL = 'https://afa-editor.ew.r.appspot.com';
 const MINT_SITE_URL = 'https://www.apefacingapes.com';
@@ -115,7 +133,7 @@ const heroApefestFrame = async (url) => {
     return URL.createObjectURL(blob);
 };
 
-function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook, apefest = false }) {
+function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook, onExplore, apefest = false, explore = false }) {
     const [value, setValue] = useState('');
     const [heroId, setHeroId] = useState(null);
     useEffect(() => {
@@ -247,6 +265,12 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook, apefest = false }) {
     const submit = (e) => {
         e.preventDefault();
         const id = value.replace(/[^0-9]/g, '').slice(0, 4);
+        if (explore) {
+            // ApeFest CTA: typed ID, otherwise the ape currently shown in the hero.
+            if (id) onExplore(id, null);
+            else if (heroId != null) { setStopped(true); onExplore(String(heroId), currentLook); }
+            return;
+        }
         if (id) onSubmitId(id);
         else document.getElementById('hero-token-id')?.focus();
     };
@@ -296,7 +320,9 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook, apefest = false }) {
                     <input id="hero-token-id" className="hero-input" inputMode="numeric" autoComplete="off"
                         placeholder="Ape ID, e.g. 2388" value={value}
                         onChange={(e) => setValue(e.target.value.replace(/[^0-9]/g, '').slice(0, 4))} />
-                    <button type="submit" className="hero-cta">Open your ape</button>
+                    {explore
+                        ? <button type="submit" className="hero-cta hero-cta--apefest">Explore ApeFest mode</button>
+                        : <button type="submit" className="hero-cta">Open your ape</button>}
                 </form>
                 <button type="button" className="hero-random" onClick={tryRandom} disabled={!mintedIds.length}>
                     or try a random one
@@ -612,11 +638,12 @@ function App() {
     const [apefest, setApefest] = useState(() => {
         try {
             if (new URLSearchParams(window.location.search).get('mode') === 'apefest') return true;
-            return window.localStorage.getItem('afa.apefest') !== '0';
-        } catch (e) { return true; }
+            const stored = window.localStorage.getItem(APEFEST_STORE_KEY);
+            return APEFEST_DEFAULT_ON ? stored !== '0' : stored === '1';
+        } catch (e) { return APEFEST_DEFAULT_ON; }
     });
     useEffect(() => {
-        try { window.localStorage.setItem('afa.apefest', apefest ? '1' : '0'); } catch (e) { /* storage blocked */ }
+        try { window.localStorage.setItem(APEFEST_STORE_KEY, apefest ? '1' : '0'); } catch (e) { /* storage blocked */ }
     }, [apefest]);
     const apefestRef = useRef(APEFEST_ENABLED && apefest);
     const apefestSrcRef = useRef(null);
@@ -1163,6 +1190,14 @@ function App() {
         if (look.mouth) setMouthAsset(look.mouth);
     }, [handleTokenSubmit]);
 
+    // Hero 'EXPLORE APEFEST MODE': open the ape with ApeFest mode on.
+    const handleExplore = useCallback((id, look) => {
+        track('apefest_toggle', 'on');
+        apefestRef.current = APEFEST_ENABLED;
+        setApefest(true);
+        handleOpenLook(id, look);
+    }, [handleOpenLook]);
+
     const handleSuggestionClick = (value) => {
         // Suggestions are derived from minted token data, so select immediately.
         handleTokenSubmit(value);
@@ -1628,7 +1663,9 @@ function App() {
           mintedIds={mintedTokenIds}
           onSubmitId={handleTokenSubmit}
           onOpenLook={handleOpenLook}
-          apefest={APEFEST_ENABLED && apefest}
+          apefest={APEFEST_DEFAULT_ON && apefest}
+          explore={APEFEST_DEFAULT_ON}
+          onExplore={handleExplore}
         />
       )}
       {tokenId && (
