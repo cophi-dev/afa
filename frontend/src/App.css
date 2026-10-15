@@ -5922,7 +5922,11 @@ body.apefest-body .mini-bar { background-color: #000 !important; }
   box-shadow: 0 0 10px rgba(225, 20, 30, 0.25), inset 0 0 0 1px rgba(225, 20, 30, 0.35);
 }
 .App.apefest-mode .asset-thumb-img img { filter: url(#apefest-duo-asset); }
-.App.apefest-mode .gallery-item.has-image .gallery-thumb img { filter: brightness(var(--tile-norm, 1)) url(#apefest-duo-pick); }
+.App.apefest-mode .gallery-item.has-image .gallery-thumb img { filter: url(#apefest-duo-pick); }
+/* Keyed + ape-normalised version (see processTileForApefest); only shown in ApeFest mode. */
+.gallery-thumb-fest { display: none; }
+.App.apefest-mode .gallery-thumb img.has-fest { visibility: hidden; }
+.App.apefest-mode .gallery-thumb .gallery-thumb-fest { display: block; position: absolute; inset: 0; width: 100%; height: 100%; }
 /* Scanlines only on tiles >= 80px edge (picker thumbs are 72px: none, avoids mobile moire) */
 .App.apefest-mode .gallery-item.has-image .gallery-thumb::after {
   content: "";
