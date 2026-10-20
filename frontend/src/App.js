@@ -1985,7 +1985,7 @@ function App() {
                               param="secondAssetType"
                               tokenId={stripTokenId}
                               endpoint={stripEndpoint}
-                              apefest={apefestActive && !previewOnly}
+                              apefest={apefestActive}
                               value={secondAsset}
                               onPick={(v) => handleSecondAssetChange({ target: { value: secondAsset === v ? '' : v } })}
                               disabled={thirdAsset === 'selfie' || Boolean(clubAsset)}
@@ -2026,7 +2026,7 @@ function App() {
                               param="mouthAssetType"
                               tokenId={stripTokenId}
                               endpoint={stripEndpoint}
-                              apefest={apefestActive && !previewOnly}
+                              apefest={apefestActive}
                               value={mouthAsset}
                               onPick={(v) => handleMouthAssetChange({ target: { value: mouthAsset === v ? '' : v } })}
                               disabled={clubAsset === 'elite'}
@@ -2066,7 +2066,7 @@ function App() {
                               param="hatAssetType"
                               tokenId={stripTokenId}
                               endpoint={stripEndpoint}
-                              apefest={apefestActive && !previewOnly}
+                              apefest={apefestActive}
                               value={hatAsset}
                               onPick={(v) => handleHatAssetChange({ target: { value: hatAsset === v ? '' : v } })}
                               disabled={Boolean(clubAsset) || secondAsset === 'singe_hoodie_glow' || secondAsset === 'singe_hoodie'}
@@ -2100,7 +2100,7 @@ function App() {
                               param="eyesAssetType"
                               tokenId={stripTokenId}
                               endpoint={stripEndpoint}
-                              apefest={apefestActive && !previewOnly}
+                              apefest={apefestActive}
                               value={eyesAsset}
                               onPick={(v) => handleEyesAssetChange({ target: { value: eyesAsset === v ? '' : v } })}
                               disabled={clubAsset === 'elite'}
@@ -2160,7 +2160,7 @@ function App() {
                               param="assetType"
                               tokenId={stripTokenId}
                               endpoint={stripEndpoint}
-                              apefest={apefestActive && !previewOnly}
+                              apefest={apefestActive}
                               value={selectedAsset}
                               onPick={(v) => handleAssetChange({ target: { value: selectedAsset === v ? '' : v } })}
                               disabled={thirdAsset === 'selfie' || clubAsset === 'elite'}
@@ -2238,7 +2238,7 @@ function App() {
                               param="thirdAssetType"
                               tokenId={stripTokenId}
                               endpoint={stripEndpoint}
-                              apefest={apefestActive && !previewOnly}
+                              apefest={apefestActive}
                               value={thirdAsset}
                               onPick={(v) => handleThirdAssetChange({ target: { value: thirdAsset === v ? '' : v } })}
                               disabled={clubAsset === 'elite' || apefestActive}
