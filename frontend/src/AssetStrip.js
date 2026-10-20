@@ -1,40 +1,53 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { backgroundHeld, onBackgroundRelease } from './utils/apiLane';
 import { renderApefestTile } from './utils/apefestLaunch';
+import { frameFromBox, SAMPLE } from './utils/tileFrame';
 
 // Picker crops zoom into the brightest (key-lit) part of the frame; a lower scene gain keeps the
 // cropped tile at the same brightness/saturation as the full list tiles (Design 15.10).
 // Per-category scene gain, measured so the visible crop matches the list tiles' mean luminance.
 export const PICKER_GAIN = { outfit: 1.46, mouth: 0.75, hat: 0.74, eyes: 0.4, hand: 1.19, extra: 0.8 };
 
-// Uniform framing in ApeFest mode: item bbox = (asset render - bare ape) on a 96px sample,
-// mapped into the launch frame (ape scaled 0.96, bottom-centred), item fills ~60% of the tile.
-const FRAME_FILL = 0.6;
-const APE_S = 0.96;
 const baseCache = new Map();
+const diffAt = (a, b, i) => Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]) + 2 * Math.abs(a[i + 3] - b[i + 3]);
 async function sample96(blob) {
-    const bmp = await createImageBitmap(blob, { resizeWidth: 96, resizeHeight: 96, resizeQuality: 'medium' });
-    const c = document.createElement('canvas'); c.width = 96; c.height = 96;
+    const bmp = await createImageBitmap(blob, { resizeWidth: SAMPLE, resizeHeight: SAMPLE, resizeQuality: 'medium' });
+    const c = document.createElement('canvas'); c.width = SAMPLE; c.height = SAMPLE;
     const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(bmp, 0, 0);
-    return x.getImageData(0, 0, 96, 96).data;
+    return x.getImageData(0, 0, SAMPLE, SAMPLE).data;
 }
-async function itemFrame(itemBlob, baseBlob) {
+// Blur knocks a thin garment under the core threshold. Grow a small core box into
+// neighbouring pixels that still differ, without jumping across to the face.
+function growBox(a, b, box) {
+    const { x0, y0, x1, y1 } = box;
+    if (Math.min(x1 - x0, y1 - y0) >= 14) return box;
+    const radius = 8;
+    let nx0 = x0; let ny0 = y0; let nx1 = x1; let ny1 = y1;
+    const yLo = Math.max(0, y0 - radius); const yHi = Math.min(SAMPLE - 1, y1 + radius);
+    const xLo = Math.max(0, x0 - radius); const xHi = Math.min(SAMPLE - 1, x1 + radius);
+    for (let y = yLo; y <= yHi; y += 1) {
+        for (let x = xLo; x <= xHi; x += 1) {
+            if (diffAt(a, b, (y * SAMPLE + x) * 4) > 45) {
+                if (x < nx0) nx0 = x; if (x > nx1) nx1 = x; if (y < ny0) ny0 = y; if (y > ny1) ny1 = y;
+            }
+        }
+    }
+    return { x0: nx0, y0: ny0, x1: nx1, y1: ny1 };
+}
+async function itemFrame(itemBlob, baseBlob, category, launch) {
     const [a, b] = await Promise.all([sample96(itemBlob), sample96(baseBlob)]);
-    let x0 = 96; let y0 = 96; let x1 = -1; let y1 = -1;
-    for (let y = 0; y < 96; y += 1) {
-        for (let x = 0; x < 96; x += 1) {
-            const i = (y * 96 + x) * 4;
-            const d = Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]) + 2 * Math.abs(a[i + 3] - b[i + 3]);
-            if (d > 90) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    let x0 = SAMPLE; let y0 = SAMPLE; let x1 = -1; let y1 = -1;
+    for (let y = 0; y < SAMPLE; y += 1) {
+        for (let x = 0; x < SAMPLE; x += 1) {
+            if (diffAt(a, b, (y * SAMPLE + x) * 4) > 90) {
+                if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+            }
         }
     }
     if (x1 < 0) return null;
-    const m = (v) => v / 96;
-    const fx = (v) => (1 - APE_S) / 2 + APE_S * m(v); const fy = (v) => (1 - APE_S) + APE_S * m(v);
-    const bx0 = fx(x0); const bx1 = fx(x1 + 1); const by0 = fy(y0); const by1 = fy(y1 + 1);
-    const side = Math.max(bx1 - bx0, by1 - by0);
-    const zoom = Math.min(4, Math.max(1, FRAME_FILL / side));
-    return { zoom, cx: (bx0 + bx1) / 2, cy: (by0 + by1) / 2 };
+    let box = { x0, y0, x1, y1 };
+    if (category === 'outfit' || category === 'hand') box = growBox(a, b, box);
+    return frameFromBox(box, { category, launch });
 }
 const festBlobCache = new Map();
 let frameChain = Promise.resolve();
@@ -236,16 +249,19 @@ function AssetThumb({ option, index, active, disabled, onPick, fetchPreview, cac
     const [festUrl, setFestUrl] = useState(null);
     const [frame, setFrame] = useState(null);
     useEffect(() => {
-        if (!fetchFest || !url) { setFestUrl(null); return undefined; }
+        // Minted: launch render + frame. Unminted: same frame on the blurred preview (no sharp pixels).
+        if ((!fetchFest && !fetchBase) || !url) { setFestUrl(null); setFrame(null); return undefined; }
         let alive = true;
+        if (!fetchFest) setFestUrl(null);
         // One fetch per asset for both the render and the framing; framing runs queued, one per task.
-        if (!festBlobCache.has(cacheKey)) festBlobCache.set(cacheKey, fetchFest().catch((e) => { festBlobCache.delete(cacheKey); throw e; }));
+        const loadItem = fetchFest || fetchPreview;
+        if (!festBlobCache.has(cacheKey)) festBlobCache.set(cacheKey, loadItem().catch((e) => { festBlobCache.delete(cacheKey); throw e; }));
         const getBlob = () => festBlobCache.get(cacheKey);
-        const tile = renderApefestTile(`fest|${cacheKey}`, getBlob, 384, { gain: PICKER_GAIN[crop] ?? 0.8 });
-        const fr = fetchBase ? Promise.all([getBlob(), fetchBase()]).then(([i, b]) => queueFrame(() => itemFrame(i, b))).catch(() => null) : Promise.resolve(null);
+        const tile = fetchFest ? renderApefestTile(`fest|${cacheKey}`, getBlob, 384, { gain: PICKER_GAIN[crop] ?? 0.8 }) : Promise.resolve(null);
+        const fr = fetchBase ? Promise.all([getBlob(), fetchBase()]).then(([i, b]) => queueFrame(() => itemFrame(i, b, crop, Boolean(fetchFest)))).catch(() => null) : Promise.resolve(null);
         Promise.all([tile, fr]).then(([u, f]) => { if (alive) { setFrame(f); setFestUrl(u); } }).catch(() => {});
         return () => { alive = false; };
-    }, [fetchFest ? cacheKey : null, url]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [(fetchFest || fetchBase) ? cacheKey : null, url]); // eslint-disable-line react-hooks/exhaustive-deps
     const c = cropFor(crop, option.value);
 
     return (
@@ -259,7 +275,7 @@ function AssetThumb({ option, index, active, disabled, onPick, fetchPreview, cac
             title={option.label}
         >
             <span data-cat={crop} className={`asset-thumb-img ${url ? '' : 'is-loading'} ${failed ? 'is-failed' : ''}`}>
-                {url && <img src={url} alt="" width="72" height="72" className={festUrl ? 'has-fest' : undefined} style={{ transform: `scale(${c.zoom})`, transformOrigin: c.origin }} />}
+                {url && <img src={url} alt="" width="72" height="72" className={festUrl ? 'has-fest' : undefined} style={(!festUrl && frame) ? frameStyle(frame) : { transform: `scale(${c.zoom})`, transformOrigin: c.origin }} />}
                 {festUrl && <img src={festUrl} alt="" width="72" height="72" className="asset-thumb-fest" data-cat={crop} style={frame ? frameStyle(frame) : { transform: `scale(${c.zoom})`, transformOrigin: c.origin }} />}
             </span>
             <span className="asset-thumb-label">{shortName(option.label)}</span>
@@ -327,11 +343,14 @@ export default function AssetStrip({ selectRef, param, tokenId, value, onPick, d
                             const q = new URLSearchParams(query); q.set('thirdAssetType', 'transparent');
                             return fetchAssetBlob(`/api/get-asset?${q.toString()}`);
                         } : null}
-                        fetchBase={apefest && endpoint === 'get-asset' ? () => {
-                            const k = String(tokenId);
+                        fetchBase={apefest ? () => {
+                            const k = `${endpoint}|${tokenId}`;
                             if (!baseCache.has(k)) {
-                                const q = new URLSearchParams({ tokenId, assetType: 'AFA', thirdAssetType: 'transparent', size: '384' });
-                                baseCache.set(k, fetchAssetBlob(`/api/get-asset?${q.toString()}`).catch((e) => { baseCache.delete(k); throw e; }));
+                                const q = new URLSearchParams({ tokenId, assetType: 'AFA', size: '384' });
+                                // Minted diffs the transparent composite. Unminted diffs the same blurred
+                                // preview the tile shows, so the background is not the whole bounding box.
+                                if (endpoint === 'get-asset') q.set('thirdAssetType', 'transparent');
+                                baseCache.set(k, fetchAssetBlob(`/api/${endpoint}?${q.toString()}`).catch((e) => { baseCache.delete(k); throw e; }));
                             }
                             return baseCache.get(k);
                         } : null}
