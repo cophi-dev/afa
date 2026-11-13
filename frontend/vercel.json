@@ -1,8 +1,32 @@
 {
   "rewrites": [
     {
+      "source": "/img/get-asset",
+      "destination": "https://afa-editor.ew.r.appspot.com/api/get-asset"
+    },
+    {
+      "source": "/img/get-asset-preview",
+      "destination": "https://afa-editor.ew.r.appspot.com/api/get-asset-preview"
+    },
+    {
       "source": "/a/:id",
       "destination": "/api/a?id=:id"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/img/get-asset",
+      "headers": [
+        { "key": "CDN-Cache-Control", "value": "public, max-age=31536000, immutable" },
+        { "key": "Vercel-CDN-Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/img/get-asset-preview",
+      "headers": [
+        { "key": "CDN-Cache-Control", "value": "public, max-age=300" },
+        { "key": "Vercel-CDN-Cache-Control", "value": "public, max-age=300" }
+      ]
     }
   ],
   "functions": {

@@ -114,7 +114,7 @@ Use `gcloud compute backend-services get-effective-security-policies` / CDN metr
 
 **Rough monthly cost:** **$0 extra** on Vercel Hobby/Pro if traffic stays within included bandwidth; edge requests count against plan limits. No global static IP or forwarding-rule minimum.
 
-Implementation in root `vercel.json` (before SPA fallback):
+Implementation in `frontend/vercel.json` (Vercel project root; before SPA fallback). Root `vercel.json` mirrors the same routes for non-frontend deploys:
 
 - **Rewrites** (query string forwarded automatically → part of edge cache key):
   - `/img/get-asset` → `https://afa-editor.ew.r.appspot.com/api/get-asset`
