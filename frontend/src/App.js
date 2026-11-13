@@ -545,9 +545,11 @@ function App() {
     const fetchFromAnyBase = useCallback(async (pathWithQuery, parser) => {
         let lastError = null;
 
-        for (const baseUrl of apiBaseCandidates) {
+        const edgePicker = /^\/img\/get-asset(-preview)?(\?|$)/.test(pathWithQuery);
+        const bases = edgePicker ? [''] : apiBaseCandidates;
+        for (const baseUrl of bases) {
             try {
-                const url = `${baseUrl}${pathWithQuery}`;
+                const url = edgePicker ? pathWithQuery : `${baseUrl}${pathWithQuery}`;
                 // Renders are deterministic per URL but the server sends no-cache and re-renders each time
                 // (2-4s, ~400KB). Keep them in Cache Storage so repeat views/visits don't hit the server.
                 const cacheable = RENDER_CACHE && /^\/api\/get-asset(-preview)?\?/.test(pathWithQuery);

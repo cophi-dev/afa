@@ -1,3 +1,13 @@
 runtime: python312
 env: standard
-entrypoint: gunicorn -b :$PORT app:app
+# F1 (free tier) like live version eco-1 (cost-down 01.11.2026, GO Phillipp 14.11: stay on F1).
+# Picker tiles are cached at the Vercel edge (/img rewrites), so the origin renders each tile once.
+instance_class: F1
+entrypoint: gunicorn -b :$PORT --workers 1 --threads 4 --worker-class gthread --timeout 60 app:app
+env_variables:
+  RENDER_CACHE_MAX_BYTES: "83886080"
+automatic_scaling:
+  min_instances: 1
+  max_instances: 1
+  target_cpu_utilization: 0.7
+  max_concurrent_requests: 8
