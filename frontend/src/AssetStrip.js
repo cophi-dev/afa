@@ -2,6 +2,14 @@ import React, { useEffect, useRef, useState } from 'react';
 import { backgroundHeld, onBackgroundRelease } from './utils/apiLane';
 import { renderApefestTile } from './utils/apefestLaunch';
 
+// Picker ?size=384 via Vercel edge /img/* (rewrites to GAE). Local dev uses /api (CRA proxy).
+const pickerImgPrefix = () => {
+    if (process.env.REACT_APP_PICKER_IMG_PREFIX) return process.env.REACT_APP_PICKER_IMG_PREFIX;
+    if (typeof window !== 'undefined' && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)) return '/api';
+    return '/img';
+};
+const pickerTilePath = (endpoint, query) => `${pickerImgPrefix()}/${endpoint}?${query}`;
+
 // Picker crops zoom into the brightest (key-lit) part of the frame; a lower scene gain keeps the
 // cropped tile at the same brightness/saturation as the full list tiles (Design 15.10).
 // Per-category scene gain, measured so the visible crop matches the list tiles' mean luminance.
@@ -326,12 +334,12 @@ export default function AssetStrip({ selectRef, param, tokenId, value, onPick, d
                         crop={crop}
                         rootRef={rootRef}
                         apefestMode={useTransparentThumb}
-                        fetchPreview={() => fetchAssetBlob(`/api/${endpoint}?${query.toString()}`)}
+                        fetchPreview={() => fetchAssetBlob(pickerTilePath(endpoint, query.toString()))}
                         fetchBase={apefest && endpoint === 'get-asset' ? () => {
                             const k = String(tokenId);
                             if (!baseCache.has(k)) {
                                 const q = new URLSearchParams({ tokenId, assetType: 'AFA', thirdAssetType: 'transparent', size: '384' });
-                                baseCache.set(k, fetchAssetBlob(`/api/get-asset?${q.toString()}`).catch((e) => { baseCache.delete(k); throw e; }));
+                                baseCache.set(k, fetchAssetBlob(pickerTilePath('get-asset', q.toString())).catch((e) => { baseCache.delete(k); throw e; }));
                             }
                             return baseCache.get(k);
                         } : null}

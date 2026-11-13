@@ -1,6 +1,8 @@
 # Cloud CDN in front of AFA image API
 
-This document describes how to put **Google Cloud CDN** in front of the App Engine image endpoints (`/api/get-asset`, `/api/get-asset-preview`) after the backend changes on `main` land. **Do not run these steps from CI or a cloud agent** — they create billable GCP resources.
+**Gewählt (Stand PR #49 / Phillip GO 00:30): Option B — Vercel Edge** via `/img/get-asset` und `/img/get-asset-preview` in `vercel.json`. Asset-Picker-Kacheln (`?size=384`) laden nur diesen Pfad; Hauptbild und übrige APIs bleiben auf `/api/*` bzw. direkt GAE. Option A bleibt als späteres Upgrade dokumentiert.
+
+This document also describes **Option A** (Google Cloud CDN + LB) if edge caching on Vercel is not enough. **Do not run Option A from CI or a cloud agent** — it creates billable GCP resources.
 
 ## Prerequisites
 
@@ -108,36 +110,35 @@ Use `gcloud compute backend-services get-effective-security-policies` / CDN metr
 
 ---
 
-## Option B — Vercel rewrite + Edge cache (no GCP LB fee)
+## Option B — Vercel rewrite + Edge cache (**deployed in repo**)
 
 **Rough monthly cost:** **$0 extra** on Vercel Hobby/Pro if traffic stays within included bandwidth; edge requests count against plan limits. No global static IP or forwarding-rule minimum.
 
-Add a rewrite so browser requests hit the same origin path but Vercel caches immutable responses at the edge:
+Implementation in root `vercel.json` (before SPA fallback):
 
-```json
-{
-  "headers": [
-    {
-      "source": "/api/get-asset",
-      "headers": [
-        { "key": "CDN-Cache-Control", "value": "public, max-age=31536000, immutable" }
-      ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/api/get-asset",
-      "destination": "https://afa-editor.ew.r.appspot.com/api/get-asset"
-    }
-  ]
-}
+- **Rewrites** (query string forwarded automatically → part of edge cache key):
+  - `/img/get-asset` → `https://afa-editor.ew.r.appspot.com/api/get-asset`
+  - `/img/get-asset-preview` → `https://afa-editor.ew.r.appspot.com/api/get-asset-preview`
+- **Response headers** on those sources:
+  - `CDN-Cache-Control` + `Vercel-CDN-Cache-Control`: `public, max-age=31536000, immutable` (picker thumbs)
+  - Preview path: `public, max-age=300`
+
+Frontend: `frontend/src/AssetStrip.js` calls `/img/…?size=384` on Vercel; `localhost` falls back to `/api/…` (CRA proxy).
+
+**Verify after Vercel preview deploy:**
+
+```bash
+URL='https://YOUR-PREVIEW.vercel.app/img/get-asset?tokenId=1&assetType=AFA&size=384'
+curl -sI "$URL" | grep -iE '^(HTTP|content-type|x-vercel-cache|cache-control)'
+curl -sI "$URL" | grep -iE '^(HTTP|x-vercel-cache)'   # second request → x-vercel-cache: HIT
+curl -s "$URL" | file -   # WebP image data (once backend on GAE serves ?size= WebP)
 ```
 
 **Caveats:**
 
-- Query strings must be part of the cache key (Vercel does this by default for `?` URLs).
-- `get-asset-preview` should use a **short** edge TTL (match `max-age=300`) via a separate header rule.
-- First visitor per edge POP still pays App Engine render cost; CDN/LB in Option A scales better for viral apes.
+- First request per edge POP / URL still hits App Engine (MISS). GAE should send immutable `Cache-Control` after backend PR deploy for best behavior; until then edge TTL is driven by `Vercel-CDN-Cache-Control` above.
+- Main studio preview (`/api/get-asset` full size) is **not** edge-cached — only picker paths.
+- Option A scales better for very hot global traffic on the same URLs.
 
 ---
 
@@ -152,7 +153,7 @@ Add a rewrite so browser requests hit the same origin path but Vercel caches imm
 
 ## Deploy checklist (human)
 
-1. Merge PR and `gcloud app deploy backend/app.yaml` (F2, `min_instances: 1`, gthread workers).
-2. Confirm live headers on `afa-editor.ew.r.appspot.com` match above.
-3. Choose Option A or B; update frontend API base if using a dedicated image hostname.
-4. Monitor `X-Render-Cache` HIT rate on GAE and CDN hit ratio in Console.
+1. Merge PR; Vercel picks up `vercel.json` automatically (Option B active for picker).
+2. `gcloud app deploy backend/app.yaml` (F2, `min_instances: 1`, gthread workers) for LRU + WebP + immutable headers on GAE.
+3. Confirm `curl -sI` on preview/live `/img/get-asset?…&size=384`: second request `x-vercel-cache: HIT`.
+4. Option A only if Vercel edge limits or hit ratio is insufficient.
