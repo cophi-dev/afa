@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, send_file, send_from_directory, url_f
 from flask_cors import CORS
 from PIL import Image
 from html import escape
+import hashlib
 import json
 import os
 import threading
@@ -1324,9 +1325,19 @@ def requested_thumb_size():
 
 
 def cached_image_response(data, mimetype, cache_control):
+    """Image bytes for CDN caching: no session cookies, stable ETag, long cache headers."""
     response = Response(data, mimetype=mimetype)
     response.headers['Cache-Control'] = cache_control
+    response.headers['ETag'] = f'"{hashlib.sha256(data).hexdigest()[:32]}"'
     response.headers['X-Render-Cache'] = 'HIT' if getattr(request, '_render_hit', False) else 'MISS'
+    # Deterministic renders must not vary on cookies (Cloud CDN / shared caches).
+    vary = response.headers.get('Vary', '')
+    if vary:
+        kept = ', '.join(v for v in (p.strip() for p in vary.split(',')) if v and v.lower() != 'cookie')
+        if kept:
+            response.headers['Vary'] = kept
+        else:
+            response.headers.pop('Vary', None)
     return response
 
 

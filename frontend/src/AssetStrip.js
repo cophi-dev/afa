@@ -36,7 +36,7 @@ async function itemFrame(itemBlob, baseBlob) {
     const zoom = Math.min(4, Math.max(1, FRAME_FILL / side));
     return { zoom, cx: (bx0 + bx1) / 2, cy: (by0 + by1) / 2 };
 }
-const festBlobCache = new Map();
+const blobCache = new Map();
 let frameChain = Promise.resolve();
 const queueFrame = (fn) => {
     const run = frameChain.then(() => new Promise((r) => setTimeout(r, 0))).then(fn);
@@ -188,6 +188,7 @@ const loadPreview = (key, fetcher, priority = false) => {
                         await new Promise((r) => setTimeout(r, 1500 * (attempt + 1))); // eslint-disable-line no-await-in-loop
                     }
                 }
+                blobCache.set(key, blob);
                 const url = URL.createObjectURL(blob);
                 cache.set(key, url);
                 resolve(url);
@@ -203,7 +204,7 @@ const loadPreview = (key, fetcher, priority = false) => {
     return promise;
 };
 
-function AssetThumb({ option, index, active, disabled, onPick, fetchPreview, cacheKey, crop, rootRef, fetchFest = null, fetchBase = null }) {
+function AssetThumb({ option, index, active, disabled, onPick, fetchPreview, cacheKey, crop, rootRef, apefestMode = false, fetchBase = null }) {
     const ref = useRef(null);
     const [url, setUrl] = useState(() => cache.get(cacheKey) || null);
     const [failed, setFailed] = useState(false);
@@ -231,21 +232,21 @@ function AssetThumb({ option, index, active, disabled, onPick, fetchPreview, cac
         return () => { cancelled = true; observer.disconnect(); };
     }, [cacheKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // ApeFest (minted only): same small launch frame as the list tiles, rendered in the worker from the
-    // transparent thumbnail once the normal tile is loaded (so it stays lazy), queued + cached.
+    // ApeFest (minted): fest look from the same server blob as the thumb (transparent ?size=384 WebP).
     const [festUrl, setFestUrl] = useState(null);
     const [frame, setFrame] = useState(null);
     useEffect(() => {
-        if (!fetchFest || !url) { setFestUrl(null); return undefined; }
+        if (!apefestMode || !url) { setFestUrl(null); return undefined; }
         let alive = true;
-        // One fetch per asset for both the render and the framing; framing runs queued, one per task.
-        if (!festBlobCache.has(cacheKey)) festBlobCache.set(cacheKey, fetchFest().catch((e) => { festBlobCache.delete(cacheKey); throw e; }));
-        const getBlob = () => festBlobCache.get(cacheKey);
+        const getBlob = () => {
+            const blob = blobCache.get(cacheKey);
+            return blob ? Promise.resolve(blob) : Promise.reject(new Error('thumb blob missing'));
+        };
         const tile = renderApefestTile(`fest|${cacheKey}`, getBlob, 384, { gain: PICKER_GAIN[crop] ?? 0.8 });
         const fr = fetchBase ? Promise.all([getBlob(), fetchBase()]).then(([i, b]) => queueFrame(() => itemFrame(i, b))).catch(() => null) : Promise.resolve(null);
         Promise.all([tile, fr]).then(([u, f]) => { if (alive) { setFrame(f); setFestUrl(u); } }).catch(() => {});
         return () => { alive = false; };
-    }, [fetchFest ? cacheKey : null, url]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [apefestMode ? cacheKey : null, url]); // eslint-disable-line react-hooks/exhaustive-deps
     const c = cropFor(crop, option.value);
 
     return (
@@ -310,7 +311,9 @@ export default function AssetStrip({ selectRef, param, tokenId, value, onPick, d
                 query.set(param, option.value);
                 // Server-side small WebP (384px covers the 3.5x tile crops on 2x screens); ~20 KB instead of ~450 KB PNG.
                 query.set('size', '384');
-                const cacheKey = `${endpoint}|${tokenId}|${param}|${option.value}`;
+                const useTransparentThumb = apefest && endpoint === 'get-asset';
+                if (useTransparentThumb) query.set('thirdAssetType', 'transparent');
+                const cacheKey = `${endpoint}|${tokenId}|${param}|${option.value}${useTransparentThumb ? '|t' : ''}`;
                 return (
                     <AssetThumb
                         key={option.value}
@@ -322,11 +325,8 @@ export default function AssetStrip({ selectRef, param, tokenId, value, onPick, d
                         cacheKey={cacheKey}
                         crop={crop}
                         rootRef={rootRef}
+                        apefestMode={useTransparentThumb}
                         fetchPreview={() => fetchAssetBlob(`/api/${endpoint}?${query.toString()}`)}
-                        fetchFest={apefest && endpoint === 'get-asset' ? () => {
-                            const q = new URLSearchParams(query); q.set('thirdAssetType', 'transparent');
-                            return fetchAssetBlob(`/api/get-asset?${q.toString()}`);
-                        } : null}
                         fetchBase={apefest && endpoint === 'get-asset' ? () => {
                             const k = String(tokenId);
                             if (!baseCache.has(k)) {
