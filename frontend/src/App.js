@@ -71,7 +71,9 @@ function SiteBar() {
 
 // Hero auto-swap (Design spec 14.10). Fixed minted ape + curated rotating looks (GO 14.11).
 const HERO_ID = '2388';
-const HERO_RENDER_SIZE = 768;
+// 384 until the next App Engine deploy adds 768 to THUMB_SIZES (live GAE answers 768 with a full PNG,
+// which the immutable edge cache would then keep). Matches the static base frame.
+const HERO_RENDER_SIZE = 384;
 const HERO_BASE_STATIC = `${process.env.PUBLIC_URL || ''}/hero/2388-base.webp`;
 const HERO_STEP_MS = 1200;
 const HERO_HOLD_MS = 1000;
