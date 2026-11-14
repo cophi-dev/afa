@@ -8,7 +8,7 @@ const pickerImgPrefix = () => {
     if (typeof window !== 'undefined' && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)) return '/api';
     return '/img';
 };
-const pickerTilePath = (endpoint, query) => `${pickerImgPrefix()}/${endpoint}?${query}`;
+export const pickerTilePath = (endpoint, query) => `${pickerImgPrefix()}/${endpoint}?${query}`;
 
 // Picker crops zoom into the brightest (key-lit) part of the frame; a lower scene gain keeps the
 // cropped tile at the same brightness/saturation as the full list tiles (Design 15.10).
