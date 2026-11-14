@@ -1313,7 +1313,7 @@ def render_cache_put(key, data, mimetype):
 
 # Optional small output for picker/list tiles: ?size=160|256|384 -> WebP (a few KB-tens of KB
 # instead of a ~400 KB 1000px PNG). Without size the response is unchanged (full PNG).
-THUMB_SIZES = (160, 256, 384)
+THUMB_SIZES = (160, 256, 384, 768)
 
 
 def requested_thumb_size():

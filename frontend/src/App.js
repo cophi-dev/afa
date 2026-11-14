@@ -3,7 +3,7 @@ import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMe
 import './App.css';
 import { getAllTransactions, getMintedTokenIdsNewestFirst, checkTokenMintStatus } from './services/etherscanService';
 import { debug, error as logError } from './utils/debug';
-import AssetStrip from './AssetStrip';
+import AssetStrip, { pickerTilePath } from './AssetStrip';
 import { track } from './utils/track';
 import { buildShareText, buildXIntentUrl } from './utils/shareText';
 import { assetLabel } from './utils/assetLabels';
@@ -69,43 +69,75 @@ function SiteBar() {
     );
 }
 
-// Hero auto-swap (Design spec 14.10). One random MINTED ape per load stays as base;
-// one trait layer changes per step, cumulative, then hold and reset.
+// Hero auto-swap (Design spec 14.10). Fixed minted ape + curated rotating looks (GO 14.11).
+const HERO_ID = '2388';
+const HERO_RENDER_SIZE = 768;
+const HERO_BASE_STATIC = `${process.env.PUBLIC_URL || ''}/hero/2388-base.webp`;
 const HERO_STEP_MS = 1200;
 const HERO_HOLD_MS = 1000;
-// Curated: strong silhouettes only.
-const HERO_POOL = {
-    hat: ['glitter_cowboy_hat', 'german_ape_club_hat', 'beret', 'pudgy_hat', 'cats_hat', 'vegas'],
-    outfit: ['vegas', 'cheetah_hoodie', 'french_stripes', 'blazer', 'apefest_jacket'],
-    eyes: ['star_glasses', 'vision_pro', 'btc_eyes'],
-    hand: ['banana', 'basketball', 'candle', 'fireworks', 'gm_espresso', 'balloon_moon'],
-    mouth: ['lollipop', 'banana_smile', 'big_smile'],
-};
-const HERO_ORDER = ['hat', 'outfit', 'eyes', 'hand', 'hat', 'mouth'];
 const HERO_PARAM = { hat: 'hatAssetType', outfit: 'secondAssetType', eyes: 'eyesAssetType', hand: 'assetType', mouth: 'mouthAssetType' };
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-// Builds the 6 cumulative looks for one cycle: [{ look, cat, value }].
-function buildHeroSteps() {
+// Three deterministic style cycles (HERO_ORDER: hat → outfit → eyes → hand → hat → mouth).
+const HERO_CYCLES = [
+    [
+        { cat: 'hat', value: 'vegas' },
+        { cat: 'outfit', value: 'vegas' },
+        { cat: 'eyes', value: 'star_glasses' },
+        { cat: 'hand', value: 'fireworks' },
+        { cat: 'hat', value: 'glitter_cowboy_hat' },
+        { cat: 'mouth', value: 'big_smile' },
+    ],
+    [
+        { cat: 'hat', value: 'beret' },
+        { cat: 'outfit', value: 'french_stripes' },
+        { cat: 'eyes', value: 'vision_pro' },
+        { cat: 'hand', value: 'gm_espresso' },
+        { cat: 'hat', value: 'german_ape_club_hat' },
+        { cat: 'mouth', value: 'lollipop' },
+    ],
+    [
+        { cat: 'hat', value: 'pudgy_hat' },
+        { cat: 'outfit', value: 'cheetah_hoodie' },
+        { cat: 'eyes', value: 'btc_eyes' },
+        { cat: 'hand', value: 'basketball' },
+        { cat: 'hat', value: 'cats_hat' },
+        { cat: 'mouth', value: 'banana_smile' },
+    ],
+];
+
+function buildHeroStepsFromCycle(cycle) {
     const look = {};
-    const usedHat = new Set();
-    return HERO_ORDER.map((cat) => {
-        let options = HERO_POOL[cat];
-        if (cat === 'hat') options = options.filter((v) => !usedHat.has(v));
-        const value = pick(options);
-        if (cat === 'hat') usedHat.add(value);
+    return cycle.map(({ cat, value }) => {
         look[cat] = value;
         return { look: { ...look }, cat, value };
     });
 }
+
 const lookParams = (look) => {
     const out = {};
     Object.entries(look || {}).forEach(([cat, v]) => { if (v) out[HERO_PARAM[cat]] = v; });
     if (!out.assetType) out.assetType = 'AFA';
     return out;
 };
-// /api/get-asset answers with Cache-Control: no-cache, so a plain <img> preload would be
-// fetched again on display. Preload into a blob URL instead and show that (instant swap).
+
+const heroAssetUrl = (look) => {
+    const q = new URLSearchParams({ tokenId: HERO_ID, assetType: 'AFA', size: String(HERO_RENDER_SIZE), ...lookParams(look) });
+    return pickerTilePath('get-asset', q.toString());
+};
+
+// Edge-cached /img URLs: decode in memory, reuse the same URL for display (browser + CDN cache).
+const preloadHeroFrame = async (url) => {
+    try {
+        const img = new Image();
+        img.src = url;
+        if (img.decode) await img.decode();
+        return url;
+    } catch (e) {
+        return url;
+    }
+};
+
 const preloadImage = async (url) => {
     try {
         const res = await fetch(url);
@@ -133,39 +165,38 @@ const heroApefestFrame = async (url) => {
     return URL.createObjectURL(blob);
 };
 
-function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook, onExplore, apefest = false, explore = false }) {
+function Hero({ mintedIds, onSubmitId, onOpenLook, onExplore, apefest = false, explore = false }) {
     const [value, setValue] = useState('');
-    const [heroId, setHeroId] = useState(null);
-    useEffect(() => {
-        if (heroId == null && mintedIds.length) setHeroId(pick(mintedIds));
-    }, [heroId, mintedIds]);
-    const urlFor = useCallback((look) => {
-        const q = new URLSearchParams({ tokenId: String(heroId), ...lookParams(look) });
-        return `${apiBase}/api/get-asset?${q.toString()}`;
-    }, [apiBase, heroId]);
+
+    const urlFor = useCallback((look) => heroAssetUrl(look), []);
 
     const reduceMotion = useMemo(() => typeof window !== 'undefined' && window.matchMedia
         && window.matchMedia('(prefers-reduced-motion: reduce)').matches, []);
     const [steps, setSteps] = useState(null);      // current cycle
     const [ready, setReady] = useState(false);     // all 6 preloaded
     const [stepIdx, setStepIdx] = useState(-1);    // -1 = original ape
-    const [layers, setLayers] = useState({ a: null, b: null, front: 'a' });
+    const [layers, setLayers] = useState(() => (
+        apefest ? { a: null, b: null, front: 'a' } : { a: HERO_BASE_STATIC, b: null, front: 'a' }
+    ));
     const [stopped, setStopped] = useState(false);
     const hoverRef = useRef(false);
     const inViewRef = useRef(true);
     const stageRef = useRef(null);
+    const cycleIdxRef = useRef(0);
 
     // Cycles: build + preload all 6 looks first. The next cycle preloads during the
     // current one, so the reset to the original ape is short.
     const nextCycleRef = useRef(null);
-    const baseSrcRef = useRef(null);
+    const baseSrcRef = useRef(apefest ? null : HERO_BASE_STATIC);
     const prevStepsRef = useRef(null);
     const baseReadyRef = useRef(null);
     const prepareCycle = useCallback(() => {
-        const next = buildHeroSteps();
+        const cycle = HERO_CYCLES[cycleIdxRef.current % HERO_CYCLES.length];
+        cycleIdxRef.current += 1;
+        const next = buildHeroStepsFromCycle(cycle);
         const load = apefest
             ? (url) => heroApefestFrame(url).catch(() => preloadImage(url))
-            : preloadImage;
+            : preloadHeroFrame;
         const done = (apefest && baseReadyRef.current ? baseReadyRef.current : Promise.resolve())
             .then(() => Promise.all(next.map((st) => load(urlFor(st.look)))))
             .then((srcs) => next.map((st, i) => ({ ...st, src: srcs[i] })));
@@ -177,7 +208,7 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook, onExplore, apefest =
         nextCycleRef.current = null;
         setReady(false);
         const next = await pending;
-        // Free the previous cycle's blob URLs once they are off screen.
+        // Free ApeFest blob URLs from the previous cycle once off screen.
         const old = prevStepsRef.current;
         prevStepsRef.current = next;
         if (old) window.setTimeout(() => old.forEach((st) => { if (st.src && st.src.startsWith('blob:')) URL.revokeObjectURL(st.src); }), 3000);
@@ -186,9 +217,9 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook, onExplore, apefest =
     }, [prepareCycle]);
 
     useEffect(() => {
-        if (heroId == null) return;
         setStepIdx(-1);
         nextCycleRef.current = null;
+        cycleIdxRef.current = 0;
         let cancelled = false;
         if (apefest) {
             // ApeFest: never show the plain ape; the base frame renders first, the cycle after it.
@@ -202,13 +233,12 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook, onExplore, apefest =
                 });
         } else {
             baseReadyRef.current = null;
-            baseSrcRef.current = urlFor(null);
-            setLayers({ a: baseSrcRef.current, b: null, front: 'a' });
-            preloadImage(urlFor(null)).then((src) => { baseSrcRef.current = src; });
+            baseSrcRef.current = HERO_BASE_STATIC;
+            setLayers({ a: HERO_BASE_STATIC, b: null, front: 'a' });
         }
         startCycle();
         return () => { cancelled = true; };
-    }, [heroId, urlFor, startCycle, apefest]);
+    }, [urlFor, startCycle, apefest]);
 
     // Reduced motion: show the full look statically.
     useEffect(() => {
@@ -225,7 +255,7 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook, onExplore, apefest =
         const io = new IntersectionObserver(([e]) => { inViewRef.current = e.isIntersecting; }, { threshold: 0.1 });
         io.observe(el);
         return () => io.disconnect();
-    }, [heroId]);
+    }, []);
 
     useEffect(() => {
         if (reduceMotion || stopped || !ready || !steps) return undefined;
@@ -237,7 +267,7 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook, onExplore, apefest =
             const show = (url) => setLayers((prev) => (prev.front === 'a' ? { ...prev, b: url, front: 'b' } : { ...prev, a: url, front: 'a' }));
             if (isLast) {
                 // Reset to the original ape, then prepare a fresh cycle.
-                show(baseSrcRef.current || urlFor(null));
+                show(baseSrcRef.current || HERO_BASE_STATIC);
                 setStepIdx(-1);
                 startCycle();
             } else {
@@ -253,9 +283,8 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook, onExplore, apefest =
     const current = steps && stepIdx >= 0 ? steps[stepIdx] : null;
     const currentLook = current ? current.look : {};
     const openThis = () => {
-        if (heroId == null) return;
         setStopped(true);
-        onOpenLook(String(heroId), currentLook);
+        onOpenLook(HERO_ID, currentLook);
     };
     const onStageClick = () => {
         // Mobile: tap stops the swap and opens this ape with the current look.
@@ -268,7 +297,7 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook, onExplore, apefest =
         if (explore) {
             // ApeFest CTA: typed ID, otherwise the ape currently shown in the hero.
             if (id) onExplore(id, null);
-            else if (heroId != null) { setStopped(true); onExplore(String(heroId), currentLook); }
+            else { setStopped(true); onExplore(HERO_ID, currentLook); }
             return;
         }
         if (id) onSubmitId(id);
@@ -292,16 +321,15 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook, onExplore, apefest =
                     <div className="hero-stage" ref={stageRef} onClick={onStageClick}
                         onMouseEnter={() => { hoverRef.current = true; }} onMouseLeave={() => { hoverRef.current = false; }}
                         data-apefest={apefest ? 'on' : undefined}
-                        role="img" aria-label={heroId != null ? `AFA #${heroId} trying on traits` : 'Loading ape'}>
+                        role="img" aria-label={`AFA #${HERO_ID} trying on traits`}>
                         {layers.a && <img src={layers.a} alt="" width="480" height="480" decoding="sync"
                             className={`hero-ape ${layers.front === 'a' ? 'is-front' : ''}`} />}
                         {layers.b && <img src={layers.b} alt="" width="480" height="480" decoding="sync"
                             className={`hero-ape ${layers.front === 'b' ? 'is-front' : ''}`} />}
                     </div>
-                    {heroId != null && (
-                        <div className="hero-caption">
+                    <div className="hero-caption">
                             <span className="hero-caption-left">
-                                <span className="hero-caption-name">AFA #{heroId}</span>
+                                <span className="hero-caption-name">AFA #{HERO_ID}</span>
                                 {reduceMotion ? (
                                     <span className="hero-caption-trait"> · styled</span>
                                 ) : (
@@ -313,7 +341,6 @@ function Hero({ apiBase, mintedIds, onSubmitId, onOpenLook, onExplore, apefest =
                             </span>
                             <button type="button" className="hero-style-link" onClick={openThis}>Style this ape →</button>
                         </div>
-                    )}
                 </div>
                 <form className="hero-form" onSubmit={submit} role="search">
                     <label htmlFor="hero-token-id" className="visually-hidden">Ape ID</label>
@@ -1657,7 +1684,6 @@ function App() {
       <SiteBar />
       {!tokenId && (
         <Hero
-          apiBase={apiBaseCandidates[0]}
           mintedIds={mintedTokenIds}
           onSubmitId={handleTokenSubmit}
           onOpenLook={handleOpenLook}
