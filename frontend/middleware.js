@@ -69,7 +69,6 @@ export default async function middleware(request) {
     return;
   }
 
-  const url = new URL(request.url);
   const rawTokenId = url.searchParams.get('tokenId');
   const tokenId = rawTokenId ? String(rawTokenId).replace(/[^0-9]/g, '').slice(0, 4) : '';
   const queryString = url.searchParams.toString();
