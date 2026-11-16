@@ -3906,10 +3906,22 @@ textarea {
   font-weight: 500;
 }
 
+.overview-loop {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.token-id-error {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: #ffb4b4;
+}
+
 .token-go {
   flex: 0 0 auto;
   min-width: 48px;
-  min-height: 36px;
+  min-height: 44px;
   padding: 0 16px;
   border: 0;
   border-radius: 999px;
@@ -5421,7 +5433,7 @@ button.gallery-item.is-selected .gallery-meta {
 .dropdown-section:has(.asset-picker) > .dropdown-header,
 .dropdown-section:has(.asset-picker) .dropdown-with-arrows > :not(.asset-picker) { display: none !important; }
 .dropdown-section:has(.asset-picker) .dropdown-with-arrows { display: block !important; border: 0 !important; background: none !important; padding: 0 !important; }
-.asset-picker-head { display: flex; align-items: baseline; gap: 8px; min-height: 22px; margin-bottom: 8px; }
+.asset-picker-head { display: flex; align-items: baseline; gap: 8px; min-height: 24px; margin-bottom: 8px; }
 .asset-picker-title { font-size: 13px; font-weight: 600; color: #fff; }
 .asset-picker-current { font-size: 13px; color: rgba(255,255,255,0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .asset-picker-clear { border: 0; background: none; color: rgba(255,255,255,0.6); font-size: 16px; line-height: 1; padding: 0 4px; cursor: pointer; }
@@ -5587,9 +5599,9 @@ button.gallery-item.is-selected .gallery-meta {
 .hero-caption-trait { color: rgba(255,255,255,.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: mini-fade 180ms ease-out; }
 .hero-caption-cat { font-family: 'Saira Extra Condensed', var(--font-display); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
 .hero-caption-val { font-family: 'Barlow', var(--font-body); font-size: 14px; }
-.hero-style-link { align-self: center; background: none; border: 0; padding: 4px 0; cursor: pointer; font: inherit; font-size: .95rem;
+.hero-style-link { align-self: center; background: none; border: 0; padding: 8px 4px; min-width: 24px; min-height: 24px; cursor: pointer; font: inherit; font-size: .95rem;
   color: rgba(255,255,255,.85); text-decoration: underline; text-underline-offset: 4px; }
-.preview-mint-link { align-self: center; font-size: .9rem; color: rgba(255,255,255,.75); text-decoration: underline; text-underline-offset: 4px; }
+.preview-mint-link { align-self: center; font-size: .9rem; color: rgba(255,255,255,.75); text-decoration: underline; text-underline-offset: 4px; padding: 8px 4px; min-height: 24px; }
 @media (prefers-reduced-motion: reduce) { .hero--try .hero-ape, .hero-caption-trait { transition: none; animation: none; } }
 @media (min-width: 768px) {
   html, body { overflow-x: clip; overflow-y: visible; }

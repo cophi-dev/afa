@@ -9,6 +9,7 @@ import { buildShareText, buildXIntentUrl } from './utils/shareText';
 import { assetLabel } from './utils/assetLabels';
 import { renderApefestLaunch, renderApefestTile } from './utils/apefestLaunch';
 import { drawApefestText, canvasToBlob, loadImage, loadApefestFonts, APEFEST_CRT, APEFEST_PAGE_SCAN, APEFEST_JUMP, buildApefestShareText, apefestUnmintedText } from './utils/apefest';
+import { parseTokenIdInput } from './utils/tokenId';
 
 // ApeFest (10.17): while true, the "Add frame" button becomes the ApeFest toggle.
 // Set to false after ApeFest to restore "Add frame"; nothing else needs to change.
@@ -31,6 +32,27 @@ function readApefestDefault() {
 const APEFEST_DEFAULT_ON = APEFEST_ENABLED && readApefestDefault();
 // After the rollback the opt-in uses its own key, so the auto-on '1' from ApeFest week doesn't carry over.
 const APEFEST_STORE_KEY = APEFEST_DEFAULT_ON ? 'afa.apefest' : 'afa.apefest.optin';
+
+const OVERVIEW_PLACEHOLDER = '__overview__';
+
+function OverviewLoopVideo() {
+    return (
+        <video
+            className="overview-loop"
+            autoPlay
+            muted
+            loop
+            playsInline
+            poster="./overview-poster.webp"
+            width="1200"
+            height="1200"
+            aria-label="Looping preview of dressing up an Ape Facing Ape in the editor"
+        >
+            <source src="./overview.webm" type="video/webm" />
+            <source src="./overview.mp4" type="video/mp4" />
+        </video>
+    );
+}
 
 const DEFAULT_API_URL = 'https://afa-editor.ew.r.appspot.com';
 const MINT_SITE_URL = 'https://www.apefacingapes.com';
@@ -169,6 +191,7 @@ const heroApefestFrame = async (url) => {
 
 function Hero({ mintedIds, onSubmitId, onOpenLook, onExplore, apefest = false, explore = false }) {
     const [value, setValue] = useState('');
+    const [heroIdError, setHeroIdError] = useState('');
 
     const urlFor = useCallback((look) => heroAssetUrl(look), []);
 
@@ -295,15 +318,20 @@ function Hero({ mintedIds, onSubmitId, onOpenLook, onExplore, apefest = false, e
 
     const submit = (e) => {
         e.preventDefault();
-        const id = value.replace(/[^0-9]/g, '').slice(0, 4);
+        setHeroIdError('');
+        const parsed = parseTokenIdInput(value);
         if (explore) {
             // ApeFest CTA: typed ID, otherwise the ape currently shown in the hero.
-            if (id) onExplore(id, null);
+            if (parsed.ok) onExplore(parsed.value, null);
             else { setStopped(true); onExplore(HERO_ID, currentLook); }
             return;
         }
-        if (id) onSubmitId(id);
-        else document.getElementById('hero-token-id')?.focus();
+        if (parsed.ok) onSubmitId(parsed.value);
+        else if (parsed.reason === 'invalid_range') {
+            setHeroIdError('Enter a token ID from 0 to 9999.');
+        } else {
+            document.getElementById('hero-token-id')?.focus();
+        }
     };
     const tryRandom = () => {
         if (!mintedIds.length) return;
@@ -324,9 +352,9 @@ function Hero({ mintedIds, onSubmitId, onOpenLook, onExplore, apefest = false, e
                         onMouseEnter={() => { hoverRef.current = true; }} onMouseLeave={() => { hoverRef.current = false; }}
                         data-apefest={apefest ? 'on' : undefined}
                         role="img" aria-label={`AFA #${HERO_ID} trying on traits`}>
-                        {layers.a && <img src={layers.a} alt="" width="480" height="480" decoding="sync"
+                        {layers.a && <img src={layers.a} alt={`Styling preview for AFA #${HERO_ID}`} width="480" height="480" decoding="sync"
                             className={`hero-ape ${layers.front === 'a' ? 'is-front' : ''}`} />}
-                        {layers.b && <img src={layers.b} alt="" width="480" height="480" decoding="sync"
+                        {layers.b && <img src={layers.b} alt={`Styling preview for AFA #${HERO_ID}`} width="480" height="480" decoding="sync"
                             className={`hero-ape ${layers.front === 'b' ? 'is-front' : ''}`} />}
                     </div>
                     <div className="hero-caption">
@@ -348,11 +376,12 @@ function Hero({ mintedIds, onSubmitId, onOpenLook, onExplore, apefest = false, e
                     <label htmlFor="hero-token-id" className="visually-hidden">Ape ID</label>
                     <input id="hero-token-id" className="hero-input" inputMode="numeric" autoComplete="off"
                         placeholder="Ape ID, e.g. 2388" value={value}
-                        onChange={(e) => setValue(e.target.value.replace(/[^0-9]/g, '').slice(0, 4))} />
+                        onChange={(e) => { setHeroIdError(''); setValue(e.target.value.replace(/[^0-9]/g, '').slice(0, 5)); }} />
                     {explore
                         ? <button type="submit" className="hero-cta hero-cta--apefest">Explore ApeFest mode</button>
                         : <button type="submit" className="hero-cta">Open your ape</button>}
                 </form>
+                {heroIdError ? <p className="token-id-error" role="alert">{heroIdError}</p> : null}
                 <button type="button" className="hero-random" onClick={tryRandom} disabled={!mintedIds.length}>
                     or try a random one
                 </button>
@@ -377,7 +406,7 @@ function MiniPreviewBar({ visible, tokenId, imageUrl, previewOnly, lastTrait, on
             <button type="button" className="mini-bar-main" onClick={onJump} tabIndex={visible ? 0 : -1}
                 aria-label={`Back to ${name} preview`}>
                 <span className={`mini-bar-thumb ${previewOnly ? 'is-blurred' : ''}`}>
-                    {String(imageUrl).startsWith('blob:') && <img key={imageUrl} src={imageUrl} alt="" width="56" height="56" />}
+                    {String(imageUrl).startsWith('blob:') && <img key={imageUrl} src={imageUrl} alt={`${name} thumbnail`} width="56" height="56" />}
                 </span>
                 <span className="mini-bar-text">
                     <span className="mini-bar-name">{name}</span>
@@ -456,7 +485,7 @@ function MintedGalleryItem({ id, imageUrl, isFailed, isSelected, onSelect, onBec
                     <>
                         <img src={imageUrl} alt={`AFA #${id}`} width="1000" height="1000" decoding="async" 
                             className={festUrl ? 'has-fest' : undefined} />
-                        {festUrl && <img src={festUrl} alt="" aria-hidden="true" width="1000" height="1000" decoding="async" className="gallery-thumb-fest" />}
+                        {festUrl && <img src={festUrl} alt={`ApeFest frame for AFA #${id}`} width="1000" height="1000" decoding="async" className="gallery-thumb-fest" />}
                     </>
                 ) : (
                     <div className={`gallery-skeleton ${isFailed ? 'is-failed' : ''}`}>
@@ -610,7 +639,8 @@ function App() {
     const [hatAsset, setHatAsset] = useState('');
     const [clubAsset, setClubAsset] = useState('');
     const [eyesAsset, setEyesAsset] = useState('');
-    const [currentImageUrl, setCurrentImageUrl] = useState('./overview.gif'); // New state for the current image URL
+    const [currentImageUrl, setCurrentImageUrl] = useState(OVERVIEW_PLACEHOLDER);
+    const [tokenIdError, setTokenIdError] = useState('');
     const [showLoader, setShowLoader] = useState(false); // State to control loader visibility
     const [loaderMessage, setLoaderMessage] = useState(LOADER_MESSAGES[0]);
     const [fade, setFade] = useState(false);
@@ -1033,7 +1063,7 @@ function App() {
 
             logError('Error fetching asset:', error);
             setSyncPendingTokenId('');
-            setCurrentImageUrl('./overview.gif');
+            setCurrentImageUrl(OVERVIEW_PLACEHOLDER);
             setTokenId('');
             setUnmintedTokenId(String(newTokenId));
             setShowLoader(false);
@@ -1146,11 +1176,12 @@ function App() {
     }, [mintListReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleTokenInput = (e) => {
-        const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
+        const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 5);
         setTokenInput(value);
+        setTokenIdError('');
         
         if (value) {
-            const suggestions = buildSuggestions(value);
+            const suggestions = buildSuggestions(value.slice(0, 4));
             setSuggestions(suggestions);
             setShowSuggestions(suggestions.length > 0);
         } else {
@@ -1170,8 +1201,15 @@ function App() {
     }, []);
 
     const handleTokenSubmit = useCallback(async (rawValue) => {
-        const value = String(rawValue || '').replace(/[^0-9]/g, '').slice(0, 4);
-        if (!value) return false;
+        const parsed = parseTokenIdInput(rawValue ?? tokenInput);
+        if (!parsed.ok) {
+            if (parsed.reason === 'invalid_range') {
+                setTokenIdError('Enter a token ID from 0 to 9999.');
+            }
+            return false;
+        }
+        const value = parsed.value;
+        setTokenIdError('');
         setSelectNonce((n) => n + 1);
 
         setIsCheckingMint(true);
@@ -1204,7 +1242,7 @@ function App() {
         setShowSuggestions(false);
         track('ape_select', 'minted');
         return true;
-    }, [resetTraitSelections, verifyTokenMinted]);
+    }, [resetTraitSelections, verifyTokenMinted, tokenInput]);
 
     // Hero "Style this ape": open a minted ape with the hero's current look.
     const handleOpenLook = useCallback(async (id, look) => {
@@ -1236,13 +1274,18 @@ function App() {
         const urlTokenId = params.get('tokenId');
         if (!urlTokenId) return;
 
-        const value = String(urlTokenId).replace(/[^0-9]/g, '').slice(0, 4);
-        if (!value) return;
+        const parsed = parseTokenIdInput(urlTokenId);
+        if (!parsed.ok) {
+            if (parsed.reason === 'invalid_range') {
+                setTokenIdError('Enter a token ID from 0 to 9999.');
+            }
+            return;
+        }
 
         let cancelled = false;
 
         (async () => {
-            const loaded = await handleTokenSubmit(value);
+            const loaded = await handleTokenSubmit(parsed.value);
             if (cancelled || !loaded) return;
 
             const applyTraitParam = (key, setter) => {
@@ -1708,7 +1751,11 @@ function App() {
         <section className={`studio-preview ${tokenId ? 'has-token' : ''}`} aria-label="Preview">
           <div className="preview-card">
             <div id="asset-display" className={`${fade || ''} ${showLoader ? 'is-loading' : ''}`}>
-              <img src={currentImageUrl} alt="Ape preview" width="1200" height="1200" />
+              {currentImageUrl === OVERVIEW_PLACEHOLDER ? (
+                <OverviewLoopVideo />
+              ) : (
+                <img src={currentImageUrl} alt="Ape preview" width="1200" height="1200" />
+              )}
               {apefestActive && previewOnly && !showLoader && (
                 // 390: the baked 13px note is ~5px on screen, so a readable page overlay sits on top (>=11px, 60%).
                 <span className="apefest-note-overlay" aria-hidden="true">NOT YET MINTED</span>
@@ -1937,11 +1984,14 @@ function App() {
                           className="token-go"
                           onClick={() => handleTokenSubmit(tokenInput)}
                           disabled={isCheckingMint || !String(tokenInput || '').trim()}
-                          aria-label="Load this token"
+                          aria-label="Go"
                         >
                           Go
                         </button>
                       </div>
+                      {tokenIdError ? (
+                        <p className="token-id-error" role="alert">{tokenIdError}</p>
+                      ) : null}
                       {showSuggestions && (
                         <div className="suggestions-container" ref={suggestionsRef} aria-label="Matching token IDs">
                           {suggestions.map((suggestion, index) => (
