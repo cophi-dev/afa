@@ -20,13 +20,12 @@ DEFAULT_OG_IMAGE_HEIGHT = '630'
 app = Flask(__name__, static_folder='public', static_url_path='/')
 
 allowed_origins = [
-    "https://afa-3zwtn2xev-cophidevs-projects.vercel.app",
     "https://afa-editor.vercel.app",
     "https://www.afa-editor.app",
     "https://afa-editor.app",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000"
 ]
+if os.environ.get('AFA_DEV') == '1' or os.environ.get('FLASK_ENV') == 'development':
+    allowed_origins.extend(["http://localhost:3000", "http://127.0.0.1:3000"])
 
 CORS(app, resources={r"/api/*": {"origins": allowed_origins}}, supports_credentials=True)
 
@@ -653,13 +652,22 @@ def is_minted(token_id):
     return False
 
 
+CACHE_NO_STORE = 'no-store'
+
+
+def json_error(body, status):
+    response = jsonify(body)
+    response.headers['Cache-Control'] = CACHE_NO_STORE
+    return response, status
+
+
 def not_minted_response(token_id):
-    return jsonify({
+    return json_error({
         'error': 'Token not minted',
         'code': 'NOT_MINTED',
         'tokenId': normalize_token_id(token_id),
         'claimUrl': CLAIM_URL,
-    }), 403
+    }, 403)
 
 # Modify this function to return a list of elite token IDs as strings
 def load_elite_ids():
@@ -1284,8 +1292,47 @@ _render_cache_bytes = 0
 _render_lock = threading.Lock()
 
 
+RENDER_QUERY_KEYS = (
+    'tokenId', 'assetType', 'secondAssetType', 'thirdAssetType',
+    'mouthAssetType', 'hatAssetType', 'eyesAssetType', 'clubAssetType', 'size',
+)
+
+
+def normalized_render_query_args(args):
+    """Cache keys only use allowed params; unknown query keys are ignored."""
+    out = {}
+    for key in RENDER_QUERY_KEYS:
+        if key not in args:
+            continue
+        raw = args.get(key)
+        if raw is None or raw == '':
+            continue
+        if key == 'tokenId':
+            tid = normalize_token_id(raw)
+            if not tid or int(tid) > 9999:
+                continue
+            out[key] = tid
+        elif key == 'size':
+            try:
+                size = int(raw)
+            except (TypeError, ValueError):
+                continue
+            if size in THUMB_SIZES:
+                out[key] = str(size)
+        else:
+            out[key] = str(raw)
+    return out
+
+
+def build_render_cache_key(endpoint, args):
+    parts = normalized_render_query_args(args)
+    if not parts:
+        return endpoint
+    return endpoint + '?' + '&'.join(f'{k}={parts[k]}' for k in sorted(parts))
+
+
 def render_cache_key(endpoint):
-    return endpoint + '?' + '&'.join(f'{k}={v}' for k, v in sorted(request.args.items(multi=True)))
+    return build_render_cache_key(endpoint, request.args)
 
 
 def render_cache_get(key):
@@ -1346,57 +1393,6 @@ CACHE_IMMUTABLE = 'public, max-age=31536000, immutable'
 # Mint-status-dependent (unminted blur): short.
 CACHE_SHORT = 'public, max-age=300'
 
-@app.route('/api/get-asset', methods=['GET'])
-def get_asset():
-    token_id = request.args.get('tokenId')
-    if not is_minted(token_id):
-        return not_minted_response(token_id)
-
-    asset_type = request.args.get('assetType', '')
-    second_asset_type = request.args.get('secondAssetType', '')
-    third_asset_type = request.args.get('thirdAssetType', '')
-    mouth_asset_type = request.args.get('mouthAssetType', '')
-    hat_asset_type = request.args.get('hatAssetType', '')
-    eyes_asset_type = request.args.get('eyesAssetType', '')
-    club_asset_type = request.args.get('clubAssetType', '')
-
-    # Check if elite asset is requested and if token_id is not in elite list
-    if club_asset_type == 'elite' and token_id not in elite_ids:
-        # Return a message indicating the token ID is not eligible for elite assets
-        return jsonify({'error': 'Token ID not eligible for elite assets'}), 200
-    # Check if elite asset is requested and if token_id is not in elite list
-    if club_asset_type == 'dubai' and token_id not in dubai_ids:
-        # Return a message indicating the token ID is not eligible for elite assets
-        return jsonify({'error': 'Token ID not eligible for dubai assets'}), 200
-
-    key = render_cache_key('get-asset')
-    hit = render_cache_get(key)
-    if hit is not None:
-        request._render_hit = True
-        return cached_image_response(hit[0], hit[1], CACHE_IMMUTABLE)
-    try:
-        data = load_db()
-        image = compose_ape(token_id, data, asset_type, second_asset_type, third_asset_type,
-                          mouth_asset_type, hat_asset_type, eyes_asset_type, club_asset_type)
-        if not image:
-            raise ValueError("Ape not found")
-
-        img_io = BytesIO()
-        size = requested_thumb_size()
-        if size:
-            image.resize((size, size), Image.LANCZOS).save(img_io, 'WEBP', quality=82, method=4)
-            mimetype = 'image/webp'
-        else:
-            image.save(img_io, 'PNG')
-            mimetype = 'image/png'
-        payload = img_io.getvalue()
-        render_cache_put(key, payload, mimetype)
-        return cached_image_response(payload, mimetype, CACHE_IMMUTABLE)
-    
-    except Exception as e:
-        print(f"Error processing Token ID {token_id}: {e}")
-        return jsonify({'error': 'Internal Server Error'}), 500
-
 PREVIEW_SIZE = 512
 PREVIEW_BASE = 32          # same "medium" level as afa-progress /api/og-ape
 PREVIEW_RADIUS = 2.6 * (PREVIEW_SIZE / PREVIEW_BASE) / 2 * 0.6
@@ -1418,40 +1414,98 @@ def blur_preview(image, seed):
     return ImageChops.soft_light(big, grain)
 
 
-PREVIEW_RATE_LIMIT = 300     # requests (a full picker is ~100 blurred thumbnails)
-PREVIEW_RATE_WINDOW = 60     # seconds, per client IP and instance
-_preview_hits = {}
-_preview_lock = threading.Lock()
+RENDER_RATE_LIMIT = 300     # requests (a full picker is ~100 blurred thumbnails)
+RENDER_RATE_WINDOW = 60     # seconds, per client IP and instance
+_render_rate_hits = {}
+_render_rate_lock = threading.Lock()
 
 
-def preview_rate_limited(ip):
+def render_rate_limited(ip):
     now = time.time()
-    with _preview_lock:
-        hits = [t for t in _preview_hits.get(ip, []) if now - t < PREVIEW_RATE_WINDOW]
-        limited = len(hits) >= PREVIEW_RATE_LIMIT
+    with _render_rate_lock:
+        hits = [t for t in _render_rate_hits.get(ip, []) if now - t < RENDER_RATE_WINDOW]
+        limited = len(hits) >= RENDER_RATE_LIMIT
         if not limited:
             hits.append(now)
-        _preview_hits[ip] = hits
-        if len(_preview_hits) > 5000:
-            _preview_hits.clear()
+        _render_rate_hits[ip] = hits
+        if len(_render_rate_hits) > 5000:
+            _render_rate_hits.clear()
     return limited
+
+
+def client_ip():
+    return (request.headers.get('X-Forwarded-For') or request.remote_addr or '').split(',')[0].strip()
+
+
+@app.route('/api/get-asset', methods=['GET'])
+def get_asset():
+    ip = client_ip()
+    if render_rate_limited(ip):
+        return json_error({'error': 'rate_limited'}, 429)
+
+    token_id = normalize_token_id(request.args.get('tokenId'))
+    if not token_id or int(token_id) > 9999:
+        return json_error({'error': 'invalid_id'}, 400)
+    if not is_minted(token_id):
+        return not_minted_response(token_id)
+
+    asset_type = request.args.get('assetType', '')
+    second_asset_type = request.args.get('secondAssetType', '')
+    third_asset_type = request.args.get('thirdAssetType', '')
+    mouth_asset_type = request.args.get('mouthAssetType', '')
+    hat_asset_type = request.args.get('hatAssetType', '')
+    eyes_asset_type = request.args.get('eyesAssetType', '')
+    club_asset_type = request.args.get('clubAssetType', '')
+
+    if club_asset_type == 'elite' and token_id not in elite_ids:
+        return json_error({'error': 'Token ID not eligible for elite assets'}, 400)
+    if club_asset_type == 'dubai' and token_id not in dubai_ids:
+        return json_error({'error': 'Token ID not eligible for dubai assets'}, 400)
+
+    key = render_cache_key('get-asset')
+    hit = render_cache_get(key)
+    if hit is not None:
+        request._render_hit = True
+        return cached_image_response(hit[0], hit[1], CACHE_IMMUTABLE)
+    try:
+        data = load_db()
+        image = compose_ape(token_id, data, asset_type, second_asset_type, third_asset_type,
+                          mouth_asset_type, hat_asset_type, eyes_asset_type, club_asset_type)
+        if not image:
+            return json_error({'error': 'Ape not found'}, 404)
+
+        img_io = BytesIO()
+        size = requested_thumb_size()
+        if size:
+            image.resize((size, size), Image.LANCZOS).save(img_io, 'WEBP', quality=82, method=4)
+            mimetype = 'image/webp'
+        else:
+            image.save(img_io, 'PNG')
+            mimetype = 'image/png'
+        payload = img_io.getvalue()
+        render_cache_put(key, payload, mimetype)
+        return cached_image_response(payload, mimetype, CACHE_IMMUTABLE)
+
+    except Exception as e:
+        print(f"Error processing Token ID {token_id}: {e}")
+        return json_error({'error': 'Internal Server Error'}, 500)
 
 
 @app.route('/api/get-asset-preview', methods=['GET'])
 def get_asset_preview():
     """Blurred try-on preview for UNMINTED tokens. The sharp composite and its
     layers never leave the server; minted tokens must use /api/get-asset."""
-    ip = (request.headers.get('X-Forwarded-For') or request.remote_addr or '').split(',')[0].strip()
-    if preview_rate_limited(ip):
-        return jsonify({'error': 'rate_limited'}), 429
+    ip = client_ip()
+    if render_rate_limited(ip):
+        return json_error({'error': 'rate_limited'}, 429)
     token_id = normalize_token_id(request.args.get('tokenId'))
     if not token_id or int(token_id) > 9999:
-        return jsonify({'error': 'invalid_id'}), 400
+        return json_error({'error': 'invalid_id'}, 400)
     if is_minted(token_id):
-        return jsonify({'error': 'Token is minted, use /api/get-asset', 'code': 'MINTED'}), 409
+        return json_error({'error': 'Token is minted, use /api/get-asset', 'code': 'MINTED'}, 409)
     club_asset_type = request.args.get('clubAssetType', '')
     if club_asset_type in ('elite', 'dubai'):
-        return jsonify({'error': 'Club assets are not available in preview'}), 400
+        return json_error({'error': 'Club assets are not available in preview'}, 400)
     key = render_cache_key('get-asset-preview')
     hit = render_cache_get(key)
     if hit is not None:
@@ -1477,7 +1531,7 @@ def get_asset_preview():
         return cached_image_response(payload, 'image/webp', CACHE_SHORT)
     except Exception as e:
         print(f"Error building preview for Token ID {token_id}: {e}")
-        return jsonify({'error': 'Internal Server Error'}), 500
+        return json_error({'error': 'Internal Server Error'}, 500)
 
 
 @app.route('/api/get-background-color', methods=['GET'])

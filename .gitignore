@@ -25,3 +25,7 @@ frontend/.env.production.local
 # macOS folder metadata — ignore in every directory
 .DS_Store
 **/.DS_Store
+
+frontend/build/
+**/__pycache__/
+**/*.pyc

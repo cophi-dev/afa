@@ -43,11 +43,27 @@ function buildOgHtml({ title, description, canonicalUrl, ogImage, imageWidth, im
 </html>`;
 }
 
+const PROBE_PATH = /^\/(\.env|\.git|\.htaccess|\.htpasswd|wp-admin|wp-login\.php|server-status)(\/|$)/i;
+
 export const config = {
-  matcher: ['/((?!api/|a/|static/|favicon|logo|overview|manifest|robots|apple-touch|og-preview|og-image|.*\\..*).*)'],
+  matcher: [
+    '/.env',
+    '/.env.local',
+    '/.git/:path*',
+    '/((?!api/|a/|img/|fonts/|hero/|static/|favicon|logo|overview|manifest|robots|sitemap|apple-touch|og-preview|og-image|.*\\..*).*)',
+  ],
 };
 
 export default async function middleware(request) {
+  const url = new URL(request.url);
+  const pathname = url.pathname;
+  if (PROBE_PATH.test(pathname)) {
+    return new Response('Not Found', {
+      status: 404,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' },
+    });
+  }
+
   const userAgent = request.headers.get('user-agent') || '';
   if (!BOT_UA.test(userAgent)) {
     return;
