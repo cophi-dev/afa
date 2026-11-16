@@ -27,6 +27,10 @@ traits/
 Filenames must match trait values exactly (e.g. `Fur/Black.png`, `Eyes/Laser Eyes.png`).
 Case is resolved at runtime on Linux, but prefer Title Case matching the trait value.
 
+**Spaces vs underscores:** Some Drive exports use underscores in filenames (e.g.
+`Hoodie_Fur/Death_Bot.png`) while trait values use spaces (`Death Bot`). The backend
+`resolve_asset_path` maps these variants automatically — do not rename source files.
+
 ### Star Glasses
 
 Per-eye overlays live under **`memes/star_glasses/`** (preferred) or the legacy
