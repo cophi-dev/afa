@@ -247,6 +247,23 @@ color_map = {
     "Yellow": (180, 180, 137, 0.4)
 }
 
+def _filename_variants(filename):
+    """Space/underscore variants (e.g. Death Bot.png vs Death_Bot.png)."""
+    seen = {filename}
+    variants = [filename]
+    if ' ' in filename:
+        spaced = filename.replace(' ', '_')
+        if spaced not in seen:
+            seen.add(spaced)
+            variants.append(spaced)
+    if '_' in filename:
+        underscored = filename.replace('_', ' ')
+        if underscored not in seen:
+            seen.add(underscored)
+            variants.append(underscored)
+    return variants
+
+
 def resolve_asset_path(path):
     """Resolve asset paths on case-sensitive filesystems (e.g. head_zombie.PNG vs .png)."""
     if os.path.isfile(path):
@@ -258,6 +275,13 @@ def resolve_asset_path(path):
     for entry in os.listdir(directory):
         if entry.lower() == target:
             return os.path.join(directory, entry)
+    for variant in _filename_variants(filename):
+        if os.path.isfile(os.path.join(directory, variant)):
+            return os.path.join(directory, variant)
+        variant_target = variant.lower()
+        for entry in os.listdir(directory):
+            if entry.lower() == variant_target:
+                return os.path.join(directory, entry)
     return path
 
 

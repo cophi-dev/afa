@@ -1,0 +1,40 @@
+name: Backend tests
+
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-test.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-test.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Regenerate trait manifest (must match committed file)
+        run: |
+          python scripts/generate_trait_manifest.py
+          git diff --exit-code trait_manifest.json || (
+            echo 'trait_manifest.json is stale; run backend/scripts/generate_trait_manifest.py'
+            exit 1
+          )
+
+      - name: Unit tests
+        run: python -m unittest discover -v -p 'test_*.py'

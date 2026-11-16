@@ -1,0 +1,92 @@
+name: Backend deploy (App Engine)
+
+# Laptop-free deploy: manual only (no auto deploy on push).
+on:
+  workflow_dispatch:
+    inputs:
+      promote_after_smoke:
+        description: 'Move 100% traffic to new version after smoke test'
+        type: boolean
+        default: true
+
+concurrency:
+  group: backend-gae-deploy
+  cancel-in-progress: false
+
+env:
+  GCP_PROJECT_ID: afa-editor
+  GAE_REGION: europe-west
+  ROLLBACK_VERSION: eco-1
+  NEVER_TOUCH_VERSION: perf-rb
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Pull trait assets from GCS
+        env:
+          TRAITS_BUCKET: ${{ vars.GCS_TRAITS_BUCKET }}
+        run: |
+          set -euo pipefail
+          test -n "${TRAITS_BUCKET}" || { echo 'Set repo variable GCS_TRAITS_BUCKET'; exit 1; }
+          mkdir -p backend/traits
+          gcloud storage rsync -r "gs://${TRAITS_BUCKET}/traits" backend/traits
+
+      - name: Verify traits against manifest
+        working-directory: backend
+        run: python scripts/verify_traits.py
+
+      - name: Compute version id
+        id: version
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          VERSION="ci-${SHORT_SHA}-$(date -u +%Y%m%d%H%M)"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Deploy version: ${VERSION} (rollback stays on ${ROLLBACK_VERSION}, will not touch ${NEVER_TOUCH_VERSION})"
+
+      - name: Deploy App Engine (no promote)
+        working-directory: backend
+        run: |
+          gcloud app deploy app.deploy.yaml \
+            --project="${GCP_PROJECT_ID}" \
+            --version="${{ steps.version.outputs.version }}" \
+            --no-promote \
+            --quiet
+
+      - name: Smoke test new version
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          BASE_URL="https://${VERSION}-dot-${GCP_PROJECT_ID}.${GAE_REGION}.r.appspot.com"
+          echo "Smoke URL: ${BASE_URL}"
+          # App Engine cold start after min_instances: 0
+          sleep 30
+          python backend/scripts/smoke_test_deploy.py --base-url "${BASE_URL}"
+
+      - name: Promote traffic on success
+        if: inputs.promote_after_smoke
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          echo "Setting 100% traffic to ${VERSION} (${ROLLBACK_VERSION} remains for rollback)"
+          gcloud app services set-traffic default \
+            --splits="${VERSION}=1" \
+            --project="${GCP_PROJECT_ID}" \
+            --quiet

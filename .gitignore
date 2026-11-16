@@ -18,6 +18,10 @@ frontend/.env.production.local
 # Local Python venv — never commit
 /env/
 
+# Python bytecode
+__pycache__/
+*.pyc
+
 # Proprietary trait artwork — not distributed in the public repo
 /backend/traits/**
 !/backend/traits/README.md
