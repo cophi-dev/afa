@@ -1,6 +1,9 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+  scroll-padding-top: var(--site-bar-h, 64px);
+  background-color: #09090a;
+  color-scheme: dark;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -11,13 +14,12 @@ html {
 
 body {
   margin: 0;
+  background-color: var(--bg, #09090a);
+  color: var(--text-color, #f4f3ef);
   font-family: var(--font-body, 'Barlow', ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--fs-md, 16px);
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior-y: contain;
-}
-
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
 }
