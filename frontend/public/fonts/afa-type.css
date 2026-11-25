@@ -8,8 +8,6 @@
   --font-display: 'Saira Extra Condensed', 'Arial Narrow', ui-sans-serif, system-ui, sans-serif;
   --font-body: 'Barlow', ui-sans-serif, system-ui, sans-serif;
   --font-label: var(--font-body);
-  --studio-hero-bg: url('/studio-hero-bg.webp');
-  --studio-stage-mat: url('/studio-stage-mat.webp');
 }
 /* ApeFest mode only: Press Start 2P (SIL OFL 1.1, see OFL-PressStart2P.txt), digits-only DejaVu Sans Mono Bold (Bitstream Vera license) for "10.17". */
 @font-face { font-family: 'Press Start 2P'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/press-start-2p-400.woff2') format('woff2'); }
